@@ -16,7 +16,6 @@ import (
 
 func main() {
 	port := flag.Int("port", 8080, "port for server")
-	players := flag.Int("players", 2, "number of players")
 
 	flag.Parse()
 	if flag.NArg() != 1 {
@@ -100,7 +99,7 @@ func main() {
 		}
 	}
 
-	server, err := devtools.NewServer(gameRoot, manifest, *port, *players)
+	server, err := devtools.NewServer(gameRoot, manifest, *port)
 	if err != nil {
 		log.Fatal(err)
 	}

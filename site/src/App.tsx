@@ -3,9 +3,9 @@ import History from './History';
 import { HistoryItem, Player, GameUpdate } from './types';
 import './App.css';
 
-
-const minPlayers = parseInt(document.getElementsByTagName("body")[0].getAttribute("minPlayers")!)
-const maxPlayers = parseInt(document.getElementsByTagName("body")[0].getAttribute("maxPlayers")!)
+const body = document.getElementsByTagName("body")[0];
+const minPlayers = parseInt(body.getAttribute("minPlayers")!);
+const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
 const possiblePlayers = [
   {position: 0, name: "Evelyn", color: "#ff0000"},
   {position: 1, name: "Logan", color: "#00ff00"},
@@ -143,7 +143,6 @@ function App() {
   }, [players])
 
   return (
-    <>
     <div style={{display:'flex', flexDirection:'row'}}>
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div style={{display: 'flex', flexDirection:'row'}}>
@@ -152,16 +151,14 @@ function App() {
             <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>
           )}
         </div>
-        <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 0, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
+        <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
+        <iframe onLoad={() => setGameLoaded(true)} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
-      <div style={{width: '30vw', display: 'flex', flexDirection:'column'}}>
+      <div style={{width: '30vw', height:'100vh', display: 'flex', flexDirection:'column'}}>
         <h2>History <button onClick={() => resetGame()}>Reset game</button></h2>
-        <div style={{flexGrow: 1}}><History revertTo={(n) => setHistory(history.slice(0, n+1))} initialState={initialState} items={history}/></div>
+        <History revertTo={(n) => setHistory(history.slice(0, n+1))} initialState={initialState} items={history}/>
       </div>
-
     </div>
-    <iframe onLoad={() => setGameLoaded(true)} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
-    </>
       );
 }
 

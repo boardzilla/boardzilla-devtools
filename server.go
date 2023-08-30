@@ -27,17 +27,15 @@ type Server struct {
 	gameRoot string
 	manifest *ManifestV1
 	port     int
-	players  int
 	senders  map[int]chan int
 	lock     sync.Mutex
 }
 
-func NewServer(gameRoot string, manifest *ManifestV1, port, players int) (*Server, error) {
+func NewServer(gameRoot string, manifest *ManifestV1, port int) (*Server, error) {
 	return &Server{
 		gameRoot: gameRoot,
 		manifest: manifest,
 		port:     port,
-		players:  players,
 		senders:  map[int]chan int{},
 		lock:     sync.Mutex{},
 	}, nil
