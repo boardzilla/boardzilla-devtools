@@ -1,7 +1,7 @@
 {
   "name": "Number guesser",
-  "minPlayers": 2,
-  "maxPlayers": 2,
+  "minPlayers": 1,
+  "maxPlayers": 5,
   "ui": {
     "root": "ui",
     "build": "npm run build",

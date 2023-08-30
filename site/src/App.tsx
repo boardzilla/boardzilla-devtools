@@ -4,14 +4,19 @@ import { HistoryItem, Player, GameUpdate } from './types';
 import './App.css';
 
 
-const urlParams = new URLSearchParams(window.location.search);
 const minPlayers = parseInt(document.getElementsByTagName("body")[0].getAttribute("minPlayers")!)
 const maxPlayers = parseInt(document.getElementsByTagName("body")[0].getAttribute("maxPlayers")!)
 const possiblePlayers = [
   {position: 0, name: "Evelyn", color: "#ff0000"},
   {position: 1, name: "Logan", color: "#00ff00"},
   {position: 2, name: "Avery", color: "#0000ff"},
-  {position: 3, name: "Jayden", color: "#666600"}
+  {position: 3, name: "Jayden", color: "#666600"},
+  {position: 4, name: "Aischa", color: "#006666"},
+  {position: 5, name: "Shyamapada", color: "#660066"},
+  {position: 6, name: "Iovica", color: "#333333"},
+  {position: 7, name: "Liubika", color: "#ff6633"},
+  {position: 8, name: "Zvezdelina", color: "#3366ff"},
+  {position: 9, name: "Guadalupe", color: "#f01a44"},
 ]
 
 function App() {
@@ -22,13 +27,19 @@ function App() {
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
-  const updateNumberOfPlayers = useCallback((n:number) => {
-    setNumberOfPlayers(n);
-    setPlayers(possiblePlayers.slice(0, n))
+  const updateNumberOfPlayers = useCallback((n:string) => {
+    const num = parseInt(n)
+    if (Number.isNaN(num)) return
+    setNumberOfPlayers(num);
+    setPlayers(possiblePlayers.slice(0, num))
     setInitialState(undefined);
     setHistory([]);
   }, [])
 
+  const resetGame = useCallback(() => {
+    setInitialState(undefined)
+    setHistory([])
+  }, [])
   const sendToGame = useCallback((data: any) => {
     (document.getElementById("game") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
@@ -118,19 +129,34 @@ function App() {
     return () => window.removeEventListener('message', messageCb)
   }, [messageCb])
 
+  useEffect(() => {
+    const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
+    const validKeys = keys.slice(0, players.length)
+    const l = (e: globalThis.KeyboardEvent):any => {
+      const idx = validKeys.indexOf(e.code)
+      if (!e.shiftKey || idx === -1) return
+      setCurrentPlayer(players[idx].position);
+      e.stopPropagation();
+    }
+    window.addEventListener('keydown', l);
+    return () => window.removeEventListener('keydown', l);
+  }, [players])
+
   return (
     <>
     <div style={{display:'flex', flexDirection:'row'}}>
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div style={{display: 'flex', flexDirection:'row'}}>
-          <input type="number" value={numberOfPlayers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfPlayers(parseInt(v.currentTarget.value))}/>
-          {players.map(p => <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>)}
+          <input type="number" value={numberOfPlayers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfPlayers(v.currentTarget.value)}/>
+          {players.map(p =>
+            <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>
+          )}
         </div>
         <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 0, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
       </div>
       <div style={{width: '30vw', display: 'flex', flexDirection:'column'}}>
-        <h2>History</h2>
-        <div style={{flexGrow: 1}}><History initialState={initialState} items={history}/></div>
+        <h2>History <button onClick={() => resetGame()}>Reset game</button></h2>
+        <div style={{flexGrow: 1}}><History revertTo={(n) => setHistory(history.slice(0, n+1))} initialState={initialState} items={history}/></div>
       </div>
 
     </div>
