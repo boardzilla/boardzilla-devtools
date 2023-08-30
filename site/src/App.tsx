@@ -3,6 +3,10 @@ import History from './History';
 import { HistoryItem, Player, GameUpdate } from './types';
 import './App.css';
 
+
+const urlParams = new URLSearchParams(window.location.search);
+const minPlayers = parseInt(document.getElementsByTagName("body")[0].getAttribute("minPlayers")!)
+const maxPlayers = parseInt(document.getElementsByTagName("body")[0].getAttribute("maxPlayers")!)
 const possiblePlayers = [
   {position: 0, name: "Evelyn", color: "#ff0000"},
   {position: 1, name: "Logan", color: "#00ff00"},
@@ -12,7 +16,7 @@ const possiblePlayers = [
 
 function App() {
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
-  const [numberOfPlayers, setNumberOfPlayers] = useState<number>(2);
+  const [numberOfPlayers, setNumberOfPlayers] = useState<number>(minPlayers);
   const [players, setPlayers] = useState<Player[]>(possiblePlayers.slice(0, numberOfPlayers));
   const [currentPlayer, setCurrentPlayer] = useState(players[0].position);
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
@@ -119,7 +123,7 @@ function App() {
     <div style={{display:'flex', flexDirection:'row'}}>
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div style={{display: 'flex', flexDirection:'row'}}>
-          <input type="number" value={numberOfPlayers} min="1" max="4" onChange={v => updateNumberOfPlayers(parseInt(v.currentTarget.value))}/>
+          <input type="number" value={numberOfPlayers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfPlayers(parseInt(v.currentTarget.value))}/>
           {players.map(p => <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>)}
         </div>
         <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 0, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>

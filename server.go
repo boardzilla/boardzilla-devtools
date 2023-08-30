@@ -9,6 +9,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/go-chi/chi/v5"
@@ -126,7 +128,8 @@ func (s *Server) Serve() {
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		path := r.RequestURI
-		if path == "/" {
+		index := path == "/"
+		if index {
 			path = "index.html"
 		}
 		ext := filepath.Ext(path)
@@ -137,6 +140,12 @@ func (s *Server) Serve() {
 			return
 		}
 		w.Header().Add("Content-type", mime.TypeByExtension(ext))
+		if index {
+			out := string(f)
+			out = strings.ReplaceAll(out, "{{minPlayers}}", strconv.Itoa(s.manifest.MinimumPlayers))
+			out = strings.ReplaceAll(out, "{{maxPlayers}}", strconv.Itoa(s.manifest.MaximumPlayers))
+			f = []byte(out)
+		}
 		w.Write(f)
 	})
 	http.ListenAndServe(fmt.Sprintf(":%d", s.port), r)
