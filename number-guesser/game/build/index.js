@@ -29,7 +29,8 @@ var game = (() => {
         return {
           position: p.position,
           currentPlayer,
-          winner: void 0
+          winner: void 0,
+          move: 0
         };
       }),
       messages: []
@@ -54,7 +55,8 @@ var game = (() => {
         return {
           position: p.position,
           currentPlayer: state.currentPlayer,
-          winner: state.winner
+          winner: state.winner,
+          move: state.move
         };
       }),
       messages: []

@@ -114,8 +114,11 @@ function App() {
           }
           break
       }
-
     })
+    evtSource!.onerror = e => {
+      console.log("evt error", e)
+    }
+
     return () => evtSource.close()
   }, [])
 

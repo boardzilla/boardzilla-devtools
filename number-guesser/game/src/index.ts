@@ -13,6 +13,7 @@ export type PlayerState = {
   position: number
 	winner : number | undefined
 	currentPlayer: number,
+	move: number
 }
 
 export type GameUpdate = {
@@ -42,6 +43,7 @@ export function initialState(players: Player[], setup: {}): GameUpdate {
 			position: p.position,
 			currentPlayer,
 			winner: undefined,
+			move: 0,
 		}}),
 		messages: []
 	}
@@ -65,6 +67,7 @@ export function processMove(state: GameState, position: number, move: GameMove):
 			position: p.position,
 			currentPlayer: state.currentPlayer,
 			winner: state.winner,
+			move: state.move,
 		}}),
 		messages: []
 	}

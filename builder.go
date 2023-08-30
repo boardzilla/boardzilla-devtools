@@ -79,7 +79,7 @@ func (b *Builder) BuildGame() error {
 	if err != nil {
 		return err
 	}
-	return b.buildUI(manifest)
+	return b.buildGame(manifest)
 }
 
 func (b *Builder) buildGame(m *ManifestV1) error {

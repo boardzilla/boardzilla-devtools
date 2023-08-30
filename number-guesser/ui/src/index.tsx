@@ -44,9 +44,9 @@ const Game = () => {
   }, [error])
 
   return <div>
-    {error !== "" && <span style={{backgroundColor: "#faa"}}>{error}</span>}
-    <pre>{JSON.stringify(state, null, 2)}</pre>
+    {error !== "" && <div style={{backgroundColor: "#faa", margin: '4px'}}>{error}</div>}
     {state && (state.winner !== undefined ? <span>Game is done! {state.winner === state.position ? "YOU WIN": "YOU LOSE"}</span> : numbers.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>))}
+    <pre>{JSON.stringify(state, null, 2)}</pre>
   </div>
 }
 

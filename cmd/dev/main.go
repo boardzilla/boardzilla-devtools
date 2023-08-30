@@ -61,16 +61,16 @@ func main() {
 				}
 				if strings.HasPrefix(rel, "..") {
 					log.Printf("Game reloaded due to change in %s\n", e.Name)
-					rebuilt <- devtools.ReloadGame
 					if err := devBuilder.BuildGame(); err != nil {
 						log.Println("error during rebuild:", err)
 					}
+					rebuilt <- devtools.ReloadGame
 				} else {
 					log.Printf("UI reloaded due to change in %s\n", e.Name)
-					rebuilt <- devtools.ReloadUI
 					if err := devBuilder.BuildUI(); err != nil {
 						log.Println("error during rebuild:", err)
 					}
+					rebuilt <- devtools.ReloadUI
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
