@@ -23534,7 +23534,8 @@
     });
     (0, import_react.useEffect)(() => {
       if (error === "")
-        setTimeout(() => setError(""), 5e3);
+        return;
+      setTimeout(() => setError(""), 5e3);
     }, [error]);
     return /* @__PURE__ */ import_react.default.createElement("div", null, error !== "" && /* @__PURE__ */ import_react.default.createElement("div", { style: { backgroundColor: "#faa", margin: "4px" } }, error), state && (state.winner !== void 0 ? /* @__PURE__ */ import_react.default.createElement("span", null, "Game is done! ", state.winner === state.position ? "YOU WIN" : "YOU LOSE") : numbers.map((n) => /* @__PURE__ */ import_react.default.createElement("button", { onClick: () => makeMove(n), key: n }, n))), /* @__PURE__ */ import_react.default.createElement("pre", null, JSON.stringify(state, null, 2)));
   };

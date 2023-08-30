@@ -39,7 +39,7 @@ const Game = () => {
   })
 
   useEffect(() => {
-    if (error === "")
+    if (error === "") return
     setTimeout(() => setError(""), 5000)
   }, [error])
 

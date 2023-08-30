@@ -124,8 +124,8 @@ function App() {
 
   useEffect(() => {
     if (initialState || !gameLoaded) return
-    (document.getElementById("game") as HTMLIFrameElement).contentWindow!.postMessage({type: "initialState", players, setup: {}})
-  }, [initialState, gameLoaded, players]);
+    sendToGame({type: "initialState", players, setup: {}})
+  }, [initialState, gameLoaded, players, sendToGame]);
 
   useEffect(() => {
     window.addEventListener('message', messageCb);
