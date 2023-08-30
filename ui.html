@@ -1,0 +1,11 @@
+<html>
+  <body>
+    <div id="root"></div>
+  </body>
+  <script src="ui.js"></script>
+  <script>
+    window.addEventListener('message', (event) => {
+      console.log("Message received from the child: " + event.data); // Message received from child
+    });
+  </script>
+</html>

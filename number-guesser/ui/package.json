@@ -1,0 +1,19 @@
+{
+  "name": "ui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "build": "esbuild --format=iife --asset-names=assets/[hash]/[name] --loader:.png=file --bundle --outdir=build src/index.tsx"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/react-dom": "^18.2.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.21"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Number guesser",
+  "minPlayers": 2,
+  "maxPlayers": 2,
+  "ui": {
+    "root": "ui",
+    "build": "npm run build",
+    "src": "src",
+    "out": "build"
+  },
+  "game": {
+    "root": "game",
+    "build": "npm run build",
+    "src": "src",
+    "artifact": "build/index.js"
+  }
+}

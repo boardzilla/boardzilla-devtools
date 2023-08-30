@@ -1,0 +1,10 @@
+{
+  "name": "number-guesser",
+  "version": "1.0.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "esbuild": "^0.19.2"
+  }
+}

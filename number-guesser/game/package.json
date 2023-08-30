@@ -1,0 +1,11 @@
+{
+  "name": "game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "build": "esbuild --format=iife --global-name=game --outdir=build src/index.ts"
+  },
+  "author": "",
+  "license": "ISC"
+}
