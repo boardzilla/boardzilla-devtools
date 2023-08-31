@@ -17,7 +17,7 @@ type MoveProcessedData = {
 const Game = () => {
   const [state, setState] = useState<any>();
   const [error, setError] = useState<string>("");
-  const listener = useCallback((event: MessageEvent<SetStateData | MoveErrorData>) => {
+  const listener = useCallback((event: MessageEvent<SetStateData | MoveProcessedData>) => {
     switch(event.data.type) {
       case 'setState':
         setState((event.data as SetStateData).data);
