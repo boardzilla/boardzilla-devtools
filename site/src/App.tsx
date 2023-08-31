@@ -66,22 +66,21 @@ function App() {
       case '/game.html':
         switch(e.data.type) {
           case 'initialState':
-            console.log("setting initial state!")
             setInitialState(e.data.data)
             break
-          case 'processMove':
-            let lastHistory = history[history.length - 1]
-            setHistory([...history.slice(0, history.length - 1), {
-              ...lastHistory,
-              data: e.data.data
-            }])
-            break
-          case 'processMoveError':
-            setHistory([...history.slice(0, history.length - 1)]);
-            sendToUI({type: "moveError", move: e.data.move, error: e.data.error})
+          case 'moveProcessed':
+            if (e.data.error) {
+              setHistory([...history.slice(0, history.length - 1)]);
+            } else {
+              let lastHistory = history[history.length - 1]
+              setHistory([...history.slice(0, history.length - 1), {
+                ...lastHistory,
+                data: e.data.data
+              }])
+            }
+            sendToUI({type: "moveProcessed", id: e.data.id, error: e.data.error})
             break
           }
-          console.log(e)
         break
       case '/ui.html':
         setHistory([...history, {
@@ -103,11 +102,11 @@ function App() {
         case "reload":
           switch(e.target) {
             case "ui":
-              console.log("RELOADING UI");
+              console.debug("UI reloading due to changes");
               (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
               break
             case "game":
-              console.log("RELOADING GAME");
+              console.debug("Game reloading due to changes");
               setGameLoaded(false);
               (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
               break
@@ -116,7 +115,7 @@ function App() {
       }
     })
     evtSource!.onerror = e => {
-      console.log("evt error", e)
+      console.log("eventsource error", e)
     }
 
     return () => evtSource.close()

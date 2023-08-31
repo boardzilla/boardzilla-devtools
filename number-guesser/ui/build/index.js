@@ -23519,14 +23519,14 @@
         case "setState":
           setState(event.data.data);
           break;
-        case "moveError":
-          setError(event.data.error);
+        case "moveProcessed":
+          let e = event.data;
+          setError(e.error ? e.error : "");
           break;
       }
     }, []);
     const makeMove = (0, import_react.useCallback)((n) => {
-      console.log("making move!", n, window.top);
-      window.top.postMessage({ number: n }, "*");
+      window.top.postMessage({ id: crypto.randomUUID(), data: { number: n } }, "*");
     }, []);
     (0, import_react.useEffect)(() => {
       window.addEventListener("message", listener, false);

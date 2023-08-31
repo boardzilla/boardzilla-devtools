@@ -8,10 +8,10 @@ type SetStateData = {
   data: any
 }
 
-type MoveErrorData = {
-  type: "moveError"
-  error: string
-  move: any
+type MoveProcessedData = {
+  type: "moveProcessed"
+  error: string | undefined
+  id: string
 }
 
 const Game = () => {
@@ -22,15 +22,15 @@ const Game = () => {
       case 'setState':
         setState((event.data as SetStateData).data);
         break;
-      case 'moveError':
-        setError((event.data as MoveErrorData).error);
+      case 'moveProcessed':
+        let e = event.data as MoveProcessedData
+        setError(e.error ? e.error : "");
         break;
     }
   }, [])
 
   const makeMove = useCallback((n: number) => {
-    console.log("making move!",n, window.top!)
-    window.top!.postMessage({number: n}, "*")
+    window.top!.postMessage({id: crypto.randomUUID(), data: {number: n}}, "*")
   }, [])
 
   useEffect(() => {
@@ -53,4 +53,3 @@ const Game = () => {
 const rootElement = document.getElementById('root')!
 const root = ReactDOM.createRoot(rootElement);
 root.render(<Game />);
-

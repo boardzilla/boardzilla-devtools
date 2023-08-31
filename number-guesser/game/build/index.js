@@ -39,7 +39,7 @@ var game = (() => {
   function processMove(state, position, move) {
     if (position !== state.currentPlayer)
       throw new Error("not your turn");
-    if (move.number === state.number) {
+    if (move.data.number === state.number) {
       state.finished = true;
       state.winner = state.currentPlayer;
     } else {

@@ -22,9 +22,14 @@ export type GameUpdate = {
   messages: Message[]
 }
 
+export type Move = {
+  id: string
+  data: any
+}
+
 export type HistoryItem = {
   seq: number
   data: GameUpdate | undefined
-  move: any
+  move: Move
 }
 

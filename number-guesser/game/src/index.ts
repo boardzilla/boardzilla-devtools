@@ -31,9 +31,15 @@ type GameState = {
 	winner: number | undefined
 }
 
-type GameMove = {
-  number: number
+type Move<T> = {
+	id: string
+	data: T
 }
+
+type NumberGuessingMove = {
+	number: number
+}
+
 
 export function initialState(players: Player[], setup: {}): GameUpdate {
 	const currentPlayer = Math.min(...players.map(p => p.position))
@@ -49,9 +55,9 @@ export function initialState(players: Player[], setup: {}): GameUpdate {
 	}
 }
 
-export function processMove(state: GameState, position: number, move: GameMove): GameUpdate {
+export function processMove(state: GameState, position: number, move: Move<NumberGuessingMove>): GameUpdate {
 	if (position !== state.currentPlayer) throw new Error ("not your turn");
-	if (move.number === state.number) {
+	if (move.data.number === state.number) {
 		state.finished = true
 		state.winner = state.currentPlayer
 	} else {

@@ -2,18 +2,19 @@
   <script src="game.js"></script>
   <script>
     window.addEventListener('message', (event) => {
-      console.log("Message received from the parent!: game ... ", event.data); // Message received from child
       switch (event.data.type) {
       case 'initialState':
+        console.debug("game generating initial state",event.data.players, event.data.setup);
         const initialState = game.initialState(event.data.players, event.data.setup);
         window.top.postMessage({type: "initialState", data: initialState}, "*")
         break;
       case 'processMove':
+        console.debug("game proccessing move", event.data.move);
         try {
-          const p = game.processMove(event.data.previousState, event.data.position, event.data.move);
-          window.top.postMessage({type: "processMove", data: p}, "*")
+          const data = game.processMove(event.data.previousState, event.data.position, event.data.move);
+          window.top.postMessage({type: "moveProcessed", id: event.data.move.id, error: undefined, data}, "*")
         } catch (e) {
-          window.top.postMessage({type: "processMoveError", position: event.data.position, move: event.data.move, error: String(e)}, "*")
+          window.top.postMessage({type: "moveProcessed", id: event.data.move.id, error: String(e)}, "*")
         }
         break;
       }

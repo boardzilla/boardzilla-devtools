@@ -45,7 +45,7 @@ type PlayerState = {
   state: any
 }
 
-export type GameState = any
+type GameState = any
 
 type GameUpdate = {
   game: GameState
@@ -53,29 +53,43 @@ type GameUpdate = {
   messages: Message[]
 }
 
-export type HistoryItem = {
+type Move = {
+  id: string,
+  data: any
+}
+
+type HistoryItem = {
   seq: number
   data: GameUpdate | undefined
-  move: any
+  move: Move
 }
 
 initialState(players: Player[], setup: any): GameUpdate
-processMove(previousState: GameState, position: number, move: number): GameUpdate
+processMove(previousState: GameState, position: number, move: Move): GameUpdate
 ```
 
 ### UI
 
 ```ts
 
+// submit move with ...
+
+type Move = {
+  id: string
+  data: any
+}
+
+window.top!.postMessage(m: Move)
+
 type SetStateData = {
   type: "setState",
   data: any
 }
 
-type MoveErrorData = {
-  type: "moveError"
-  error: string
-  move: any
+type MoveProcessed = {
+  type: "moveProcessed"
+  error: string?
+  id: string
 }
 
 window.addEventListener('message', (evt: MessageEvent<SetStateData | MoveErrorData>))
