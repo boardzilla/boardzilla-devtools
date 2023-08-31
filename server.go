@@ -152,11 +152,8 @@ func (s *Server) Serve() {
 func (s *Server) Reload(t int) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	fmt.Printf("reloadin! %d\n", t)
-	for i, sender := range s.senders {
-		fmt.Printf("i! %d\n", i)
+	for _, sender := range s.senders {
 		sender <- t
-		fmt.Printf("done i! %d\n", i)
 	}
 }
 

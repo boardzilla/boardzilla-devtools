@@ -31,5 +31,6 @@ export type HistoryItem = {
   seq: number
   data: GameUpdate | undefined
   move: Move
+  position: number
 }
 

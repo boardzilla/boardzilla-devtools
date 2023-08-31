@@ -19,6 +19,13 @@ const possiblePlayers = [
   {position: 9, name: "Guadalupe", color: "#f01a44"},
 ]
 
+type pendingPromise = {
+  resolve: (d: any) => void
+  reject: (e: Error) => void
+}
+let initalStatePromise: pendingPromise | undefined;
+const pendingPromises = new Map<string, pendingPromise>()
+
 function App() {
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
   const [numberOfPlayers, setNumberOfPlayers] = useState<number>(minPlayers);
@@ -48,6 +55,36 @@ function App() {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
 
+  const reprocessHistory = useCallback(async () => {
+    const newInitialState = await new Promise<GameUpdate>((resolve, reject) => {
+      initalStatePromise = {resolve, reject}
+      sendToGame({type: "initialState", players, setup: {}})
+    })
+    let i = 0;
+    let previousState = newInitialState
+    const newHistory: HistoryItem[] = []
+    while(i < history.length) {
+      let move = history[i].move
+      let position = history[i].position
+      try {
+        let p = new Promise<GameUpdate>((resolve, reject) => {
+          const id = crypto.randomUUID()
+          pendingPromises.set(id, {resolve, reject});
+          sendToGame({type: "processMove", position, previousState: previousState.game, move: {...move, id}})
+        })
+        const res = await p
+        newHistory.push({position, move, seq: i, data: res})
+      } catch(e) {
+        console.error("error while reprocessing history", e)
+        break
+      }
+      i++;
+    }
+    setInitialState(newInitialState);
+    setHistory(newHistory);
+    setGameLoaded(true);
+  }, [history, players, sendToGame]);
+
   const sendCurrentPlayerState = useCallback(() => {
     const historyItem = history.slice().reverse().find(h => h.data)
     if (!initialState && !historyItem) return
@@ -66,9 +103,24 @@ function App() {
       case '/game.html':
         switch(e.data.type) {
           case 'initialState':
+            if (initalStatePromise) {
+              initalStatePromise.resolve(e.data.data)
+              initalStatePromise = undefined;
+              return;
+            }
             setInitialState(e.data.data)
             break
           case 'moveProcessed':
+            let p = pendingPromises.get(e.data.id)
+            if (p) {
+              if (e.data.error) {
+                p.reject(new Error(e.data.error))
+              } else {
+                p.resolve(e.data.data)
+              }
+              pendingPromises.delete(e.data.id)
+              return
+            }
             if (e.data.error) {
               setHistory([...history.slice(0, history.length - 1)]);
             } else {
@@ -84,6 +136,7 @@ function App() {
         break
       case '/ui.html':
         setHistory([...history, {
+          position: currentPlayer,
           seq: history.length,
           data: undefined,
           move: e.data
@@ -154,11 +207,11 @@ function App() {
           )}
         </div>
         <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
-        <iframe onLoad={() => setGameLoaded(true)} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
+        <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div style={{width: '30vw', height:'100vh', display: 'flex', flexDirection:'column'}}>
         <h2>History <button onClick={() => resetGame()}>Reset game</button></h2>
-        <History revertTo={(n) => setHistory(history.slice(0, n+1))} initialState={initialState} items={history}/>
+        <History players={players} revertTo={(n) => setHistory(history.slice(0, n+1))} initialState={initialState} items={history}/>
       </div>
     </div>
       );
