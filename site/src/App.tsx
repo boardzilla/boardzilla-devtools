@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import History from './History';
 import { HistoryItem, Player, GameUpdate } from './types';
+import { Modal } from 'react-responsive-modal';
+
+import 'react-responsive-modal/styles.css';
 import './App.css';
 
 const body = document.getElementsByTagName("body")[0];
@@ -33,6 +36,10 @@ function App() {
   const [currentPlayer, setCurrentPlayer] = useState(players[0].position);
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [open, setOpen] = useState(false);
+
+  const onOpenModal = () => setOpen(true);
+  const onCloseModal = () => setOpen(false);
 
   const updateNumberOfPlayers = useCallback((n:string) => {
     const num = parseInt(n)
@@ -135,17 +142,25 @@ function App() {
           }
         break
       case '/ui.html':
-        setHistory([...history, {
-          position: currentPlayer,
-          seq: history.length,
-          data: undefined,
-          move: e.data
-        }]);
-        const previousState = history.length === 0 ? initialState! : history[history.length - 1].data!;
-        sendToGame({type: "processMove", position: currentPlayer, previousState: previousState.game, move: e.data})
+        switch(e.data.type) {
+          case 'gameMove':
+            setHistory([...history, {
+              position: currentPlayer,
+              seq: history.length,
+              data: undefined,
+              move: e.data
+            }]);
+            const previousState = history.length === 0 ? initialState! : history[history.length - 1].data!;
+            sendToGame({type: "processMove", position: currentPlayer, previousState: previousState.game, move: e.data})
+            break
+          case 'switchPlayer':
+            if (e.data.index >= players.length) break
+            setCurrentPlayer(e.data.index)
+            break
+        }
         break
     }
-  }, [history, initialState, currentPlayer, sendToGame, sendToUI])
+  }, [history, initialState, currentPlayer, players, sendToGame, sendToUI])
 
   useEffect(() => {
     const evtSource = new EventSource("/events");
@@ -199,9 +214,15 @@ function App() {
 
   return (
     <div style={{display:'flex', flexDirection:'row'}}>
+      <Modal open={open} onClose={onCloseModal} center>
+        <h2>Help</h2>
+        <p>
+          To switch between players use shift-1, shift-2 etc
+        </p>
+      </Modal>
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div style={{display: 'flex', flexDirection:'row'}}>
-          <input type="number" value={numberOfPlayers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfPlayers(v.currentTarget.value)}/>
+          <button onClick={onOpenModal}>?</button><input type="number" value={numberOfPlayers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfPlayers(v.currentTarget.value)}/>
           {players.map(p =>
             <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>
           )}

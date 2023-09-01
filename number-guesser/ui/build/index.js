@@ -23526,7 +23526,7 @@
       }
     }, []);
     const makeMove = (0, import_react.useCallback)((n) => {
-      window.top.postMessage({ id: crypto.randomUUID(), data: { number: n } }, "*");
+      window.top.postMessage({ type:'gameMove', id: crypto.randomUUID(), data: { number: n } }, "*");
     }, []);
     (0, import_react.useEffect)(() => {
       window.addEventListener("message", listener, false);
