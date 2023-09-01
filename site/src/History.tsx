@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { HistoryItem, Player } from './types';
 import JsonView from '@uiw/react-json-view';
 
@@ -10,6 +10,8 @@ type HistoryProps = {
 }
 
 export default function History({items, initialState, revertTo, players}: HistoryProps) {
+  const historyEndRef = useRef<HTMLDivElement>(null)
+
   const player = useCallback((pos: number): Player => {
     const p = players.find(p => p.position === pos)
     if (!p) {
@@ -18,6 +20,10 @@ export default function History({items, initialState, revertTo, players}: Histor
     return p
   }, [players])
 
+  useEffect(() => {
+    historyEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [items]);
+
   return <div style={{overflowY: "scroll"}}>
     <button onClick={() => revertTo(-1)}>Initial state</button> {<JsonView value={initialState} collapsed={1} />}
     {items.map(i => <div style={{backgroundColor: i.seq % 2 === 0 ? "#ccc" : "#fff"}} key={i.seq}>
@@ -25,5 +31,6 @@ export default function History({items, initialState, revertTo, players}: Histor
       <JsonView value={{move: i.move, game: i.data && i.data.game}} collapsed={1} />
       <JsonView value={{players: i.data && i.data.players}} collapsed={0} />
     </div>)}
+    <div ref={historyEndRef} />
   </div>
   }
