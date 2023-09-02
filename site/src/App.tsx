@@ -221,16 +221,18 @@ function App() {
         </p>
       </Modal>
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
-        <div style={{display: 'flex', flexDirection:'row'}}>
-          <button onClick={onOpenModal}>?</button><input type="number" value={numberOfPlayers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfPlayers(v.currentTarget.value)}/>
-          {players.map(p =>
+        <div style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
+          <input style={{width: '3em'}} type="number" value={numberOfPlayers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfPlayers(v.currentTarget.value)}/>
+          <span style={{flexGrow: 1}}>{players.map(p =>
             <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>
           )}
+          </span>
+          <button  style={{fontSize: '20pt'}} className="button-link" onClick={onOpenModal}>ⓘ</button>
         </div>
         <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
         <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
-      <div style={{width: '30vw', height:'100vh', display: 'flex', flexDirection:'column'}}>
+      <div style={{width: '30vw', paddingLeft: '1em', height:'100vh', display: 'flex', flexDirection:'column'}}>
         <h2>History <button onClick={() => resetGame()}>Reset game</button></h2>
         <History players={players} revertTo={(n) => setHistory(history.slice(0, n+1))} initialState={initialState} items={history}/>
       </div>
