@@ -23507,7 +23507,7 @@
     }
   });
 
-  // src/index.tsx
+  // ui/src/index.tsx
   var import_react = __toESM(require_react());
   var import_client = __toESM(require_client());
   var numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -23526,7 +23526,7 @@
       }
     }, []);
     const makeMove = (0, import_react.useCallback)((n) => {
-      window.top.postMessage({ type:'gameMove', id: crypto.randomUUID(), data: { number: n } }, "*");
+      window.top.postMessage({ type: "gameMove", id: crypto.randomUUID(), data: { number: n } }, "*");
     }, []);
     (0, import_react.useEffect)(() => {
       window.addEventListener("message", listener, false);

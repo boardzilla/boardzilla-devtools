@@ -30,7 +30,7 @@ const Game = () => {
   }, [])
 
   const makeMove = useCallback((n: number) => {
-    window.top!.postMessage({id: crypto.randomUUID(), data: {number: n}}, "*")
+    window.top!.postMessage({type: "gameMove", id: crypto.randomUUID(), data: {number: n}}, "*")
   }, [])
 
   useEffect(() => {

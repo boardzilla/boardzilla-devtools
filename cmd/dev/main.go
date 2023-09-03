@@ -110,10 +110,7 @@ func main() {
 			server.Reload(i)
 		}
 	}()
-	server.Serve()
-}
-
-func add(w *fsnotify.Watcher, p string) error {
-
-	return nil
+	if err := server.Serve(); err != nil {
+		log.Fatal(err)
+	}
 }

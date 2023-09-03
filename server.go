@@ -46,7 +46,7 @@ type reloadEvent struct {
 	Target string `json:"target"`
 }
 
-func (s *Server) Serve() {
+func (s *Server) Serve() error {
 	i := 0
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -71,7 +71,6 @@ func (s *Server) Serve() {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 
 		encoder := json.NewEncoder(w)
-
 		defer func() {
 			s.lock.Lock()
 			defer s.lock.Unlock()
@@ -146,7 +145,11 @@ func (s *Server) Serve() {
 		}
 		w.Write(f)
 	})
-	http.ListenAndServe(fmt.Sprintf(":%d", s.port), r)
+	srv := &http.Server{
+		Handler: r,
+		Addr:    fmt.Sprintf(":%d", s.port),
+	}
+	return srv.ListenAndServe()
 }
 
 func (s *Server) Reload(t int) {

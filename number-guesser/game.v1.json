@@ -3,15 +3,15 @@
   "minPlayers": 1,
   "maxPlayers": 5,
   "ui": {
-    "root": "ui",
-    "build": "npm run build",
-    "src": "src",
-    "out": "build"
+    "root": ".",
+    "build": "npm run build:ui",
+    "src": "ui/src",
+    "out": "ui/build"
   },
   "game": {
-    "root": "game",
-    "build": "npm run build",
-    "src": "src",
-    "artifact": "build/index.js"
+    "root": ".",
+    "build": "npm run build:game",
+    "src": "game/src",
+    "artifact": "game/build/index.js"
   }
 }
