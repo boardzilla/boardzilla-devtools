@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -27,7 +28,7 @@ type Server struct {
 	gameRoot string
 	manifest *ManifestV1
 	port     int
-	senders  map[int]chan int
+	senders  map[int]chan interface{}
 	lock     sync.Mutex
 }
 
@@ -36,7 +37,7 @@ func NewServer(gameRoot string, manifest *ManifestV1, port int) (*Server, error)
 		gameRoot: gameRoot,
 		manifest: manifest,
 		port:     port,
-		senders:  map[int]chan int{},
+		senders:  map[int]chan interface{}{},
 		lock:     sync.Mutex{},
 	}, nil
 }
@@ -46,7 +47,22 @@ type reloadEvent struct {
 	Target string `json:"target"`
 }
 
+type pingEvent struct {
+	Type string `json:"type"`
+}
+
 func (s *Server) Serve() error {
+	go func() {
+		for {
+			s.lock.Lock()
+			for _, sender := range s.senders {
+				sender <- pingEvent{Type: "ping"}
+			}
+			s.lock.Unlock()
+			time.Sleep(10 * time.Second)
+		}
+	}()
+
 	i := 0
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
@@ -60,7 +76,7 @@ func (s *Server) Serve() error {
 
 		s.lock.Lock()
 		currentID := i
-		c := make(chan int)
+		c := make(chan interface{})
 		s.senders[i] = c
 		s.lock.Unlock()
 		i++
@@ -78,21 +94,11 @@ func (s *Server) Serve() error {
 		}()
 
 		for i := range c {
-			var reloadTarget string
-			switch i {
-			case ReloadGame:
-				reloadTarget = "game"
-			case ReloadUI:
-				reloadTarget = "ui"
-			}
 			if _, err := w.Write([]byte("data: ")); err != nil {
 				fmt.Printf("err: %#v\n", err)
 				return
 			}
-			if err := encoder.Encode(&reloadEvent{
-				Type:   "reload",
-				Target: reloadTarget,
-			}); err != nil {
+			if err := encoder.Encode(i); err != nil {
 				fmt.Printf("err: %#v\n", err)
 				return
 			}
@@ -156,7 +162,17 @@ func (s *Server) Reload(t int) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	for _, sender := range s.senders {
-		sender <- t
+		var reloadTarget string
+		switch t {
+		case ReloadGame:
+			reloadTarget = "game"
+		case ReloadUI:
+			reloadTarget = "ui"
+		}
+		sender <- &reloadEvent{
+			Type:   "reload",
+			Target: reloadTarget,
+		}
 	}
 }
 

@@ -1,3 +1,4 @@
+import ReconnectingEventSource from "reconnecting-eventsource";
 import React, { useCallback, useEffect, useState } from 'react';
 import History from './History';
 import { HistoryItem, Player, GameUpdate } from './types';
@@ -163,7 +164,7 @@ function App() {
   }, [history, initialState, currentPlayer, players, sendToGame, sendToUI])
 
   useEffect(() => {
-    const evtSource = new EventSource("/events");
+    const evtSource = new ReconnectingEventSource("/events");
     evtSource!.onmessage = (m => {
       const e = JSON.parse(m.data)
       switch (e.type) {
@@ -179,6 +180,9 @@ function App() {
               (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
               break
           }
+          break
+        case "ping":
+          console.debug("ping received");
           break
       }
     })
