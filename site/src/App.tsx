@@ -78,7 +78,7 @@ function App() {
         let p = new Promise<GameUpdate>((resolve, reject) => {
           const id = crypto.randomUUID()
           pendingPromises.set(id, {resolve, reject});
-          sendToGame({type: "processMove", position, previousState: previousState.game, move: {...move, id}})
+          sendToGame({type: "processMove", previousState: previousState.game, move: {...move, position, id}})
         })
         const res = await p
         newHistory.push({position, move, seq: i, data: res})
@@ -151,8 +151,9 @@ function App() {
               data: undefined,
               move: e.data
             }]);
+            e.data.position = currentPlayer;
             const previousState = history.length === 0 ? initialState! : history[history.length - 1].data!;
-            sendToGame({type: "processMove", position: currentPlayer, previousState: previousState.game, move: e.data})
+            sendToGame({type: "processMove", previousState: previousState.game, move: e.data})
             break
           case 'switchPlayer':
             if (e.data.index >= players.length) break

@@ -29,6 +29,9 @@
 Must export an object `game` with two functions, `initialState` and `processMove`.
 
 ```ts
+initialState(players: Player[], setup: any): GameUpdate
+processMove(previousState: GameState, move: Move): GameUpdate
+
 type Message = {
   position: number
   body: string
@@ -54,18 +57,11 @@ type GameUpdate = {
 }
 
 type Move = {
-  id: string,
+  id: string
+  position: number
   data: any
 }
 
-type HistoryItem = {
-  seq: number
-  data: GameUpdate | undefined
-  move: Move
-}
-
-initialState(players: Player[], setup: any): GameUpdate
-processMove(previousState: GameState, position: number, move: Move): GameUpdate
 ```
 
 ### UI
@@ -79,7 +75,7 @@ type Move = {
   data: any
 }
 
-window.top!.postMessage(m: Move)
+window.top.postMessage(m: Move)
 
 type SetStateData = {
   type: "setState",

@@ -33,6 +33,7 @@ type GameState = {
 
 type Move<T> = {
 	id: string
+	position: number
 	data: T
 }
 
@@ -55,8 +56,8 @@ export function initialState(players: Player[], setup: {}): GameUpdate {
 	}
 }
 
-export function processMove(state: GameState, position: number, move: Move<NumberGuessingMove>): GameUpdate {
-	if (position !== state.currentPlayer) throw new Error ("not your turn");
+export function processMove(state: GameState, move: Move<NumberGuessingMove>): GameUpdate {
+	if (move.position !== state.currentPlayer) throw new Error ("not your turn");
 	if (move.data.number === state.number) {
 		state.finished = true
 		state.winner = state.currentPlayer

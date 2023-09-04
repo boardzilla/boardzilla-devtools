@@ -11,7 +11,7 @@
       case 'processMove':
         console.debug("game proccessing move", event.data.move);
         try {
-          const data = game.processMove(event.data.previousState, event.data.position, event.data.move);
+          const data = game.processMove(event.data.previousState, event.data.move);
           window.top.postMessage({type: "moveProcessed", id: event.data.move.id, error: undefined, data}, "*")
         } catch (e) {
           window.top.postMessage({type: "moveProcessed", id: event.data.move.id, error: String(e)}, "*")
