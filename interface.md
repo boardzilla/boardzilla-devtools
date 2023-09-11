@@ -61,13 +61,11 @@ type Move = {
   position: number
   data: any
 }
-
 ```
 
 ### UI
 
 ```ts
-
 // submit move with ...
 
 type Move = {
