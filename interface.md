@@ -57,7 +57,6 @@ type GameUpdate = {
 }
 
 type Move = {
-  id: string
   position: number
   data: any
 }
@@ -68,12 +67,12 @@ type Move = {
 ```ts
 // submit move with ...
 
-type Move = {
+type UIMove = {
   id: string
   data: any
 }
 
-window.top.postMessage(m: Move)
+window.top.postMessage(m: UIMove)
 
 type SetStateData = {
   type: "setState",
@@ -82,8 +81,8 @@ type SetStateData = {
 
 type MoveProcessed = {
   type: "moveProcessed"
-  error: string?
   id: string
+  error: string?
 }
 
 window.addEventListener('message', (evt: MessageEvent<SetStateData | MoveErrorData>))
