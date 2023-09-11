@@ -32,7 +32,6 @@ type GameState = {
 }
 
 type Move<T> = {
-	id: string
 	position: number
 	data: T
 }
