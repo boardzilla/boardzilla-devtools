@@ -6,12 +6,12 @@
     "root": ".",
     "build": "npm run build:ui",
     "src": "ui/src",
-    "out": "ui/build"
+    "outDir": "ui/build"
   },
   "game": {
     "root": ".",
     "build": "npm run build:game",
     "src": "game/src",
-    "artifact": "game/build/index.js"
+    "out": "game/build/index.js"
   }
 }

@@ -4,14 +4,14 @@ type UIConfig struct {
 	Root            string `json:"root"`
 	BuildCommand    string `json:"build"`
 	Source          string `json:"src"`
-	OutputDirectory string `json:"out"`
+	OutputDirectory string `json:"outDir"`
 }
 
 type GameConfig struct {
-	Root          string `json:"root"`
-	BuildCommand  string `json:"build"`
-	Source        string `json:"src"`
-	BuildArtifact string `json:"artifact"`
+	Root         string `json:"root"`
+	BuildCommand string `json:"build"`
+	Source       string `json:"src"`
+	OutputFile   string `json:"out"`
 }
 
 type ManifestV1 struct {

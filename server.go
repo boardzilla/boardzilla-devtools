@@ -120,7 +120,7 @@ func (s *Server) Serve() error {
 		w.Write(f)
 	})
 	r.Get("/game.js", func(w http.ResponseWriter, r *http.Request) {
-		f, err := os.ReadFile(path.Join(s.gameRoot, s.manifest.Game.Root, s.manifest.Game.BuildArtifact))
+		f, err := os.ReadFile(path.Join(s.gameRoot, s.manifest.Game.Root, s.manifest.Game.OutputFile))
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
