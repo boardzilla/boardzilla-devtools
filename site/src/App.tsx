@@ -32,9 +32,9 @@ const pendingPromises = new Map<string, pendingPromise>()
 
 function App() {
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
-  const [numberOfPlayers, setNumberOfPlayers] = useState<number>(minPlayers);
-  const [players, setPlayers] = useState<Player[]>(possiblePlayers.slice(0, numberOfPlayers));
-  const [currentPlayer, setCurrentPlayer] = useState(players[0].position);
+  const [numberOfPlayers, setNumberOfPlayers] = useState<number>(0);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [currentPlayer, setCurrentPlayer] = useState(0);
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [open, setOpen] = useState(false);
@@ -42,25 +42,33 @@ function App() {
   const onOpenModal = () => setOpen(true);
   const onCloseModal = () => setOpen(false);
 
-  const updateNumberOfPlayers = useCallback((n:string) => {
-    const num = parseInt(n)
-    if (Number.isNaN(num)) return
-    setNumberOfPlayers(num);
-    setPlayers(possiblePlayers.slice(0, num))
-    setInitialState(undefined);
-    setHistory([]);
-  }, [])
-
-  const resetGame = useCallback(() => {
-    setInitialState(undefined)
-    setHistory([])
-  }, [])
   const sendToGame = useCallback((data: any) => {
     (document.getElementById("game") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
 
   const sendToUI = useCallback((data: any) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
+  }, [])
+
+  const updateNumberOfPlayers = useCallback((n:string) => {
+    const num = parseInt(n)
+    if (Number.isNaN(num)) return
+    setNumberOfPlayers(num);
+    const players = possiblePlayers.slice(0, num);
+    setPlayers(players);
+    sendToUI({type: "setupState", players, setup: {}});
+    setInitialState(undefined);
+    setHistory([]);
+  }, [sendToUI])
+
+  useEffect(() => {
+    if (numberOfPlayers !== 0) return;
+    updateNumberOfPlayers(String(minPlayers));
+  }, [updateNumberOfPlayers, numberOfPlayers])
+
+  const resetGame = useCallback(() => {
+    setInitialState(undefined)
+    setHistory([])
   }, [])
 
   const reprocessHistory = useCallback(async () => {
@@ -98,7 +106,7 @@ function App() {
     if (!initialState && !historyItem) return
     const playerStates = historyItem ? historyItem.data! : initialState!;
     const state = playerStates.players.find(p => p.position === currentPlayer);
-    sendToUI({type: "setState", data: state})
+    sendToUI({type: "gameState", data: state})
   }, [history, initialState, currentPlayer, sendToUI]);
 
   useEffect(() => {

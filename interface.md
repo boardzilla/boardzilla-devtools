@@ -74,8 +74,8 @@ type UIMove = {
 
 window.top.postMessage(m: UIMove)
 
-type InitialStateData = {
-  type: "initialState"
+type SetupStateData = {
+  type: "setupState"
   players: Player[]
   setup: any
 }
@@ -88,8 +88,8 @@ type GameStateData = {
 type MoveProcessed = {
   type: "moveProcessed"
   id: string
-  error: string?
+  error: string | undefined
 }
 
-window.addEventListener('message', (evt: MessageEvent<InitialStateData | GameStateData | MoveErrorData>))
+window.addEventListener('message', (evt: MessageEvent<SetupStateData | GameStateData | MoveErrorData>))
 ```

@@ -3,24 +3,39 @@ import ReactDOM from 'react-dom/client';
 
 const numbers = [1,2,3,4,5,6,7,8,9,10]
 
-type SetStateData = {
-  type: "setState",
+type Player = {
+  position: number
+  name: string
+  color: string
+}
+
+type SetupStateData = {
+  type: "setupState"
+  players: Player[]
+  setup: any
+}
+
+type GameStateData = {
+  type: "gameState"
   data: any
 }
 
 type MoveProcessedData = {
   type: "moveProcessed"
-  error: string | undefined
   id: string
+  error: string | undefined
 }
 
 const Game = () => {
   const [state, setState] = useState<any>();
   const [error, setError] = useState<string>("");
-  const listener = useCallback((event: MessageEvent<SetStateData | MoveProcessedData>) => {
+  const listener = useCallback((event: MessageEvent<SetupStateData | GameStateData | MoveProcessedData>) => {
     switch(event.data.type) {
-      case 'setState':
-        setState((event.data as SetStateData).data);
+      case 'setupState':
+        console.log("got setup state", event.data);
+        break;
+      case 'gameState':
+        setState((event.data as GameStateData).data);
         break;
       case 'moveProcessed':
         let e = event.data as MoveProcessedData
