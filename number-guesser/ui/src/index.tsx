@@ -9,12 +9,6 @@ type Player = {
   color: string
 }
 
-type SetupStateData = {
-  type: "setupState"
-  players: Player[]
-  setup: any
-}
-
 type GameStateData = {
   type: "gameState"
   data: any
@@ -29,11 +23,8 @@ type MoveProcessedData = {
 const Game = () => {
   const [state, setState] = useState<any>();
   const [error, setError] = useState<string>("");
-  const listener = useCallback((event: MessageEvent<SetupStateData | GameStateData | MoveProcessedData>) => {
+  const listener = useCallback((event: MessageEvent<GameStateData | MoveProcessedData>) => {
     switch(event.data.type) {
-      case 'setupState':
-        console.log("got setup state", event.data);
-        break;
       case 'gameState':
         setState((event.data as GameStateData).data);
         break;

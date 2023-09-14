@@ -4,6 +4,7 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"html"
 	"mime"
 	"net/http"
 	"os"
@@ -130,7 +131,8 @@ func (s *Server) Serve() error {
 		w.Write(f)
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		path := r.RequestURI
+		path := r.URL.Path
+		uiPage := path == "/ui.html"
 		index := path == "/"
 		if index {
 			path = "index.html"
@@ -147,6 +149,11 @@ func (s *Server) Serve() error {
 			out := string(f)
 			out = strings.ReplaceAll(out, "{{minPlayers}}", strconv.Itoa(s.manifest.MinimumPlayers))
 			out = strings.ReplaceAll(out, "{{maxPlayers}}", strconv.Itoa(s.manifest.MaximumPlayers))
+			f = []byte(out)
+		} else if uiPage {
+			out := string(f)
+			bootstrap := r.URL.Query().Get("bootstrap")
+			out = strings.ReplaceAll(out, "{{bootstrap-json}}", html.EscapeString(bootstrap))
 			f = []byte(out)
 		}
 		w.Write(f)

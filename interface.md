@@ -65,6 +65,13 @@ type Move = {
 ### UI
 
 ```ts
+
+type Bootstrap = {
+  players: Player[]
+  currentPlayer: number
+  setup: any
+}
+
 // submit move with ...
 
 type UIMove = {
@@ -73,12 +80,6 @@ type UIMove = {
 }
 
 window.top.postMessage(m: UIMove)
-
-type SetupStateData = {
-  type: "setupState"
-  players: Player[]
-  setup: any
-}
 
 type GameStateData = {
   type: "gameState"
@@ -91,5 +92,7 @@ type MoveProcessed = {
   error: string | undefined
 }
 
-window.addEventListener('message', (evt: MessageEvent<SetupStateData | GameStateData | MoveErrorData>))
+window.addEventListener('message', (evt: MessageEvent<GameStateData | MoveErrorData>))
+
+// data-bootstrap-json="{ json encoded Bootstrap }" on body
 ```

@@ -32,8 +32,8 @@ const pendingPromises = new Map<string, pendingPromise>()
 
 function App() {
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
-  const [numberOfPlayers, setNumberOfPlayers] = useState<number>(0);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [numberOfPlayers, setNumberOfPlayers] = useState<number>(minPlayers);
+  const [players, setPlayers] = useState<Player[]>(possiblePlayers.slice(0, minPlayers));
   const [currentPlayer, setCurrentPlayer] = useState(0);
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -50,21 +50,21 @@ function App() {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
 
+  const bootstrap = useCallback(() => {
+    return JSON.stringify({
+      players, currentPlayer
+    })
+  }, [currentPlayer, players])
+
   const updateNumberOfPlayers = useCallback((n:string) => {
     const num = parseInt(n)
     if (Number.isNaN(num)) return
     setNumberOfPlayers(num);
     const players = possiblePlayers.slice(0, num);
     setPlayers(players);
-    sendToUI({type: "setupState", players, setup: {}});
     setInitialState(undefined);
     setHistory([]);
-  }, [sendToUI])
-
-  useEffect(() => {
-    if (numberOfPlayers !== 0) return;
-    updateNumberOfPlayers(String(minPlayers));
-  }, [updateNumberOfPlayers, numberOfPlayers])
+  }, [])
 
   const resetGame = useCallback(() => {
     setInitialState(undefined)
@@ -242,7 +242,7 @@ function App() {
           </span>
           <button  style={{fontSize: '20pt'}} className="button-link" onClick={onOpenModal}>ⓘ</button>
         </div>
-        <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
+        <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?boostrap=${encodeURIComponent(bootstrap())}`}></iframe>
         <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div style={{width: '30vw', paddingLeft: '1em', height:'100vh', display: 'flex', flexDirection:'column'}}>

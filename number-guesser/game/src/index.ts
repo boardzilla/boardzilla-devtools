@@ -40,7 +40,6 @@ type NumberGuessingMove = {
 	number: number
 }
 
-
 export function initialState(players: Player[], setup: {}): GameUpdate {
 	const currentPlayer = Math.min(...players.map(p => p.position))
 	return {
