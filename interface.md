@@ -51,7 +51,7 @@ type Message = {
 
 type PlayerState = {
   position: number
-  state: any
+  state: GameState
 }
 
 type GameState = any
@@ -75,16 +75,16 @@ The game ui occurs in two phases "new" and "started".  The phase will be indicat
 During "new", it will recv the following events.
 
 ```ts
-window.addEventListener('message', (evt: MessageEvent<PlayerEvent | PhaseChangeEvent | MessageProcessed>))
-window.top.postMessage(m: StartMessage)
+window.addEventListener('message', (evt: MessageEvent<PlayerEvent | UpdateEvent | MessageProcessed>))
+window.top.postMessage(m: StartMessage | ReadyMessage)
 
 ```
 
 During "started", it will recv the following events.
 
 ```ts
-window.addEventListener('message', (evt: MessageEvent<MoveProcessed | PhaseChangeEvent | MessageProcessed>))
-window.top.postMessage(m: MoveMessage | UndoMessage)
+window.addEventListener('message', (evt: MessageEvent<MoveProcessed | UpdateEvent | MessageProcessed>))
+window.top.postMessage(m: MoveMessage | UndoMessage | ReadyMessage)
 
 ```
 
@@ -95,23 +95,33 @@ type PlayerEvent = {
   added: boolean
 }
 
-type PhaseChangeEvent = {
+type UpdateEvent = {
   phase: "new" | "started"
   state: any
 }
 
 type MoveMessage = {
   id: string
+  type: 'move'
   data: any
 }
 
 type UndoMessage = {
   id: string
+  type: 'undo'
   steps: number
 }
 
 type StartMessage = {
   id: string
+  type: 'start'
+  setup: any
+  players: Player[]
+}
+
+type ReadyMessage = {
+  id: string
+  type: 'ready'
   setup: any
   players: Player[]
 }
@@ -122,5 +132,5 @@ type MessageProcessed = {
   error: string | undefined
 }
 
-// data-bootstrap-json="{ json encoded PhaseChangeEvent }" on body
+// data-bootstrap-json="{ json encoded UpdateEvent }" on body
 ```

@@ -26,11 +26,10 @@ const Game = () => {
   const listener = useCallback((event: MessageEvent<GameStateData | MoveProcessedData>) => {
     switch(event.data.type) {
       case 'gameState':
-        setState((event.data as GameStateData).data);
+        setState(event.data.data);
         break;
       case 'moveProcessed':
-        let e = event.data as MoveProcessedData
-        setError(e.error ? e.error : "");
+        setError(event.data.error || "");
         break;
     }
   }, [])
