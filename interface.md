@@ -1,5 +1,17 @@
 # Boardzilla game packaging
 
+## Common types
+
+```ts
+
+type Player = {
+  position: number
+  name: string
+  color: string
+}
+
+```
+
 ## game.v1.json
 
 ```
@@ -37,12 +49,6 @@ type Message = {
   body: string
 }
 
-type Player = {
-  position: number
-  name: string
-  color: string
-}
-
 type PlayerState = {
   position: number
   state: any
@@ -64,35 +70,57 @@ type Move = {
 
 ### UI
 
+The game ui occurs in two phases "new" and "started".  The phase will be indicated by
+
+During "new", it will recv the following events.
+
+```ts
+window.addEventListener('message', (evt: MessageEvent<PlayerEvent | PhaseChangeEvent | MessageProcessed>))
+window.top.postMessage(m: StartMessage)
+
+```
+
+During "started", it will recv the following events.
+
+```ts
+window.addEventListener('message', (evt: MessageEvent<MoveProcessed | PhaseChangeEvent | MessageProcessed>))
+window.top.postMessage(m: MoveMessage | UndoMessage)
+
+```
+
 ```ts
 
-type Bootstrap = {
-  players: Player[]
-  currentPlayer: number
-  setup: any
+type PlayerEvent = {
+  player: Player
+  added: boolean
 }
 
-// submit move with ...
+type PhaseChangeEvent = {
+  phase: "new" | "started"
+  state: any
+}
 
-type UIMove = {
+type MoveMessage = {
   id: string
   data: any
 }
 
-window.top.postMessage(m: UIMove)
-
-type GameStateData = {
-  type: "gameState"
-  data: any
+type UndoMessage = {
+  id: string
+  steps: number
 }
 
-type MoveProcessed = {
-  type: "moveProcessed"
+type StartMessage = {
+  id: string
+  setup: any
+  players: Player[]
+}
+
+type MessageProcessed = {
+  type: "messageProcessed"
   id: string
   error: string | undefined
 }
 
-window.addEventListener('message', (evt: MessageEvent<GameStateData | MoveErrorData>))
-
-// data-bootstrap-json="{ json encoded Bootstrap }" on body
+// data-bootstrap-json="{ json encoded PhaseChangeEvent }" on body
 ```
