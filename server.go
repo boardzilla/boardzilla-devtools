@@ -4,14 +4,12 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"html"
+	"html/template"
 	"mime"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -130,13 +128,50 @@ func (s *Server) Serve() error {
 		w.Header().Add("Content-type", "application/javascript")
 		w.Write(f)
 	})
+	r.Get("/ui.html", func(w http.ResponseWriter, r *http.Request) {
+		f, err := s.getFile("/ui.html")
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		t, err := template.New("ui.html").Parse(string(f))
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		var data struct {
+			Bootstrap string
+		}
+		fmt.Printf("r.URL.Query(): %#v", r.URL.Query())
+		data.Bootstrap = r.URL.Query().Get("bootstrap")
+		fmt.Printf("data.Bootstrap: %#v\n", data.Bootstrap)
+		t.Execute(w, data)
+	})
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		f, err := s.getFile("/index.html")
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		t, err := template.New("index.html").Parse(string(f))
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		var data struct {
+			MaximumPlayers int
+			MinimumPlayers int
+		}
+		data.MaximumPlayers = s.manifest.MinimumPlayers
+		data.MinimumPlayers = s.manifest.MinimumPlayers
+		t.Execute(w, data)
+	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		uiPage := path == "/ui.html"
-		index := path == "/"
-		if index {
-			path = "index.html"
-		}
 		ext := filepath.Ext(path)
 		f, err := s.getFile(path)
 		if err != nil {
@@ -145,17 +180,6 @@ func (s *Server) Serve() error {
 			return
 		}
 		w.Header().Add("Content-type", mime.TypeByExtension(ext))
-		if index {
-			out := string(f)
-			out = strings.ReplaceAll(out, "{{minPlayers}}", strconv.Itoa(s.manifest.MinimumPlayers))
-			out = strings.ReplaceAll(out, "{{maxPlayers}}", strconv.Itoa(s.manifest.MaximumPlayers))
-			f = []byte(out)
-		} else if uiPage {
-			out := string(f)
-			bootstrap := r.URL.Query().Get("bootstrap")
-			out = strings.ReplaceAll(out, "{{bootstrap-json}}", html.EscapeString(bootstrap))
-			f = []byte(out)
-		}
 		w.Write(f)
 	})
 	srv := &http.Server{
