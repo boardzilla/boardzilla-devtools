@@ -83,21 +83,23 @@ window.top.postMessage(m: StartMessage | ReadyMessage)
 During "started", it will recv the following events.
 
 ```ts
-window.addEventListener('message', (evt: MessageEvent<MoveProcessed | UpdateEvent | MessageProcessed>))
+window.addEventListener('message', (evt: MessageEvent<UpdateEvent | MessageProcessed>))
 window.top.postMessage(m: MoveMessage | UndoMessage | ReadyMessage)
 
 ```
 
 ```ts
 
-// recv events
+// recv events by ui
 // indicates a player was added
 type PlayerEvent = {
+  type: "player"
   player: Player
   added: boolean
 }
 
 type UpdateEvent = {
+  type: "update"
   phase: "new" | "started"
   state: any
 }
@@ -108,7 +110,12 @@ type MessageProcessed = {
   error: string | undefined
 }
 
-// sent events
+// sent events by ui
+type SetupUpdated = {
+  type: "setupUpdated"
+  data: any
+}
+
 type MoveMessage = {
   id: string
   type: 'move'
