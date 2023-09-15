@@ -90,6 +90,8 @@ window.top.postMessage(m: MoveMessage | UndoMessage | ReadyMessage)
 
 ```ts
 
+// recv events
+// indicates a player was added
 type PlayerEvent = {
   player: Player
   added: boolean
@@ -100,6 +102,13 @@ type UpdateEvent = {
   state: any
 }
 
+type MessageProcessed = {
+  type: "messageProcessed"
+  id: string
+  error: string | undefined
+}
+
+// sent events
 type MoveMessage = {
   id: string
   type: 'move'
@@ -120,17 +129,6 @@ type StartMessage = {
 }
 
 type ReadyMessage = {
-  id: string
   type: 'ready'
-  setup: any
-  players: Player[]
 }
-
-type MessageProcessed = {
-  type: "messageProcessed"
-  id: string
-  error: string | undefined
-}
-
-// data-bootstrap-json="{ json encoded UpdateEvent }" on body
 ```
