@@ -84,13 +84,13 @@ During "started", it will recv the following events.
 
 ```ts
 window.addEventListener('message', (evt: MessageEvent<UpdateEvent | MessageProcessed>))
-window.top.postMessage(m: MoveMessage | UndoMessage | ReadyMessage)
+window.top.postMessage(m: MoveMessage | ReadyMessage)
 
 ```
 
+#### recv events by ui
 ```ts
 
-// recv events by ui
 // indicates a player was added
 type PlayerEvent = {
   type: "player"
@@ -98,36 +98,38 @@ type PlayerEvent = {
   added: boolean
 }
 
+// an update to the current game state
 type UpdateEvent = {
   type: "update"
   phase: "new" | "started"
   state: any
 }
 
+// indicates the disposition of a message that was processed
 type MessageProcessed = {
   type: "messageProcessed"
   id: string
   error: string | undefined
 }
+```
 
-// sent events by ui
+#### sent events by ui
+
+```ts
+// used to update the current setup json state
 type SetupUpdated = {
   type: "setupUpdated"
   data: any
 }
 
+// used to send a move
 type MoveMessage = {
   id: string
   type: 'move'
   data: any
 }
 
-type UndoMessage = {
-  id: string
-  type: 'undo'
-  steps: number
-}
-
+// used to actually start the game
 type StartMessage = {
   id: string
   type: 'start'
@@ -135,6 +137,7 @@ type StartMessage = {
   players: Player[]
 }
 
+// used to tell the top that you're ready to recv events
 type ReadyMessage = {
   type: 'ready'
 }
