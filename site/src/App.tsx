@@ -94,6 +94,7 @@ function App() {
   }, [])
 
   const resetGame = useCallback(() => {
+    setPhase("new")
     setInitialState(undefined)
     setHistory([])
   }, [])
@@ -130,17 +131,13 @@ function App() {
     setGameLoaded(true);
   }, [gameLoaded, history, phase, players, sendToGame]);
 
-  const sendCurrentPlayerState = useCallback(() => {
+  useEffect(() => {
     if (phase === 'new') {
       return sendToUI({type: "update", phase, state: setupState});
     }
     const currentState = history.length === 0 ? initialState : history[history.length - 1].data;
     sendToUI({type: "update", phase, state: currentState?.players.find(p => p.position === currentPlayer)});
-  }, [history, initialState, sendToUI, phase, setupState, currentPlayer]);
-
-  useEffect(() => {
-    sendCurrentPlayerState()
-  }, [initialState, history, currentPlayer, sendCurrentPlayerState])
+  }, [initialState, history, currentPlayer, phase, sendToUI, setupState]);
 
   const messageCb = useCallback((e: MessageEvent<UISetupUpdated | UIMoveMessage | UIStartMessage | UIReadyMessage | GameInitialStateMessage | GameMoveProcessedMessage | UISwitchPlayerMessage>) => {
     const path = (e.source! as WindowProxy).location.pathname
@@ -293,7 +290,7 @@ function App() {
           </span>
           <button  style={{fontSize: '20pt'}} className="button-link" onClick={onOpenModal}>ⓘ</button>
         </div>
-        <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
+        <iframe seamless={true} sandbox="allow-scripts allow-same-origin" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
         <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div style={{width: '30vw', paddingLeft: '1em', height:'100vh', display: 'flex', flexDirection:'column'}}>
