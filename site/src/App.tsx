@@ -7,6 +7,49 @@ import { Modal } from 'react-responsive-modal';
 import 'react-responsive-modal/styles.css';
 import './App.css';
 
+type UISetupUpdated = {
+  type: "setupUpdated"
+  data: any
+}
+
+// used to send a move
+type UIMoveMessage = {
+  id: string
+  type: 'move'
+  data: any
+  position: number | undefined
+}
+
+// used to actually start the game
+type UIStartMessage = {
+  id: string
+  type: 'start'
+  setup: any
+  players: Player[]
+}
+
+// used to tell the top that you're ready to recv events
+type UIReadyMessage = {
+  type: 'ready'
+}
+
+type GameInitialStateMessage = {
+  type: "initialState"
+  data: GameUpdate
+}
+
+type GameMoveProcessedMessage = {
+  type: "moveProcessed"
+  id: string
+  error: string | undefined
+  data: GameUpdate
+}
+
+type UISwitchPlayerMessage = {
+  type: "switchPlayer"
+  index: number
+}
+
 const body = document.getElementsByTagName("body")[0];
 const minPlayers = parseInt(body.getAttribute("minPlayers")!);
 const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
@@ -31,6 +74,8 @@ let initalStatePromise: pendingPromise | undefined;
 const pendingPromises = new Map<string, pendingPromise>()
 
 function App() {
+  const [phase, setPhase] = useState<"new" | "started">("new");
+  const [setupState, setSetupState] = useState<any>({});
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
   const [numberOfPlayers, setNumberOfPlayers] = useState<number>(minPlayers);
   const [players, setPlayers] = useState<Player[]>(possiblePlayers.slice(0, minPlayers));
@@ -72,6 +117,8 @@ function App() {
   }, [])
 
   const reprocessHistory = useCallback(async () => {
+    if (phase !== "started") return
+    if (!gameLoaded) return
     const newInitialState = await new Promise<GameUpdate>((resolve, reject) => {
       initalStatePromise = {resolve, reject}
       sendToGame({type: "initialState", players, setup: {}})
@@ -99,7 +146,7 @@ function App() {
     setInitialState(newInitialState);
     setHistory(newHistory);
     setGameLoaded(true);
-  }, [history, players, sendToGame]);
+  }, [gameLoaded, history, phase, players, sendToGame]);
 
   const sendCurrentPlayerState = useCallback(() => {
     const historyItem = history.slice().reverse().find(h => h.data)
@@ -113,7 +160,7 @@ function App() {
     sendCurrentPlayerState()
   }, [initialState, history, currentPlayer, sendCurrentPlayerState])
 
-  const messageCb = useCallback((e: MessageEvent) => {
+  const messageCb = useCallback((e: MessageEvent<UISetupUpdated | UIMoveMessage | UIStartMessage | UIReadyMessage | GameInitialStateMessage | GameMoveProcessedMessage | UISwitchPlayerMessage>) => {
     const path = (e.source! as WindowProxy).location.pathname
     switch (path) {
       case '/game.html':
@@ -124,7 +171,11 @@ function App() {
               initalStatePromise = undefined;
               return;
             }
-            setInitialState(e.data.data)
+            console.log("players[0].position", players[0].position)
+            setInitialState(e.data.data);
+            setPhase("started");
+            setCurrentPlayer(players[0].position);
+            sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)});
             break
           case 'moveProcessed':
             let p = pendingPromises.get(e.data.id)
@@ -146,13 +197,17 @@ function App() {
                 data: e.data.data
               }])
             }
-            sendToUI({type: "moveProcessed", id: e.data.id, error: e.data.error})
+            sendToUI({type: "messageProcessed", id: e.data.id, error: e.data.error})
+            sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)});
             break
           }
         break
       case '/ui.html':
         switch(e.data.type) {
-          case 'gameMove':
+          case 'setupUpdated':
+            setSetupState(e.data.data)
+            break
+          case 'move':
             setHistory([...history, {
               position: currentPlayer,
               seq: history.length,
@@ -161,8 +216,23 @@ function App() {
             }]);
             e.data.position = currentPlayer;
             const previousState = history.length === 0 ? initialState! : history[history.length - 1].data!;
-            sendToGame({type: "processMove", previousState: previousState.game, move: e.data})
+            sendToGame({type: "processMove", previousState: previousState.game, move: e.data});
             break
+          case 'start':
+            console.log("starting!", e.data)
+            sendToGame({type: "initialState", players: e.data.players, setup: e.data.setup})
+            sendToUI({type: "messageProcessed", id: e.data.id});
+            break
+          case 'ready':
+            const currentState = history.length === 0 ? initialState! : history[history.length - 1].data!;
+            sendToUI({type: "update", phase, state: phase === 'new' ? setupState : currentState});
+            if (phase === 'new') {
+              for (let player of players) {
+                sendToUI({type: "player", player, added: true});
+              }
+            }
+            break
+          // special event for player switching
           case 'switchPlayer':
             if (e.data.index >= players.length) break
             setCurrentPlayer(e.data.index)
@@ -170,7 +240,7 @@ function App() {
         }
         break
     }
-  }, [history, initialState, currentPlayer, players, sendToGame, sendToUI])
+  }, [history, initialState, currentPlayer, players, sendToGame, sendToUI, phase, setupState])
 
   useEffect(() => {
     const evtSource = new ReconnectingEventSource("/events");
@@ -201,11 +271,6 @@ function App() {
 
     return () => evtSource.close()
   }, [])
-
-  useEffect(() => {
-    if (initialState || !gameLoaded) return
-    sendToGame({type: "initialState", players, setup: {}})
-  }, [initialState, gameLoaded, players, sendToGame]);
 
   useEffect(() => {
     window.addEventListener('message', messageCb);

@@ -1,17 +1,5 @@
 # Boardzilla game packaging
 
-## Common types
-
-```ts
-
-type Player = {
-  position: number
-  name: string
-  color: string
-}
-
-```
-
 ## game.v1.json
 
 ```
@@ -43,6 +31,12 @@ Must export an object `game` with two functions, `initialState` and `processMove
 ```ts
 initialState(players: Player[], setup: any): GameUpdate
 processMove(previousState: GameState, move: Move): GameUpdate
+
+type Player = {
+  position: number
+  name: string
+  color: string
+}
 
 type Message = {
   position: number
@@ -90,6 +84,13 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 
 #### recv events by ui
 ```ts
+
+type Player = {
+  id: string
+  name: string
+  color: string
+  position: number
+}
 
 // indicates a player was added
 type PlayerEvent = {

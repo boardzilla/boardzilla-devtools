@@ -9,7 +9,7 @@
         window.top.postMessage({type: "initialState", data: initialState}, "*")
         break;
       case 'processMove':
-        console.debug("game proccessing move", event.data.move);
+        console.debug("game proccessing move", event.data);
         try {
           const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data});
           window.top.postMessage({type: "moveProcessed", id: event.data.move.id, error: undefined, data: gameUpdate}, "*")
