@@ -58,7 +58,6 @@ const Game = () => {
         }
       return
     }
-    console.log("dealing with", event.data)
     switch (phase) {
       case 'new':
         switch(event.data.type) {

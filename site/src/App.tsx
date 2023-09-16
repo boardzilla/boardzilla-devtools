@@ -176,7 +176,6 @@ function App() {
                 data: e.data.data
               }])
             }
-            console.log("E.data", e.data)
             sendToUI({type: "messageProcessed", id: e.data.id, error: e.data.error})
             if (e.data.data) {
               sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)});
@@ -201,7 +200,6 @@ function App() {
             sendToGame({type: "processMove", previousState: previousState.game, move: e.data});
             break
           case 'start':
-            console.log("starting!", e.data)
             sendToGame({type: "initialState", players: e.data.players, setup: e.data.setup})
             setPlayers(e.data.players);
             sendToUI({type: "messageProcessed", id: e.data.id});
@@ -211,7 +209,6 @@ function App() {
             sendToUI({type: "update", phase, state: phase === 'new' ? setupState : currentState.players.find(p => p.position === currentPlayer)});
             if (phase === 'new') {
               for (let player of possiblePlayers.slice(0, maxPlayers)) {
-                console.log("adding!", maxPlayers)
                 sendToUI({type: "player", player, added: true});
               }
             }
