@@ -166,7 +166,7 @@ func (s *Server) Serve() error {
 			MaximumPlayers int
 			MinimumPlayers int
 		}
-		data.MaximumPlayers = s.manifest.MinimumPlayers
+		data.MaximumPlayers = s.manifest.MaximumPlayers
 		data.MinimumPlayers = s.manifest.MinimumPlayers
 		t.Execute(w, data)
 	})
