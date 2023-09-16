@@ -42,7 +42,7 @@ type GameMoveProcessedMessage = {
   type: "moveProcessed"
   id: string
   error: string | undefined
-  data: GameUpdate
+  data: GameUpdate | undefined
 }
 
 type UISwitchPlayerMessage = {
@@ -51,19 +51,18 @@ type UISwitchPlayerMessage = {
 }
 
 const body = document.getElementsByTagName("body")[0];
-const minPlayers = parseInt(body.getAttribute("minPlayers")!);
 const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
 const possiblePlayers = [
-  {position: 0, name: "Evelyn", color: "#ff0000"},
-  {position: 1, name: "Logan", color: "#00ff00"},
-  {position: 2, name: "Avery", color: "#0000ff"},
-  {position: 3, name: "Jayden", color: "#666600"},
-  {position: 4, name: "Aischa", color: "#006666"},
-  {position: 5, name: "Shyamapada", color: "#660066"},
-  {position: 6, name: "Iovica", color: "#333333"},
-  {position: 7, name: "Liubika", color: "#ff6633"},
-  {position: 8, name: "Zvezdelina", color: "#3366ff"},
-  {position: 9, name: "Guadalupe", color: "#f01a44"},
+  {id: "0", position: 0, name: "Evelyn", color: "#ff0000"},
+  {id: "1", position: 1, name: "Logan", color: "#00ff00"},
+  {id: "2", position: 2, name: "Avery", color: "#0000ff"},
+  {id: "3", position: 3, name: "Jayden", color: "#666600"},
+  {id: "4", position: 4, name: "Aischa", color: "#006666"},
+  {id: "5", position: 5, name: "Shyamapada", color: "#660066"},
+  {id: "6", position: 6, name: "Iovica", color: "#333333"},
+  {id: "7", position: 7, name: "Liubika", color: "#ff6633"},
+  {id: "8", position: 8, name: "Zvezdelina", color: "#3366ff"},
+  {id: "9", position: 9, name: "Guadalupe", color: "#f01a44"},
 ]
 
 type pendingPromise = {
@@ -77,8 +76,7 @@ function App() {
   const [phase, setPhase] = useState<"new" | "started">("new");
   const [setupState, setSetupState] = useState<any>({});
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
-  const [numberOfPlayers, setNumberOfPlayers] = useState<number>(minPlayers);
-  const [players, setPlayers] = useState<Player[]>(possiblePlayers.slice(0, minPlayers));
+  const [players, setPlayers] = useState<Player[]>([]);
   const [currentPlayer, setCurrentPlayer] = useState(0);
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -93,22 +91,6 @@ function App() {
 
   const sendToUI = useCallback((data: any) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
-  }, [])
-
-  const bootstrap = useCallback(() => {
-    return JSON.stringify({
-      players, currentPlayer
-    })
-  }, [currentPlayer, players])
-
-  const updateNumberOfPlayers = useCallback((n:string) => {
-    const num = parseInt(n)
-    if (Number.isNaN(num)) return
-    setNumberOfPlayers(num);
-    const players = possiblePlayers.slice(0, num);
-    setPlayers(players);
-    setInitialState(undefined);
-    setHistory([]);
   }, [])
 
   const resetGame = useCallback(() => {
@@ -149,12 +131,12 @@ function App() {
   }, [gameLoaded, history, phase, players, sendToGame]);
 
   const sendCurrentPlayerState = useCallback(() => {
-    const historyItem = history.slice().reverse().find(h => h.data)
-    if (!initialState && !historyItem) return
-    const playerStates = historyItem ? historyItem.data! : initialState!;
-    const state = playerStates.players.find(p => p.position === currentPlayer);
-    sendToUI({type: "gameState", data: state})
-  }, [history, initialState, currentPlayer, sendToUI]);
+    if (phase === 'new') {
+      return sendToUI({type: "update", phase, state: setupState});
+    }
+    const currentState = history.length === 0 ? initialState : history[history.length - 1].data;
+    sendToUI({type: "update", phase, state: currentState?.players.find(p => p.position === currentPlayer)});
+  }, [history, initialState, sendToUI, phase, setupState, currentPlayer]);
 
   useEffect(() => {
     sendCurrentPlayerState()
@@ -162,6 +144,7 @@ function App() {
 
   const messageCb = useCallback((e: MessageEvent<UISetupUpdated | UIMoveMessage | UIStartMessage | UIReadyMessage | GameInitialStateMessage | GameMoveProcessedMessage | UISwitchPlayerMessage>) => {
     const path = (e.source! as WindowProxy).location.pathname
+    let currentState
     switch (path) {
       case '/game.html':
         switch(e.data.type) {
@@ -171,7 +154,6 @@ function App() {
               initalStatePromise = undefined;
               return;
             }
-            console.log("players[0].position", players[0].position)
             setInitialState(e.data.data);
             setPhase("started");
             setCurrentPlayer(players[0].position);
@@ -197,8 +179,11 @@ function App() {
                 data: e.data.data
               }])
             }
+            console.log("E.data", e.data)
             sendToUI({type: "messageProcessed", id: e.data.id, error: e.data.error})
-            sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)});
+            if (e.data.data) {
+              sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)});
+            }
             break
           }
         break
@@ -221,13 +206,15 @@ function App() {
           case 'start':
             console.log("starting!", e.data)
             sendToGame({type: "initialState", players: e.data.players, setup: e.data.setup})
+            setPlayers(e.data.players);
             sendToUI({type: "messageProcessed", id: e.data.id});
             break
           case 'ready':
-            const currentState = history.length === 0 ? initialState! : history[history.length - 1].data!;
-            sendToUI({type: "update", phase, state: phase === 'new' ? setupState : currentState});
+            currentState = history.length === 0 ? initialState! : history[history.length - 1].data!;
+            sendToUI({type: "update", phase, state: phase === 'new' ? setupState : currentState.players.find(p => p.position === currentPlayer)});
             if (phase === 'new') {
-              for (let player of players) {
+              for (let player of possiblePlayers.slice(0, maxPlayers)) {
+                console.log("adding!", maxPlayers)
                 sendToUI({type: "player", player, added: true});
               }
             }
@@ -300,14 +287,13 @@ function App() {
       </Modal>
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
-          <input style={{width: '3em'}} type="number" value={numberOfPlayers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfPlayers(v.currentTarget.value)}/>
           <span style={{flexGrow: 1}}>{players.map(p =>
             <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>
           )}
           </span>
           <button  style={{fontSize: '20pt'}} className="button-link" onClick={onOpenModal}>ⓘ</button>
         </div>
-        <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
+        <iframe seamless={true} onLoad={() => sendCurrentPlayerState()} sandbox="allow-scripts allow-same-origin" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
         <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div style={{width: '30vw', paddingLeft: '1em', height:'100vh', display: 'flex', flexDirection:'column'}}>

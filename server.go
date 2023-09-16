@@ -128,27 +128,6 @@ func (s *Server) Serve() error {
 		w.Header().Add("Content-type", "application/javascript")
 		w.Write(f)
 	})
-	r.Get("/ui.html", func(w http.ResponseWriter, r *http.Request) {
-		f, err := s.getFile("/ui.html")
-		if err != nil {
-			fmt.Printf("error: %#v\n", err)
-			w.WriteHeader(500)
-			return
-		}
-		t, err := template.New("ui.html").Parse(string(f))
-		if err != nil {
-			fmt.Printf("error: %#v\n", err)
-			w.WriteHeader(500)
-			return
-		}
-		var data struct {
-			Bootstrap string
-		}
-		fmt.Printf("r.URL.Query(): %#v", r.URL.Query())
-		data.Bootstrap = r.URL.Query().Get("bootstrap")
-		fmt.Printf("data.Bootstrap: %#v\n", data.Bootstrap)
-		t.Execute(w, data)
-	})
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		f, err := s.getFile("/index.html")
 		if err != nil {
@@ -163,11 +142,11 @@ func (s *Server) Serve() error {
 			return
 		}
 		var data struct {
-			MaximumPlayers int
 			MinimumPlayers int
+			MaximumPlayers int
 		}
-		data.MaximumPlayers = s.manifest.MaximumPlayers
 		data.MinimumPlayers = s.manifest.MinimumPlayers
+		data.MaximumPlayers = s.manifest.MaximumPlayers
 		t.Execute(w, data)
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {

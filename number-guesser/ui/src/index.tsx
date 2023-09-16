@@ -65,9 +65,12 @@ const Game = () => {
           case 'player':
             let player = event.data.player
             if (event.data.added) {
-              setPlayers([...players, player])
+              setPlayers((players) => {
+                if (players.find(p => p.id === player.id)) return players
+                return [...players, player]
+              })
             } else {
-              setPlayers(players.filter(p => p.id === player.id))
+              setPlayers((players) => players.filter(p => p.id === player.id))
             }
             break;
           case 'messageProcessed':
@@ -99,7 +102,7 @@ const Game = () => {
       setReadySent(true);
     }
     return () => window.removeEventListener('message', listener)
-  }, [phase])
+  }, [phase, players])
 
   useEffect(() => {
     if (error === "") return
