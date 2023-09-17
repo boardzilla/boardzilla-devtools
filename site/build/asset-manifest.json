@@ -1,0 +1,12 @@
+{
+  "files": {
+    "main.js": "/static/js/bundle.js",
+    "static/js/node_modules_web-vitals_dist_web-vitals_js.chunk.js": "/static/js/node_modules_web-vitals_dist_web-vitals_js.chunk.js",
+    "index.html": "/index.html",
+    "bundle.js.map": "/static/js/bundle.js.map",
+    "node_modules_web-vitals_dist_web-vitals_js.chunk.js.map": "/static/js/node_modules_web-vitals_dist_web-vitals_js.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/js/bundle.js"
+  ]
+}
