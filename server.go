@@ -116,6 +116,7 @@ func (s *Server) Serve() error {
 			return
 		}
 		w.Header().Add("Content-type", "application/javascript")
+		w.Header().Add("Cache-control", "no-store")
 		w.Write(f)
 	})
 	r.Get("/game.js", func(w http.ResponseWriter, r *http.Request) {
@@ -126,6 +127,7 @@ func (s *Server) Serve() error {
 			return
 		}
 		w.Header().Add("Content-type", "application/javascript")
+		w.Header().Add("Cache-control", "no-store")
 		w.Write(f)
 	})
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -147,6 +149,8 @@ func (s *Server) Serve() error {
 		}
 		data.MinimumPlayers = s.manifest.MinimumPlayers
 		data.MaximumPlayers = s.manifest.MaximumPlayers
+		w.Header().Add("Content-type", "text/html")
+		w.Header().Add("Cache-control", "no-store")
 		t.Execute(w, data)
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
@@ -159,6 +163,7 @@ func (s *Server) Serve() error {
 			return
 		}
 		w.Header().Add("Content-type", mime.TypeByExtension(ext))
+		w.Header().Add("Cache-control", "no-store")
 		w.Write(f)
 	})
 	srv := &http.Server{

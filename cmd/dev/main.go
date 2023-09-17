@@ -55,10 +55,12 @@ func main() {
 				if e.Op != fsnotify.Write {
 					continue
 				}
-				rel, err := filepath.Rel(path.Join(gameRoot, manifest.UI.Root), e.Name)
+				log.Printf("path.Join(gameRoot, manifest.UI.Root): %s e.Name %s\n", path.Join(gameRoot, manifest.UI.Root), e.Name)
+				rel, err := filepath.Rel(path.Join(gameRoot, manifest.UI.Root, manifest.UI.Source), e.Name)
 				if err != nil {
 					log.Fatal(err)
 				}
+				log.Printf("rel %s\n", rel)
 				if strings.HasPrefix(rel, "..") {
 					log.Printf("Game reloaded due to change in %s\n", e.Name)
 					if err := devBuilder.BuildGame(); err != nil {

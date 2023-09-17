@@ -1,8 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 
-const numbers = [1,2,3,4,5,6,7,8,9,10]
-
 type Player = {
   id: string
   position: number
@@ -35,24 +33,25 @@ type SetupState = {
 type GameState = {
   winner: number | undefined
   position: number
+  possibleGuesses: number[]
 }
 
 const Game = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [readySent, setReadySent] = useState<boolean>(false);
   const [phase, setPhase] = useState<"new" | "started">("new");
-  const [setupState, setSetupState] = useState<SetupState | undefined>();
+  const [setupState, setSetupState] = useState<SetupState | undefined>({evenOnly: false});
   const [gameState, setGameState] = useState<GameState | undefined>();
   const [error, setError] = useState<string>("");
   const listener = useCallback((event: MessageEvent<PlayerEvent | UpdateEvent | MessageProcessed>) => {
     if (event.data.type === 'update') {
       switch (event.data.phase) {
         case 'new':
-          setPhase(event.data.phase)
           setSetupState(event.data.state)
+          setGameState(undefined)
           break
         case 'started':
-          setPhase(event.data.phase)
+          setSetupState(undefined)
           setGameState(event.data.state)
           break
         }
@@ -84,14 +83,15 @@ const Game = () => {
         }
         break
     }
-  }, [phase])
+  }, [phase, gameState, setupState])
 
   const makeMove = useCallback((n: number) => {
     window.top!.postMessage({type: "move", id: crypto.randomUUID(), data: {number: n}}, "*")
   }, [])
 
   const startGame = useCallback(() => {
-    window.top!.postMessage({type: "start", id: crypto.randomUUID(), setupState, players}, "*")
+    console.log("starting game with", setupState)
+    window.top!.postMessage({type: "start", id: crypto.randomUUID(), setup: setupState, players}, "*")
   }, [setupState, players])
 
   useEffect(() => {
@@ -110,16 +110,16 @@ const Game = () => {
 
   return <div>
     {error !== "" && <div style={{backgroundColor: "#faa", margin: '4px'}}>{error}</div>}
-    {phase === "new" ? <>
-      <input type="checkbox" onChange={e => setSetupState({evenOnly: e.currentTarget.checked})} checked={setupState?.evenOnly} />Even numbers only
+    {gameState ? <>
+      {gameState.winner !== undefined ? <span>Game is done! {gameState.winner === gameState.position ? "YOU WIN": "YOU LOSE"}</span> : gameState.possibleGuesses.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}
+      <pre>{JSON.stringify(gameState, null, 2)}</pre>
+    </> : <>
+      <input type="checkbox" checked={setupState ? setupState.evenOnly : false} onChange={e => setSetupState({evenOnly: e.currentTarget.checked})} />Even numbers only
       <h2>Players</h2>
       <ul>
       {players.map(p => <li key={p.id}>{p.name}</li>)}
       </ul>
       <button onClick={() => startGame()}>Start game</button>
-    </> : <>
-      {gameState?.winner !== undefined ? <span>Game is done! {gameState.winner === gameState.position ? "YOU WIN": "YOU LOSE"}</span> : numbers.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}
-      <pre>{JSON.stringify(gameState, null, 2)}</pre>
     </>}
   </div>
 }

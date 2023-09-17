@@ -13,7 +13,8 @@ export type PlayerState = {
   position: number
 	winner : number | undefined
 	currentPlayer: number,
-	move: number
+	move: number,
+	possibleGuesses: number[]
 }
 
 export type GameUpdate = {
@@ -29,6 +30,7 @@ type GameState = {
   finished: boolean
   move: number
 	winner: number | undefined
+	possibleGuesses: number[]
 }
 
 type Move<T> = {
@@ -40,15 +42,22 @@ type NumberGuessingMove = {
 	number: number
 }
 
-export function initialState(players: Player[], setup: {}): GameUpdate {
+export function initialState(players: Player[], setup: {evenOnly:boolean} | undefined): GameUpdate {
+	const possibleGuesses: number[] = []
+	console.log("setup?.evenNumber", setup?.evenOnly)
+	for (let i = 0; i != 20; i += setup?.evenOnly ? 2 : 1) {
+		possibleGuesses.push(i)
+	}
 	const currentPlayer = Math.min(...players.map(p => p.position))
+	const number = possibleGuesses[Math.floor(Math.random()*possibleGuesses.length)];
 	return {
-		game: {number: 5, finished: false, move: 0, players, currentPlayer, winner: undefined},
+		game: {number, finished: false, move: 0, players, currentPlayer, winner: undefined, possibleGuesses},
 		players: players.map(p => { return {
 			position: p.position,
 			currentPlayer,
 			winner: undefined,
 			move: 0,
+			possibleGuesses,
 		}}),
 		messages: []
 	}
@@ -73,6 +82,7 @@ export function processMove(state: GameState, move: Move<NumberGuessingMove>): G
 			currentPlayer: state.currentPlayer,
 			winner: state.winner,
 			move: state.move,
+			possibleGuesses: state.possibleGuesses,
 		}}),
 		messages: []
 	}

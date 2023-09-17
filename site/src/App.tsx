@@ -153,7 +153,7 @@ function App() {
             }
             setInitialState(e.data.data);
             setPhase("started");
-            setCurrentPlayer(players[0].position);
+            setCurrentPlayer(e.data.data.players[0].position);
             sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)});
             break
           case 'moveProcessed':
