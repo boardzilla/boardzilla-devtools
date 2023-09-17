@@ -29,10 +29,11 @@
 Must export an object `game` with two functions, `initialState` and `processMove`.
 
 ```ts
-initialState(players: Player[], setup: any): GameUpdate
+initialState(setup: SetupState): GameState
 processMove(previousState: GameState, move: Move): GameUpdate
 
 type Player = {
+  id: string
   position: number
   name: string
   color: string
@@ -43,12 +44,32 @@ type Message = {
   body: string
 }
 
-type PlayerState = {
+type PlayerState = any
+/*
+{
   position: number
-  state: GameState
+  players: (Player & Record<string, any>)[] // Game-specific player object, scrubbed
+  board: any // json tree, scrubbed
 }
+*/
 
-type GameState = any
+type GameSettings = Record<string, any>
+
+type GameState = any 
+/*
+{
+  players: (Player & Record<string, any>)[] // Game-specific player object
+  settings: GameSettings
+  currentPlayerPosition: number
+  position: any[]
+  board: any // json tree
+}
+*/
+
+type SetupState = {
+  players: (Player & { settings: Record<string, any> })[] // permit add'l per-player settings
+  settings: GameSettings
+}
 
 type GameUpdate = {
   game: GameState
@@ -58,7 +79,7 @@ type GameUpdate = {
 
 type Move = {
   position: number
-  data: any
+  data: any // string[]
 }
 ```
 
@@ -69,15 +90,15 @@ The game ui occurs in two phases "new" and "started".  The phase will be indicat
 During "new", it will recv the following events.
 
 ```ts
-window.addEventListener('message', (evt: MessageEvent<PlayerEvent | UpdateEvent | MessageProcessed>))
-window.top.postMessage(m: StartMessage | ReadyMessage)
+window.addEventListener('message', (evt: MessageEvent<UserEvent | SetupUpdateEvent | MessageProcessed>))
+window.top.postMessage(m: SetupUpdated, PlayerUpdated, StartMessage | ReadyMessage)
 
 ```
 
 During "started", it will recv the following events.
 
 ```ts
-window.addEventListener('message', (evt: MessageEvent<UpdateEvent | MessageProcessed>))
+window.addEventListener('message', (evt: MessageEvent<GameUpdateEvent | MessageProcessed>))
 window.top.postMessage(m: MoveMessage | ReadyMessage)
 
 ```
@@ -85,25 +106,26 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 #### recv events by ui
 ```ts
 
-type Player = {
+// indicates a user was added
+type UserEvent = {
+  type: "user"
   id: string
   name: string
-  color: string
-  position: number
-}
-
-// indicates a player was added
-type PlayerEvent = {
-  type: "player"
-  player: Player
   added: boolean
 }
 
-// an update to the current game state
-type UpdateEvent = {
+// an update to the setup state
+type SetupUpdateEvent = {
   type: "update"
-  phase: "new" | "started"
-  state: any
+  phase: "new"
+  state: SetupState
+}
+
+// an update to the current game state
+type GameUpdateEvent = {
+  type: "update"
+  phase: "started"
+  state: GameState
 }
 
 // indicates the disposition of a message that was processed
@@ -120,22 +142,27 @@ type MessageProcessed = {
 // used to update the current setup json state
 type SetupUpdated = {
   type: "setupUpdated"
-  data: any
+  data: SetupState
+}
+
+type PlayerUpdated = {
+  type: "player"
+  name: string
+  color: string
 }
 
 // used to send a move
 type MoveMessage = {
   id: string
   type: 'move'
-  data: any
+  data: string[]
 }
 
 // used to actually start the game
 type StartMessage = {
   id: string
   type: 'start'
-  setup: any
-  players: Player[]
+  setup: SetupState
 }
 
 // used to tell the top that you're ready to recv events

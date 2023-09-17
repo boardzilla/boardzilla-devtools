@@ -95,7 +95,7 @@ func main() {
 			if !info.IsDir() {
 				return nil
 			}
-			return watcher.Add(root)
+			return watcher.Add(p)
 		}); err != nil {
 			log.Fatal(err)
 		}
