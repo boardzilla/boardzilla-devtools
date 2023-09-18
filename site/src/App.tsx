@@ -79,7 +79,7 @@ function App() {
   const [setupState, setSetupState] = useState<any>({});
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState(0);
+  const [currentPlayer, setCurrentPlayer] = useState(1);
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [open, setOpen] = useState(false);
@@ -192,7 +192,7 @@ function App() {
               setInitialState(e.data.data);
               setPhase("started");
               setCurrentPlayer(e.data.data.players[0].position);
-              sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)});
+              sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)?.state});
               break
             case 'moveProcessed':
               let p = pendingPromises.get(e.data.id)
@@ -216,7 +216,7 @@ function App() {
               }
               sendToUI({type: "messageProcessed", id: e.data.id, error: e.data.error})
               if (e.data.data) {
-                sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)});
+                sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)?.state});
               }
               break
             }
