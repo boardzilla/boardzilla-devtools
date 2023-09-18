@@ -6,8 +6,8 @@
     "root": ".",
     "build": "npm run build:ui",
     "watchPaths": [
-      "../../boardzilla-core/ui/",
-      "../../boardzilla-core/game/",
+      "node_modules/boardzilla/ui",
+      "node_modules/boardzilla/game",
       "ui/src",
       "game/src"
     ],
@@ -17,7 +17,7 @@
     "root": ".",
     "build": "npm run build:game",
     "watchPaths": [
-      "../../boardzilla-core/game/",
+      "node_modules/boardzilla/game",
       "game/src"
     ],
     "out": "game/build/game-interface.js"

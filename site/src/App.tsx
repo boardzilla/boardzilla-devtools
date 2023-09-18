@@ -120,7 +120,7 @@ function App() {
   }, [])
 
   const sendToUI = useCallback((data: UIUserEvent | UIGameUpdateEvent | UISetupUpdateEvent | UIMessageProcessed) => {
-    (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
+    (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(JSON.stringify(data))
   }, [])
 
   const resetGame = useCallback(() => {

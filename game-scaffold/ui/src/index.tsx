@@ -1,13 +1,13 @@
 import React from 'react';
 import render, { toggleSetting, choiceSetting, textSetting, numberSetting } from 'boardzilla/ui';
 
-import gameInterface from '../../game/src/index';
+import setup from '../../game/src/index';
 
 import { Card, PlayerMat, Building, PowergridPlayer } from '../../game/src/index';
 
 import './style.scss';
 
-render(gameInterface, {
+render(setup, {
   settings: {
     a: textSetting('a value'),
     d: choiceSetting('pick one', {a: 'type a', b: 'type b'}),

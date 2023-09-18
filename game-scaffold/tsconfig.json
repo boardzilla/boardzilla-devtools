@@ -1,10 +1,8 @@
 {
   "compilerOptions": {
-    "lib": [
-      "es2020"
-    ],
     "target": "es2020",
     "types": ["node", "jest"],
+    "esModuleInterop": true,
     "module": "nodenext",
     "sourceMap": true,
     "noImplicitAny": true,

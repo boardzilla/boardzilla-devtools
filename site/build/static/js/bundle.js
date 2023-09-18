@@ -107,7 +107,7 @@ function App() {
   const [setupState, setSetupState] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)({});
   const [gameLoaded, setGameLoaded] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)(false);
   const [players, setPlayers] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)([]);
-  const [currentPlayer, setCurrentPlayer] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)(0);
+  const [currentPlayer, setCurrentPlayer] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)(1);
   const [initialState, setInitialState] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)();
   const [history, setHistory] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)([]);
   const [open, setOpen] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)(false);
@@ -117,7 +117,7 @@ function App() {
     document.getElementById("game").contentWindow.postMessage(data);
   }, []);
   const sendToUI = (0,react__WEBPACK_IMPORTED_MODULE_1__.useCallback)(data => {
-    document.getElementById("ui").contentWindow.postMessage(data);
+    document.getElementById("ui").contentWindow.postMessage(JSON.stringify(data));
   }, []);
   const resetGame = (0,react__WEBPACK_IMPORTED_MODULE_1__.useCallback)(() => {
     setPhase("new");
@@ -229,6 +229,7 @@ function App() {
   (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(() => {
     console.log("listener!", Math.random());
     const listener = e => {
+      var _e$data$data$players$;
       console.log("got one!");
       const path = e.source.location.pathname;
       let currentState;
@@ -247,7 +248,7 @@ function App() {
               sendToUI({
                 type: "update",
                 phase: "started",
-                state: e.data.data.players.find(p => p.position === currentPlayer)
+                state: (_e$data$data$players$ = e.data.data.players.find(p => p.position === currentPlayer)) === null || _e$data$data$players$ === void 0 ? void 0 : _e$data$data$players$.state
               });
               break;
             case 'moveProcessed':
@@ -276,10 +277,11 @@ function App() {
                 error: e.data.error
               });
               if (e.data.data) {
+                var _e$data$data$players$2;
                 sendToUI({
                   type: "update",
                   phase: "started",
-                  state: e.data.data.players.find(p => p.position === currentPlayer)
+                  state: (_e$data$data$players$2 = e.data.data.players.find(p => p.position === currentPlayer)) === null || _e$data$data$players$2 === void 0 ? void 0 : _e$data$data$players$2.state
                 });
               }
               break;
@@ -549,7 +551,7 @@ function App() {
     columnNumber: 5
   }, this);
 }
-_s(App, "TWKFhWIe1XraZdRUW1gB1Hga4sI=");
+_s(App, "c72NOKoP8MAWT26abZ61QxT3Xbs=");
 _c = App;
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (App);
 var _c;
