@@ -302,10 +302,9 @@ function App() {
             case 'start':
               sendToGame({
                 type: "initialState",
-                players: e.data.players,
                 setup: e.data.setup
               });
-              setPlayers(e.data.players);
+              setPlayers(e.data.setup.players);
               sendToUI({
                 type: "messageProcessed",
                 id: e.data.id
