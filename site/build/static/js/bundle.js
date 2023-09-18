@@ -40,6 +40,7 @@ var _jsxFileName = "/Users/joshbuddy/Development/boardzilla/boardzilla-devtools/
 
 const body = document.getElementsByTagName("body")[0];
 const maxPlayers = parseInt(body.getAttribute("maxPlayers"));
+const minPlayers = parseInt(body.getAttribute("minPlayers"));
 const possiblePlayers = [{
   id: "0",
   position: 0,
@@ -95,6 +96,7 @@ let initalStatePromise;
 const pendingPromises = new Map();
 function App() {
   _s();
+  const [numberOfPlayers, setNumberOfPlayers] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)(minPlayers);
   const [phase, setPhase] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)("new");
   const [setupState, setSetupState] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)({});
   const [gameLoaded, setGameLoaded] = (0,react__WEBPACK_IMPORTED_MODULE_1__.useState)(false);
@@ -117,6 +119,7 @@ function App() {
     setHistory([]);
   }, []);
   const reprocessHistory = (0,react__WEBPACK_IMPORTED_MODULE_1__.useCallback)(async () => {
+    console.log("pre");
     if (phase !== "started") return;
     if (!gameLoaded) return;
     const newInitialState = await new Promise((resolve, reject) => {
@@ -171,6 +174,7 @@ function App() {
     setGameLoaded(true);
   }, [gameLoaded, history, phase, players, sendToGame]);
   (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(() => {
+    console.log("sending update");
     if (phase === 'new') {
       return sendToUI({
         type: "update",
@@ -185,121 +189,8 @@ function App() {
       state: currentState === null || currentState === void 0 ? void 0 : currentState.players.find(p => p.position === currentPlayer)
     });
   }, [initialState, history, currentPlayer, phase, sendToUI, setupState]);
-  const messageCb = (0,react__WEBPACK_IMPORTED_MODULE_1__.useCallback)(e => {
-    const path = e.source.location.pathname;
-    let currentState;
-    switch (path) {
-      case '/game.html':
-        switch (e.data.type) {
-          case 'initialState':
-            if (initalStatePromise) {
-              initalStatePromise.resolve(e.data.data);
-              initalStatePromise = undefined;
-              return;
-            }
-            setInitialState(e.data.data);
-            setPhase("started");
-            setCurrentPlayer(e.data.data.players[0].position);
-            sendToUI({
-              type: "update",
-              phase: "started",
-              state: e.data.data.players.find(p => p.position === currentPlayer)
-            });
-            break;
-          case 'moveProcessed':
-            let p = pendingPromises.get(e.data.id);
-            if (p) {
-              if (e.data.error) {
-                p.reject(new Error(e.data.error));
-              } else {
-                p.resolve(e.data.data);
-              }
-              pendingPromises.delete(e.data.id);
-              return;
-            }
-            if (e.data.error) {
-              setHistory([...history.slice(0, history.length - 1)]);
-            } else {
-              let lastHistory = history[history.length - 1];
-              setHistory([...history.slice(0, history.length - 1), {
-                ...lastHistory,
-                data: e.data.data
-              }]);
-            }
-            sendToUI({
-              type: "messageProcessed",
-              id: e.data.id,
-              error: e.data.error
-            });
-            if (e.data.data) {
-              sendToUI({
-                type: "update",
-                phase: "started",
-                state: e.data.data.players.find(p => p.position === currentPlayer)
-              });
-            }
-            break;
-        }
-        break;
-      case '/ui.html':
-        switch (e.data.type) {
-          case 'setupUpdated':
-            setSetupState(e.data.data);
-            break;
-          case 'move':
-            setHistory([...history, {
-              position: currentPlayer,
-              seq: history.length,
-              data: undefined,
-              move: e.data
-            }]);
-            e.data.position = currentPlayer;
-            const previousState = history.length === 0 ? initialState : history[history.length - 1].data;
-            sendToGame({
-              type: "processMove",
-              previousState: previousState.game,
-              move: e.data
-            });
-            break;
-          case 'start':
-            sendToGame({
-              type: "initialState",
-              players: e.data.players,
-              setup: e.data.setup
-            });
-            setPlayers(e.data.players);
-            sendToUI({
-              type: "messageProcessed",
-              id: e.data.id
-            });
-            break;
-          case 'ready':
-            currentState = history.length === 0 ? initialState : history[history.length - 1].data;
-            sendToUI({
-              type: "update",
-              phase,
-              state: phase === 'new' ? setupState : currentState.players.find(p => p.position === currentPlayer)
-            });
-            if (phase === 'new') {
-              for (let player of possiblePlayers.slice(0, maxPlayers)) {
-                sendToUI({
-                  type: "player",
-                  player,
-                  added: true
-                });
-              }
-            }
-            break;
-          // special event for player switching
-          case 'switchPlayer':
-            if (e.data.index >= players.length) break;
-            setCurrentPlayer(e.data.index);
-            break;
-        }
-        break;
-    }
-  }, [history, initialState, currentPlayer, players, sendToGame, sendToUI, phase, setupState]);
   (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(() => {
+    console.log("events!", Math.random());
     const evtSource = new reconnecting_eventsource__WEBPACK_IMPORTED_MODULE_0__["default"]("/events");
     evtSource.onmessage = m => {
       var _contentWindow, _contentWindow2;
@@ -329,10 +220,127 @@ function App() {
     return () => evtSource.close();
   }, []);
   (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(() => {
-    window.addEventListener('message', messageCb);
-    return () => window.removeEventListener('message', messageCb);
-  }, [messageCb]);
+    console.log("listener!", Math.random());
+    const listener = e => {
+      console.log("got one!");
+      const path = e.source.location.pathname;
+      let currentState;
+      switch (path) {
+        case '/game.html':
+          switch (e.data.type) {
+            case 'initialState':
+              if (initalStatePromise) {
+                initalStatePromise.resolve(e.data.data);
+                initalStatePromise = undefined;
+                return;
+              }
+              setInitialState(e.data.data);
+              setPhase("started");
+              setCurrentPlayer(e.data.data.players[0].position);
+              sendToUI({
+                type: "update",
+                phase: "started",
+                state: e.data.data.players.find(p => p.position === currentPlayer)
+              });
+              break;
+            case 'moveProcessed':
+              let p = pendingPromises.get(e.data.id);
+              if (p) {
+                if (e.data.error) {
+                  p.reject(new Error(e.data.error));
+                } else {
+                  p.resolve(e.data.data);
+                }
+                pendingPromises.delete(e.data.id);
+                return;
+              }
+              if (e.data.error) {
+                setHistory([...history.slice(0, history.length - 1)]);
+              } else {
+                let lastHistory = history[history.length - 1];
+                setHistory([...history.slice(0, history.length - 1), {
+                  ...lastHistory,
+                  data: e.data.data
+                }]);
+              }
+              sendToUI({
+                type: "messageProcessed",
+                id: e.data.id,
+                error: e.data.error
+              });
+              if (e.data.data) {
+                sendToUI({
+                  type: "update",
+                  phase: "started",
+                  state: e.data.data.players.find(p => p.position === currentPlayer)
+                });
+              }
+              break;
+          }
+          break;
+        case '/ui.html':
+          switch (e.data.type) {
+            case 'setupUpdated':
+              setSetupState(e.data.data);
+              break;
+            case 'move':
+              setHistory([...history, {
+                position: currentPlayer,
+                seq: history.length,
+                data: undefined,
+                move: e.data
+              }]);
+              e.data.position = currentPlayer;
+              const previousState = history.length === 0 ? initialState : history[history.length - 1].data;
+              sendToGame({
+                type: "processMove",
+                previousState: previousState.game,
+                move: e.data
+              });
+              break;
+            case 'start':
+              sendToGame({
+                type: "initialState",
+                players: e.data.players,
+                setup: e.data.setup
+              });
+              setPlayers(e.data.players);
+              sendToUI({
+                type: "messageProcessed",
+                id: e.data.id
+              });
+              break;
+            case 'ready':
+              currentState = history.length === 0 ? initialState : history[history.length - 1].data;
+              sendToUI({
+                type: "update",
+                phase,
+                state: phase === 'new' ? setupState : currentState.players.find(p => p.position === currentPlayer)
+              });
+              if (phase === 'new') {
+                for (let player of possiblePlayers.slice(0, numberOfPlayers)) {
+                  sendToUI({
+                    type: "player",
+                    player,
+                    added: true
+                  });
+                }
+              }
+              break;
+            // special event for player switching
+            case 'switchPlayer':
+              if (e.data.index >= players.length) break;
+              setCurrentPlayer(e.data.index);
+              break;
+          }
+          break;
+      }
+    };
+    window.addEventListener('message', listener);
+    return () => window.removeEventListener('message', listener);
+  }, [currentPlayer, history, initialState, numberOfPlayers, phase, players, sendToGame, sendToUI, setupState]);
   (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(() => {
+    console.log("keys!");
     const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0'];
     const validKeys = keys.slice(0, players.length);
     const l = e => {
@@ -344,6 +352,34 @@ function App() {
     window.addEventListener('keydown', l);
     return () => window.removeEventListener('keydown', l);
   }, [players]);
+  const updateNumberOfPlayers = (0,react__WEBPACK_IMPORTED_MODULE_1__.useCallback)(n => {
+    const num = parseInt(n);
+    if (Number.isNaN(num)) return;
+    setNumberOfPlayers(previousNumber => {
+      const playerDifference = num - previousNumber;
+      console.log("playerDifference", playerDifference);
+      if (playerDifference > 0) {
+        for (let player of possiblePlayers.slice(previousNumber, num)) {
+          console.log("adding", player);
+          sendToUI({
+            type: "player",
+            player,
+            added: true
+          });
+        }
+      } else if (playerDifference < 0) {
+        for (let player of possiblePlayers.slice(num, previousNumber)) {
+          console.log("removing", player);
+          sendToUI({
+            type: "player",
+            player,
+            added: false
+          });
+        }
+      }
+      return num;
+    });
+  }, [sendToUI]);
   return /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
     style: {
       display: 'flex',
@@ -357,18 +393,18 @@ function App() {
         children: "Help"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 277,
+        lineNumber: 306,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("p", {
         children: "To switch between players use shift-1, shift-2 etc"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 278,
+        lineNumber: 307,
         columnNumber: 9
       }, this)]
     }, void 0, true, {
       fileName: _jsxFileName,
-      lineNumber: 276,
+      lineNumber: 305,
       columnNumber: 7
     }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
       style: {
@@ -382,7 +418,21 @@ function App() {
           flexDirection: 'row',
           alignItems: "center"
         },
-        children: [/*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("span", {
+        children: [/*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("input", {
+          style: {
+            width: '3em'
+          },
+          disabled: phase === 'started',
+          type: "number",
+          value: numberOfPlayers,
+          min: minPlayers,
+          max: maxPlayers,
+          onChange: v => updateNumberOfPlayers(v.currentTarget.value)
+        }, void 0, false, {
+          fileName: _jsxFileName,
+          lineNumber: 313,
+          columnNumber: 11
+        }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("span", {
           style: {
             flexGrow: 1
           },
@@ -395,12 +445,12 @@ function App() {
             children: p.name
           }, p.position, false, {
             fileName: _jsxFileName,
-            lineNumber: 285,
+            lineNumber: 315,
             columnNumber: 13
           }, this))
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 284,
+          lineNumber: 314,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("button", {
           style: {
@@ -411,12 +461,12 @@ function App() {
           children: "\u24D8"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 288,
+          lineNumber: 318,
           columnNumber: 11
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 283,
+        lineNumber: 312,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("iframe", {
         seamless: true,
@@ -430,7 +480,7 @@ function App() {
         src: "/ui.html"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 290,
+        lineNumber: 320,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("iframe", {
         onLoad: () => reprocessHistory(),
@@ -443,12 +493,12 @@ function App() {
         src: "/game.html"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 291,
+        lineNumber: 321,
         columnNumber: 9
       }, this)]
     }, void 0, true, {
       fileName: _jsxFileName,
-      lineNumber: 282,
+      lineNumber: 311,
       columnNumber: 7
     }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
       style: {
@@ -464,12 +514,12 @@ function App() {
           children: "Reset game"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 294,
+          lineNumber: 324,
           columnNumber: 21
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 294,
+        lineNumber: 324,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)(_History__WEBPACK_IMPORTED_MODULE_2__["default"], {
         players: players,
@@ -478,21 +528,21 @@ function App() {
         items: history
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 295,
+        lineNumber: 325,
         columnNumber: 9
       }, this)]
     }, void 0, true, {
       fileName: _jsxFileName,
-      lineNumber: 293,
+      lineNumber: 323,
       columnNumber: 7
     }, this)]
   }, void 0, true, {
     fileName: _jsxFileName,
-    lineNumber: 275,
+    lineNumber: 304,
     columnNumber: 5
   }, this);
 }
-_s(App, "d9agn9fbAHbaNlxTJQhoeEotyYw=");
+_s(App, "TWKFhWIe1XraZdRUW1gB1Hga4sI=");
 _c = App;
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (App);
 var _c;
@@ -547,6 +597,7 @@ function History({
   players
 }) {
   _s();
+  console.log("players", players);
   const historyEndRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
   const player = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(pos => {
     const p = players.find(p => p.position === pos);
@@ -571,15 +622,15 @@ function History({
       children: "Revert"
     }, void 0, false, {
       fileName: _jsxFileName,
-      lineNumber: 28,
+      lineNumber: 29,
       columnNumber: 18
-    }, this), " ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(_uiw_react_json_view__WEBPACK_IMPORTED_MODULE_1__["default"], {
+    }, this), " ", initialState && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(_uiw_react_json_view__WEBPACK_IMPORTED_MODULE_1__["default"], {
       value: initialState,
       collapsed: 1
     }, void 0, false, {
       fileName: _jsxFileName,
-      lineNumber: 28,
-      columnNumber: 92
+      lineNumber: 29,
+      columnNumber: 108
     }, this), items.map(i => /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
       style: {
         backgroundColor: i.seq % 2 === 0 ? "#ccc" : "#fff"
@@ -593,7 +644,7 @@ function History({
         children: player(i.position).name
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 30,
+        lineNumber: 31,
         columnNumber: 14
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("button", {
         className: "history",
@@ -601,7 +652,7 @@ function History({
         children: "Revert"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 30,
+        lineNumber: 31,
         columnNumber: 145
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(_uiw_react_json_view__WEBPACK_IMPORTED_MODULE_1__["default"], {
         value: {
@@ -611,7 +662,7 @@ function History({
         collapsed: 1
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 31,
+        lineNumber: 32,
         columnNumber: 7
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(_uiw_react_json_view__WEBPACK_IMPORTED_MODULE_1__["default"], {
         value: {
@@ -620,23 +671,23 @@ function History({
         collapsed: 0
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 32,
+        lineNumber: 33,
         columnNumber: 7
       }, this)]
     }, i.seq, true, {
       fileName: _jsxFileName,
-      lineNumber: 29,
+      lineNumber: 30,
       columnNumber: 21
     }, this)), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
       ref: historyEndRef
     }, void 0, false, {
       fileName: _jsxFileName,
-      lineNumber: 34,
+      lineNumber: 35,
       columnNumber: 5
     }, this)]
   }, void 0, true, {
     fileName: _jsxFileName,
-    lineNumber: 27,
+    lineNumber: 28,
     columnNumber: 10
   }, this);
 }
