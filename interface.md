@@ -29,7 +29,7 @@
 Must export an object `game` with two functions, `initialState` and `processMove`.
 
 ```ts
-initialState(setup: SetupState): GameState
+initialState(setup: SetupState): GameUpdate
 processMove(previousState: GameState, move: Move): GameUpdate
 
 type Player = {
@@ -44,14 +44,10 @@ type Message = {
   body: string
 }
 
-type PlayerState = any
-/*
-{
+type PlayerState = {
   position: number
-  players: (Player & Record<string, any>)[] // Game-specific player object, scrubbed
-  board: any // json tree, scrubbed
+  state: GameState // Game state, scrubbed
 }
-*/
 
 type GameSettings = Record<string, any>
 

@@ -23,7 +23,7 @@ __webpack_require__.r(__webpack_exports__);
 /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
 __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
 
-var _jsxFileName = "/Users/joshbuddy/Development/boardzilla/boardzilla-devtools/site/src/App.tsx",
+var _jsxFileName = "/Users/aghull/boardzilla-devtools/site/src/App.tsx",
   _s = __webpack_require__.$Refresh$.signature();
 
 
@@ -174,6 +174,7 @@ function App() {
     setGameLoaded(true);
   }, [gameLoaded, history, phase, players, sendToGame]);
   (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(() => {
+    var _currentState$players;
     console.log("sending update");
     if (phase === 'new') {
       return sendToUI({
@@ -186,7 +187,7 @@ function App() {
     sendToUI({
       type: "update",
       phase,
-      state: currentState === null || currentState === void 0 ? void 0 : currentState.players.find(p => p.position === currentPlayer)
+      state: currentState === null || currentState === void 0 ? void 0 : (_currentState$players = currentState.players.find(p => p.position === currentPlayer)) === null || _currentState$players === void 0 ? void 0 : _currentState$players.state
     });
   }, [initialState, history, currentPlayer, phase, sendToUI, setupState]);
   (0,react__WEBPACK_IMPORTED_MODULE_1__.useEffect)(() => {
@@ -470,7 +471,7 @@ function App() {
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("iframe", {
         seamless: true,
-        sandbox: "allow-scripts allow-same-origin",
+        sandbox: "allow-scripts allow-same-origin allow-forms",
         style: {
           border: 1,
           flexGrow: 4
@@ -584,7 +585,7 @@ __webpack_require__.r(__webpack_exports__);
 /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
 __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
 
-var _jsxFileName = "/Users/joshbuddy/Development/boardzilla/boardzilla-devtools/site/src/History.tsx",
+var _jsxFileName = "/Users/aghull/boardzilla-devtools/site/src/History.tsx",
   _s = __webpack_require__.$Refresh$.signature();
 
 
@@ -731,7 +732,7 @@ __webpack_require__.r(__webpack_exports__);
 /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
 __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
 
-var _jsxFileName = "/Users/joshbuddy/Development/boardzilla/boardzilla-devtools/site/src/index.tsx";
+var _jsxFileName = "/Users/aghull/boardzilla-devtools/site/src/index.tsx";
 
 
 
@@ -1401,12 +1402,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   Label: () => (/* reexport safe */ _value__WEBPACK_IMPORTED_MODULE_5__.Label),
 /* harmony export */   Line: () => (/* reexport safe */ _value__WEBPACK_IMPORTED_MODULE_5__.Line),
 /* harmony export */   RootNode: () => (/* reexport safe */ _node__WEBPACK_IMPORTED_MODULE_3__.RootNode),
+/* harmony export */   Semicolon: () => (/* reexport safe */ _semicolon__WEBPACK_IMPORTED_MODULE_6__.Semicolon),
 /* harmony export */   Type: () => (/* reexport safe */ _value__WEBPACK_IMPORTED_MODULE_5__.Type),
 /* harmony export */   ValueView: () => (/* reexport safe */ _value__WEBPACK_IMPORTED_MODULE_5__.ValueView),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
 /* harmony export */   getValueString: () => (/* reexport safe */ _value__WEBPACK_IMPORTED_MODULE_5__.getValueString),
 /* harmony export */   isFloat: () => (/* reexport safe */ _value__WEBPACK_IMPORTED_MODULE_5__.isFloat),
-/* harmony export */   typeMap: () => (/* reexport safe */ _value__WEBPACK_IMPORTED_MODULE_5__.typeMap)
+/* harmony export */   typeMap: () => (/* reexport safe */ _value__WEBPACK_IMPORTED_MODULE_5__.typeMap),
+/* harmony export */   useHighlight: () => (/* reexport safe */ _semicolon__WEBPACK_IMPORTED_MODULE_6__.useHighlight),
+/* harmony export */   usePrevious: () => (/* reexport safe */ _semicolon__WEBPACK_IMPORTED_MODULE_6__.usePrevious)
 /* harmony export */ });
 /* harmony import */ var _babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/extends */ "./node_modules/@babel/runtime/helpers/esm/extends.js");
 /* harmony import */ var _babel_runtime_helpers_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/objectWithoutPropertiesLoose */ "./node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js");
@@ -1415,9 +1419,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _node__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./node */ "./node_modules/@uiw/react-json-view/esm/node.js");
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 /* harmony import */ var _value__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./value */ "./node_modules/@uiw/react-json-view/esm/value.js");
+/* harmony import */ var _semicolon__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./semicolon */ "./node_modules/@uiw/react-json-view/esm/semicolon.js");
 
 
 var _excluded = ["value", "style", "className"];
+
 
 
 
@@ -1435,7 +1441,8 @@ var JsonView = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((p
     lineHeight: 1.4,
     fontFamily: 'var(--w-rjv-font-family, Menlo, monospace)',
     color: 'var(--w-rjv-color, #002b36)',
-    backgroundColor: 'var(--w-rjv-background-color, #00000000)'
+    backgroundColor: 'var(--w-rjv-background-color, #00000000)',
+    fontSize: 13
   }, style);
   var cls = "w-json-view-container w-rjv " + (className || '');
   var keyid = (0,react__WEBPACK_IMPORTED_MODULE_2__.useId)();
@@ -1479,7 +1486,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! react/jsx-runtime */ "./node_modules/react/jsx-runtime.js");
 
 
-var _excluded = ["value", "keyName", "className", "displayDataTypes", "components", "displayObjectSize", "enableClipboard", "highlightUpdates", "objectSortKeys", "indentWidth", "collapsed", "level", "keyid", "quotes", "namespace", "onCopied", "onExpand", "parentValue", "setParentValue"];
+var _excluded = ["value", "keyName", "className", "displayDataTypes", "components", "displayObjectSize", "enableClipboard", "highlightUpdates", "objectSortKeys", "indentWidth", "shortenTextAfterLength", "collapsed", "level", "keyid", "quotes", "namespace", "isSet", "isMap", "onCopied", "onExpand", "parentValue", "setParentValue"];
 
 
 
@@ -1525,11 +1532,14 @@ var RootNode = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((p
       highlightUpdates = true,
       objectSortKeys = false,
       indentWidth = 15,
+      shortenTextAfterLength = 20,
       collapsed,
       level = 1,
       keyid = 'root',
       quotes = '"',
       namespace = [],
+      isSet = false,
+      isMap = false,
       onCopied,
       onExpand,
       parentValue,
@@ -1572,6 +1582,7 @@ var RootNode = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((p
     displayDataTypes,
     displayObjectSize,
     enableClipboard,
+    shortenTextAfterLength,
     level: level + 1,
     parentValue: value,
     indentWidth,
@@ -1658,6 +1669,10 @@ var RootNode = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((p
           parentName: keyName,
           color: typeof keyName === 'number' ? _value__WEBPACK_IMPORTED_MODULE_3__.typeMap['number'].color : ''
         }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_value__WEBPACK_IMPORTED_MODULE_3__.Colon, {})]
+      }), isSet && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_value__WEBPACK_IMPORTED_MODULE_3__.Type, {
+        type: "Set"
+      }), isMap && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_value__WEBPACK_IMPORTED_MODULE_3__.Type, {
+        type: "Map"
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_comps_meta__WEBPACK_IMPORTED_MODULE_9__.Meta, {
         start: true,
         isArray: isArray,
@@ -1686,35 +1701,40 @@ var RootNode = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((p
       children: entries.length > 0 && [...entries].map((_ref6, idx) => {
         var [key, itemVal] = _ref6;
         var item = itemVal;
-        var isEmpty = Array.isArray(item) && item.length === 0 || typeof item === 'object' && item && !(item instanceof Date) && Object.keys(item).length === 0;
-        if (Array.isArray(item) && !isEmpty) {
+        var isMySet = item instanceof Set;
+        var isMyMap = item instanceof Map;
+        var myValue = isMySet ? Array.from(item) : isMyMap ? Object.fromEntries(item) : item;
+        var isEmpty = Array.isArray(myValue) && myValue.length === 0 || typeof myValue === 'object' && myValue && !(myValue instanceof Date) && Object.keys(myValue).length === 0;
+        if ((Array.isArray(myValue) || isMySet || isMyMap) && !isEmpty) {
           var label = isArray ? idx : key;
           return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_value__WEBPACK_IMPORTED_MODULE_3__.Line, {
             className: "w-rjv-wrap",
             children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(RootNode, (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({
-              value: item,
+              value: myValue,
+              isSet: isMySet,
+              isMap: isMyMap,
               namespace: [...namespace, label],
               keyName: label,
               keyid: keyid + subkeyid + label
             }, subNodeProps))
           }, label + idx);
         }
-        if (typeof item === 'object' && item && !(item instanceof Date) && !isEmpty) {
+        if (typeof myValue === 'object' && myValue && !(myValue instanceof Date) && !isEmpty) {
           return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_value__WEBPACK_IMPORTED_MODULE_3__.Line, {
             className: "w-rjv-wrap",
             children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(RootNode, (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({
-              value: item,
+              value: myValue,
               namespace: [...namespace, key],
               keyName: key,
               keyid: keyid + subkeyid + key
             }, subNodeProps))
           }, key + '' + idx);
         }
-        if (typeof item === 'function') {
+        if (typeof myValue === 'function') {
           return;
         }
         var renderKey = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_semicolon__WEBPACK_IMPORTED_MODULE_6__.Semicolon, {
-          value: item,
+          value: myValue,
           "data-keys": keyid,
           quotes: quotes,
           namespace: [...namespace, key],
@@ -1724,7 +1744,7 @@ var RootNode = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((p
           color: typeof key === 'number' ? _value__WEBPACK_IMPORTED_MODULE_3__.typeMap['number'].color : '',
           keyName: key
         });
-        var length = Array.isArray(item) ? item.length : getLength(item);
+        var length = Array.isArray(myValue) ? myValue.length : getLength(myValue);
         countInfo = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(CountInfo, {
           children: length
         });
@@ -1742,7 +1762,8 @@ var RootNode = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((p
           countInfo: countInfo,
           renderKey: renderKey,
           keyName: key,
-          value: item
+          isSet: isSet,
+          value: myValue
         }), idx);
       })
     }), expand && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_10__.jsx)(_value__WEBPACK_IMPORTED_MODULE_3__.Line, {
@@ -1975,8 +1996,10 @@ __webpack_require__.r(__webpack_exports__);
 
 
 var _excluded = ["children", "style"],
-  _excluded2 = ["value", "parentValue", "setValue", "countInfo", "data", "keyName", "indentWidth", "namespace", "renderKey", "components", "quotes", "level", "enableClipboard", "displayObjectSize", "displayDataTypes"],
-  _excluded3 = ["children", "color", "fontSize", "opacity", "paddingRight", "style"];
+  _excluded2 = ["children", "length", "style"],
+  _excluded3 = ["color", "style", "isURL", "href", "children"],
+  _excluded4 = ["value", "parentValue", "setValue", "countInfo", "data", "keyName", "indentWidth", "isSet", "namespace", "renderKey", "components", "quotes", "level", "enableClipboard", "displayObjectSize", "displayDataTypes", "shortenTextAfterLength"],
+  _excluded5 = ["children", "color", "fontSize", "opacity", "paddingRight", "style"];
 
 
 
@@ -2018,6 +2041,14 @@ var typeMap = {
     color: 'var(--w-rjv-type-null-color, #d33682)',
     label: 'null'
   },
+  Set: {
+    color: 'var(--w-rjv-type-set-color, #268bd2)',
+    label: 'Set'
+  },
+  Map: {
+    color: 'var(--w-rjv-type-map-color, #268bd2)',
+    label: 'Map'
+  },
   NaN: {
     color: 'var(--w-rjv-type-nan-color, #859900)',
     label: 'NaN'
@@ -2037,7 +2068,9 @@ var Colon = _ref => {
     className: "w-rjv-colon",
     style: (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_1__["default"])({
       paddingRight: 3
-    }, style)
+    }, style, {
+      color: 'var(--w-rjv-colon-color, var(--w-rjv-color))'
+    })
   }, props, {
     children: children
   }));
@@ -2049,6 +2082,10 @@ function getValueString(value) {
   if (typeof value === 'number') {
     type = isFloat(value) ? 'float' : 'number';
     content = value.toString();
+    if (isNaN(value)) {
+      type = 'NaN';
+      content = 'NaN';
+    }
   }
   if (typeof value === 'boolean') {
     type = 'boolean';
@@ -2083,6 +2120,55 @@ function getValueString(value) {
     content
   };
 }
+var RenderShortenTextValue = _ref2 => {
+  var {
+      children,
+      length,
+      style
+    } = _ref2,
+    rest = (0,_babel_runtime_helpers_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(_ref2, _excluded2);
+  var childrenStr = children;
+  var [shorten, setShorten] = (0,react__WEBPACK_IMPORTED_MODULE_2__.useState)(length && childrenStr.length >= length);
+  var click = () => {
+    if (length && childrenStr.length <= length) return setShorten(false);
+    setShorten(!shorten);
+  };
+  var text = shorten ? childrenStr.slice(0, length) + "..." : childrenStr;
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(RenderStringValue, (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_1__["default"])({}, rest, {
+    style: (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_1__["default"])({}, style, {
+      cursor: 'pointer'
+    }),
+    onClick: click,
+    children: text
+  }));
+};
+RenderShortenTextValue.displayName = 'JVR.RenderShortenTextValue';
+var RenderStringValue = _ref3 => {
+  var {
+      color,
+      style,
+      isURL,
+      href,
+      children
+    } = _ref3,
+    rest = (0,_babel_runtime_helpers_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(_ref3, _excluded3);
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(Label, (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_1__["default"])({
+    color: color,
+    style: style
+  }, rest, {
+    className: "w-rjv-value",
+    children: [isURL && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("a", {
+      href: href,
+      style: {
+        color
+      },
+      target: "_blank",
+      rel: "noopener noreferrer",
+      children: children
+    }), !isURL && children]
+  }));
+};
+RenderStringValue.displayName = 'JVR.RenderStringValue';
 function ValueView(props) {
   var _typeMap$type;
   var {
@@ -2098,9 +2184,10 @@ function ValueView(props) {
       components = {},
       quotes,
       enableClipboard,
-      displayDataTypes
+      displayDataTypes,
+      shortenTextAfterLength
     } = props,
-    reset = (0,_babel_runtime_helpers_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(props, _excluded2);
+    reset = (0,_babel_runtime_helpers_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(props, _excluded4);
   var color = '';
   var style = {};
   var {
@@ -2116,13 +2203,10 @@ function ValueView(props) {
       fontWeight: 'bold'
     };
   }
-  if (value === undefined) {
+  if (value === undefined || type.toLocaleLowerCase() === 'nan' || !displayDataTypes) {
     typeView = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react__WEBPACK_IMPORTED_MODULE_2__.Fragment, {});
   }
   var isURL = value instanceof URL;
-  if (!displayDataTypes) {
-    typeView = /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(react__WEBPACK_IMPORTED_MODULE_2__.Fragment, {});
-  }
   color = ((_typeMap$type = typeMap[type]) == null ? void 0 : _typeMap$type.color) || '';
   var [showTools, setShowTools] = (0,react__WEBPACK_IMPORTED_MODULE_2__.useState)(false);
   var tools = (0,react__WEBPACK_IMPORTED_MODULE_2__.useMemo)(() => enableClipboard && showTools && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_copied__WEBPACK_IMPORTED_MODULE_4__.Copied, {
@@ -2158,24 +2242,24 @@ function ValueView(props) {
       content,
       children: content
     });
-    var valueView = reView ? reView : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(Label, {
+    var valueView = shortenTextAfterLength && type === 'string' ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(RenderShortenTextValue, {
       color: color,
+      href: isURL ? value.href : '',
       style: style,
-      className: "w-rjv-value",
-      children: isURL ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("a", {
-        href: value.href,
-        style: {
-          color
-        },
-        target: "_blank",
-        rel: "noopener noreferrer",
-        children: content
-      }) : content
+      isURL: isURL,
+      length: shortenTextAfterLength,
+      children: content
+    }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(RenderStringValue, {
+      color: color,
+      href: isURL ? value.href : '',
+      style: style,
+      isURL: isURL,
+      children: content
     });
     return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(Line, (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_1__["default"])({}, eventProps, {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(Label, (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_1__["default"])({}, reset, {
         ref: null,
-        children: [renderKey, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(Colon, {}), typeView, valueView, tools]
+        children: [renderKey, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(Colon, {}), typeView, reView ? reView : valueView, tools]
       }))
     }));
   }
@@ -2197,7 +2281,7 @@ function ValueView(props) {
   }));
 }
 ValueView.displayName = 'JVR.ValueView';
-var Label = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((_ref2, ref) => {
+var Label = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((_ref4, ref) => {
   var {
       children,
       color,
@@ -2205,8 +2289,8 @@ var Label = /*#__PURE__*/(0,react__WEBPACK_IMPORTED_MODULE_2__.forwardRef)((_ref
       opacity,
       paddingRight,
       style
-    } = _ref2,
-    reset = (0,_babel_runtime_helpers_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(_ref2, _excluded3);
+    } = _ref4,
+    reset = (0,_babel_runtime_helpers_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(_ref4, _excluded5);
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("span", (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_1__["default"])({
     style: (0,_babel_runtime_helpers_extends__WEBPACK_IMPORTED_MODULE_1__["default"])({
       color,
@@ -3550,10 +3634,10 @@ var store = __webpack_require__(/*! ../internals/shared-store */ "./node_modules
 (module.exports = function (key, value) {
   return store[key] || (store[key] = value !== undefined ? value : {});
 })('versions', []).push({
-  version: '3.32.1',
+  version: '3.32.2',
   mode: IS_PURE ? 'pure' : 'global',
   copyright: '© 2014-2023 Denis Pushkarev (zloirock.ru)',
-  license: 'https://github.com/zloirock/core-js/blob/v3.32.1/LICENSE',
+  license: 'https://github.com/zloirock/core-js/blob/v3.32.2/LICENSE',
   source: 'https://github.com/zloirock/core-js'
 });
 

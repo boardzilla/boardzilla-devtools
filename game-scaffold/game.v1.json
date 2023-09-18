@@ -1,0 +1,25 @@
+{
+  "name": "Your game",
+  "minPlayers": 1,
+  "maxPlayers": 4,
+  "ui": {
+    "root": ".",
+    "build": "npm run build:ui",
+    "watchPaths": [
+      "../../boardzilla-core/ui/",
+      "../../boardzilla-core/game/",
+      "ui/src",
+      "game/src"
+    ],
+    "outDir": "ui/build"
+  },
+  "game": {
+    "root": ".",
+    "build": "npm run build:game",
+    "watchPaths": [
+      "../../boardzilla-core/game/",
+      "game/src"
+    ],
+    "out": "game/build/game-interface.js"
+  }
+}

@@ -34,4 +34,4 @@ export default function History({items, initialState, revertTo, players}: Histor
     </div>)}
     <div ref={historyEndRef} />
   </div>
-  }
+}

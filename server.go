@@ -130,6 +130,17 @@ func (s *Server) Serve() error {
 		w.Header().Add("Cache-control", "no-store")
 		w.Write(f)
 	})
+	r.Get("/ui.css", func(w http.ResponseWriter, r *http.Request) {
+		f, err := os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, "index.css"))
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		w.Header().Add("Content-type", "text/css")
+		w.Header().Add("Cache-control", "no-store")
+		w.Write(f)
+	})
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		f, err := s.getFile("/index.html")
 		if err != nil {

@@ -4,8 +4,8 @@
     window.addEventListener('message', (event) => {
       switch (event.data.type) {
       case 'initialState':
-        console.debug("game generating initial state",event.data.players, event.data.setup);
-        const initialState = game.initialState(event.data.players, event.data.setup);
+        console.debug("game generating initial state", event.data.setup);
+        const initialState = game.initialState(event.data.setup);
         window.top.postMessage({type: "initialState", data: initialState}, "*")
         break;
       case 'processMove':

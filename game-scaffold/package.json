@@ -1,0 +1,17 @@
+{
+  "name": "boardzilla-game-scaffold",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "boardzilla": "link:../../boardzilla-core"
+  },
+  "devDependencies": {
+    "@types/node": "^20.6.2",
+    "esbuild": "^0.19.2",
+    "typescript": "^5.2.2"
+  },
+  "scripts": {
+    "build:ui": "esbuild --format=iife --asset-names=assets/[hash]/[name] --loader:.png=file --loader:.scss=css --bundle --outdir=ui/build ui/src/index.tsx",
+    "build:game": "esbuild --format=iife --global-name=game --bundle --outdir=game/build game/src/game-interface.ts"
+  }
+}
