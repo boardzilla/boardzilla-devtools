@@ -1,17 +1,17 @@
 package devtools
 
 type UIConfig struct {
-	Root            string `json:"root"`
-	BuildCommand    string `json:"build"`
-	Source          string `json:"src"`
-	OutputDirectory string `json:"outDir"`
+	Root            string   `json:"root"`
+	BuildCommand    string   `json:"build"`
+	WatchPaths      []string `json:"watchPaths"`
+	OutputDirectory string   `json:"outDir"`
 }
 
 type GameConfig struct {
-	Root         string `json:"root"`
-	BuildCommand string `json:"build"`
-	Source       string `json:"src"`
-	OutputFile   string `json:"out"`
+	Root         string   `json:"root"`
+	BuildCommand string   `json:"build"`
+	WatchPaths   []string `json:"watchPaths"`
+	OutputFile   string   `json:"out"`
 }
 
 type ManifestV1 struct {

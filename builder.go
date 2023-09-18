@@ -46,12 +46,15 @@ func (b *Builder) WatchedFiles() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return []string{
-		path.Join(b.root, "game.v1.json"),
-		path.Join(b.root, manifest.UI.Root, manifest.UI.Source),
-		path.Join(b.root, manifest.Game.Root, manifest.Game.Source),
-	}, nil
+	paths := make([]string, 0, len(manifest.UI.WatchPaths)+len(manifest.Game.WatchPaths)+1)
+	paths = append(paths, path.Join(b.root, "game.v1.json"))
+	for _, p := range manifest.UI.WatchPaths {
+		paths = append(paths, path.Join(b.root, p))
+	}
+	for _, p := range manifest.Game.WatchPaths {
+		paths = append(paths, path.Join(b.root, p))
+	}
+	return paths, nil
 }
 
 func (b *Builder) BuildUI() error {

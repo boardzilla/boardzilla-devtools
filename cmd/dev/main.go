@@ -55,24 +55,34 @@ func main() {
 				if e.Op != fsnotify.Write {
 					continue
 				}
-				log.Printf("path.Join(gameRoot, manifest.UI.Root): %s e.Name %s\n", path.Join(gameRoot, manifest.UI.Root), e.Name)
-				rel, err := filepath.Rel(path.Join(gameRoot, manifest.UI.Root, manifest.UI.Source), e.Name)
-				if err != nil {
-					log.Fatal(err)
+				for _, p := range manifest.UI.WatchPaths {
+					r, err := filepath.Rel(path.Join(gameRoot, p), e.Name)
+					if err != nil {
+						log.Fatal(err)
+					}
+					if !strings.HasPrefix(r, "..") {
+						if err := devBuilder.BuildUI(); err != nil {
+							log.Println("error during rebuild:", err)
+						}
+						log.Printf("UI reloaded due to change in %s\n", e.Name)
+						rebuilt <- devtools.ReloadUI
+						break
+					}
 				}
-				log.Printf("rel %s\n", rel)
-				if strings.HasPrefix(rel, "..") {
-					log.Printf("Game reloaded due to change in %s\n", e.Name)
-					if err := devBuilder.BuildGame(); err != nil {
-						log.Println("error during rebuild:", err)
+
+				for _, p := range manifest.Game.WatchPaths {
+					r, err := filepath.Rel(path.Join(gameRoot, p), e.Name)
+					if err != nil {
+						log.Fatal(err)
 					}
-					rebuilt <- devtools.ReloadGame
-				} else {
-					log.Printf("UI reloaded due to change in %s\n", e.Name)
-					if err := devBuilder.BuildUI(); err != nil {
-						log.Println("error during rebuild:", err)
+					if !strings.HasPrefix(r, "..") {
+						if err := devBuilder.BuildGame(); err != nil {
+							log.Println("error during rebuild:", err)
+						}
+						log.Printf("Game reloaded due to change in %s\n", e.Name)
+						rebuilt <- devtools.ReloadGame
+						break
 					}
-					rebuilt <- devtools.ReloadUI
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {

@@ -5,13 +5,13 @@
   "ui": {
     "root": ".",
     "build": "npm run build:ui",
-    "src": "ui/src",
+    "watchPaths": ["ui/src"],
     "outDir": "ui/build"
   },
   "game": {
     "root": ".",
     "build": "npm run build:game",
-    "src": "game/src",
+    "watchPaths": ["game/src"],
     "out": "game/build/index.js"
   }
 }
