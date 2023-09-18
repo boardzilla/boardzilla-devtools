@@ -32,6 +32,12 @@ var _jsxFileName = "/Users/aghull/boardzilla-devtools/site/src/App.tsx",
 
 
 
+// an update to the setup state
+
+// an update to the current game state
+
+// indicates the disposition of a message that was processed
+
 // used to send a move
 
 // used to actually start the game
@@ -307,7 +313,8 @@ function App() {
               setPlayers(e.data.setup.players);
               sendToUI({
                 type: "messageProcessed",
-                id: e.data.id
+                id: e.data.id,
+                error: undefined
               });
               break;
             case 'ready':
@@ -320,8 +327,9 @@ function App() {
               if (phase === 'new') {
                 for (let player of possiblePlayers.slice(0, numberOfPlayers)) {
                   sendToUI({
-                    type: "player",
-                    player,
+                    type: "user",
+                    name: player.name,
+                    id: player.id,
                     added: true
                   });
                 }
@@ -357,22 +365,21 @@ function App() {
     if (Number.isNaN(num)) return;
     setNumberOfPlayers(previousNumber => {
       const playerDifference = num - previousNumber;
-      console.log("playerDifference", playerDifference);
       if (playerDifference > 0) {
         for (let player of possiblePlayers.slice(previousNumber, num)) {
-          console.log("adding", player);
           sendToUI({
-            type: "player",
-            player,
+            type: "user",
+            id: player.id,
+            name: player.name,
             added: true
           });
         }
       } else if (playerDifference < 0) {
         for (let player of possiblePlayers.slice(num, previousNumber)) {
-          console.log("removing", player);
           sendToUI({
-            type: "player",
-            player,
+            type: "user",
+            id: player.id,
+            name: player.name,
             added: false
           });
         }
@@ -393,18 +400,18 @@ function App() {
         children: "Help"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 306,
+        lineNumber: 331,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("p", {
         children: "To switch between players use shift-1, shift-2 etc"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 307,
+        lineNumber: 332,
         columnNumber: 9
       }, this)]
     }, void 0, true, {
       fileName: _jsxFileName,
-      lineNumber: 305,
+      lineNumber: 330,
       columnNumber: 7
     }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
       style: {
@@ -430,7 +437,7 @@ function App() {
           onChange: v => updateNumberOfPlayers(v.currentTarget.value)
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 313,
+          lineNumber: 338,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("span", {
           style: {
@@ -445,12 +452,12 @@ function App() {
             children: p.name
           }, p.position, false, {
             fileName: _jsxFileName,
-            lineNumber: 315,
+            lineNumber: 340,
             columnNumber: 13
           }, this))
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 314,
+          lineNumber: 339,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("button", {
           style: {
@@ -461,12 +468,12 @@ function App() {
           children: "\u24D8"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 318,
+          lineNumber: 343,
           columnNumber: 11
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 312,
+        lineNumber: 337,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("iframe", {
         seamless: true,
@@ -480,7 +487,7 @@ function App() {
         src: "/ui.html"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 320,
+        lineNumber: 345,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("iframe", {
         onLoad: () => reprocessHistory(),
@@ -493,12 +500,12 @@ function App() {
         src: "/game.html"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 321,
+        lineNumber: 346,
         columnNumber: 9
       }, this)]
     }, void 0, true, {
       fileName: _jsxFileName,
-      lineNumber: 311,
+      lineNumber: 336,
       columnNumber: 7
     }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)("div", {
       style: {
@@ -514,12 +521,12 @@ function App() {
           children: "Reset game"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 324,
+          lineNumber: 349,
           columnNumber: 21
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 324,
+        lineNumber: 349,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_6__.jsxDEV)(_History__WEBPACK_IMPORTED_MODULE_2__["default"], {
         players: players,
@@ -528,17 +535,17 @@ function App() {
         items: history
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 325,
+        lineNumber: 350,
         columnNumber: 9
       }, this)]
     }, void 0, true, {
       fileName: _jsxFileName,
-      lineNumber: 323,
+      lineNumber: 348,
       columnNumber: 7
     }, this)]
   }, void 0, true, {
     fileName: _jsxFileName,
-    lineNumber: 304,
+    lineNumber: 329,
     columnNumber: 5
   }, this);
 }

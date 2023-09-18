@@ -7,6 +7,34 @@ import { Modal } from 'react-responsive-modal';
 import 'react-responsive-modal/styles.css';
 import './App.css';
 
+type UIUserEvent = {
+  type: "user"
+  id: string
+  name: string
+  added: boolean
+}
+
+// an update to the setup state
+type UISetupUpdateEvent = {
+  type: "update"
+  phase: "new"
+  state: any
+}
+
+// an update to the current game state
+type UIGameUpdateEvent = {
+  type: "update"
+  phase: "started"
+  state: any
+}
+
+// indicates the disposition of a message that was processed
+type UIMessageProcessed = {
+  type: "messageProcessed"
+  id: string
+  error: string | undefined
+}
+
 type UISetupUpdated = {
   type: "setupUpdated"
   data: any
@@ -91,7 +119,7 @@ function App() {
     (document.getElementById("game") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
 
-  const sendToUI = useCallback((data: any) => {
+  const sendToUI = useCallback((data: UIUserEvent | UIGameUpdateEvent | UISetupUpdateEvent | UIMessageProcessed) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
 
@@ -240,14 +268,14 @@ function App() {
             case 'start':
               sendToGame({type: "initialState", setup: e.data.setup})
               setPlayers(e.data.setup.players);
-              sendToUI({type: "messageProcessed", id: e.data.id});
+              sendToUI({type: "messageProcessed", id: e.data.id, error: undefined});
               break
             case 'ready':
               currentState = history.length === 0 ? initialState! : history[history.length - 1].data!;
               sendToUI({type: "update", phase, state: phase === 'new' ? setupState : currentState.players.find(p => p.position === currentPlayer)});
               if (phase === 'new') {
                 for (let player of possiblePlayers.slice(0, numberOfPlayers)) {
-                  sendToUI({type: "player", player, added: true});
+                  sendToUI({type: "user", name: player.name, id: player.id, added: true});
                 }
               }
               break
@@ -284,16 +312,13 @@ function App() {
     if (Number.isNaN(num)) return
     setNumberOfPlayers((previousNumber) => {
       const playerDifference = num - previousNumber
-      console.log("playerDifference", playerDifference)
       if (playerDifference > 0) {
         for (let player of possiblePlayers.slice(previousNumber, num)) {
-          console.log("adding", player)
-          sendToUI({type: "player", player, added: true});
+          sendToUI({type: "user", id: player.id, name: player.name, added: true});
         }
       } else if (playerDifference < 0) {
         for (let player of possiblePlayers.slice(num, previousNumber)) {
-          console.log("removing", player)
-          sendToUI({type: "player", player, added: false});
+          sendToUI({type: "user", id: player.id, name: player.name, added: false});
         }
       }
       return num;
