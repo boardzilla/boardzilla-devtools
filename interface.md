@@ -32,11 +32,16 @@ Must export an object `game` with two functions, `initialState` and `processMove
 initialState(setup: SetupState): GameUpdate
 processMove(previousState: GameState, move: Move): GameUpdate
 
-type Player = {
+type User = {
   id: string
-  position: number
   name: string
+  playerInfo: PlayerInfo | undefined
+}
+
+type PlayerInfo = {
+  position: number
   color: string
+  settings: any
 }
 
 type Message = {
@@ -46,12 +51,23 @@ type Message = {
 
 type PlayerState = {
   position: number
-  state: GameState // Game state, scrubbed
+  state: any // Game state, scrubbed
 }
 
 type GameSettings = Record<string, any>
-
 type GameState = any
+
+type SetupState = {
+  users: User[]
+  settings: GameSettings
+}
+
+type GameUpdate = {
+  game: GameState
+  players: PlayerState[]
+  messages: Message[]
+}
+
 /*
 {
   players: (Player & Record<string, any>)[] // Game-specific player object
@@ -62,16 +78,6 @@ type GameState = any
 }
 */
 
-type SetupState = {
-  players: (Player & { settings: Record<string, any> })[] // permit add'l per-player settings
-  settings: GameSettings
-}
-
-type GameUpdate = {
-  game: GameState
-  players: PlayerState[]
-  messages: Message[]
-}
 
 type Move = {
   position: number
@@ -86,36 +92,44 @@ The game ui occurs in two phases "new" and "started".  The phase will be indicat
 During "new", it will recv the following events.
 
 ```ts
-window.addEventListener('message', (evt: MessageEvent<UserEvent | SetupUpdateEvent | MessageProcessed>))
-window.top.postMessage(m: SetupUpdated, PlayerUpdated, StartMessage | ReadyMessage)
-
+// host-only
+window.addEventListener('message', (evt: MessageEvent<
+  GameUpdateEvent |
+  SetupUpdateEvent |
+  MessageProcessed
+>))
+window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayerAsHostMessage | UpdatePlayerMessage | StartMessage | ReadyMessage)
 ```
 
 During "started", it will recv the following events.
 
 ```ts
-window.addEventListener('message', (evt: MessageEvent<GameUpdateEvent | MessageProcessed>))
-window.top.postMessage(m: MoveMessage | ReadyMessage)
-
+window.addEventListener('message', (evt: MessageEvent<
+  GameUpdateEvent |
+  SetupUpdateEvent |
+  MessageProcessed
+>))
+window.top.postMessage(m: UpdatePlayerMessage | ReadyMessage)
 ```
+
+// set position
+// set metadata on player
+// set game settings
+// update color & name
+
+// all of this is communicated back out via settings json
+type SetupState = {
+  players: (Player & { settings: Record<string, any> })[] // permit add'l per-player settings
+  settings: GameSettings
+
+}
 
 #### recv events by ui
 ```ts
 
-// host-only
-// indicates a user was added
-type UserEvent = {
-  type: "user"
-  id: string
-  name: string
-  added: boolean
-}
-
-type PlayerUpdateEvent = {
-  type: "player"
-  id: string
-  name: string
-  color: string
+type GameUpdateEvent = {
+  type: "gameUpdate"
+  state: any
 }
 
 // non-host
@@ -123,13 +137,6 @@ type PlayerUpdateEvent = {
 type SetupUpdateEvent = {
   type: "setupUpdate"
   state: SetupState
-}
-
-// all players
-// an update to the current game state
-type GameUpdateEvent = {
-  type: "gameUpdate"
-  state: GameState
 }
 
 // indicates the disposition of a message that was processed
@@ -140,41 +147,47 @@ type MessageProcessed = {
 }
 ```
 
+StartMessage | ReadyMessage
+
 #### sent events by ui
 
 ```ts
-// host-only
-// used to update the current setup json state
-type SetupUpdated = {
-  type: "setupUpdated"
-  data: SetupState
+type UpdateSettingsMessage = {
+  type: "updateSettings"
+  id: string
+  data: any
 }
 
-// non-host
-type PlayerUpdated = {
-  type: "player"
+type UpdatePlayerAsHostMessage = {
+  type: "updatePlayerAsHost"
+  id: string
+  userID: string
+  info: PlayerInfo | undefined
+}
+
+type UpdatePlayerMessage = {
+  type: "updatePlayer"
+  id: string
   name: string
   color: string
+}
+
+type StartMessage = {
+  type: "start"
+  id: string
+  setup: SetupState
+}
+
+type ReadyMessage = {
+  type: "ready"
 }
 
 // all players
 // used to send a move
 type MoveMessage = {
-  id: string
   type: 'move'
-  data: any
-}
-
-// used to actually start the game
-type StartMessage = {
   id: string
-  type: 'start'
-  setup: SetupState
-}
-
-// used to tell the top that you're ready to recv events
-type ReadyMessage = {
-  type: 'ready'
+  data: any
 }
 
 // bootstrap data
