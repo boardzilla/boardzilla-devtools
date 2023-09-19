@@ -162,7 +162,7 @@ type UpdatePlayerAsHostMessage = {
   type: "updatePlayerAsHost"
   id: string
   userID: string
-  info: PlayerInfo | undefined
+  info: Partial<PlayerInfo>
 }
 
 type UpdatePlayerMessage = {
