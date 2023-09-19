@@ -29,7 +29,7 @@
 Must export an object `game` with two functions, `initialState` and `processMove`.
 
 ```ts
-initialState(state: SetupState | GameState): GameUpdate
+initialState(setup: SetupState): GameUpdate
 processMove(previousState: GameState, move: Move): GameUpdate
 
 type User = {
@@ -89,14 +89,13 @@ window.addEventListener('message', (evt: MessageEvent<
   SettingsUpdateEvent |
   MessageProcessed
 >))
-window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayerAsHostMessage | UpdatePlayerMessage | StartMessage | ReadyMessage)
+window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayerMessage | UpdateSelfPlayerMessage | StartMessage | ReadyMessage)
 ```
 
 During "started", it will recv the following events.
 
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
-  UserEvent |
   GameUpdateEvent |
   MessageProcessed
 >))
@@ -149,15 +148,15 @@ type UpdateSettingsMessage = {
 }
 
 // host only
-type UpdatePlayerAsHostMessage = {
+type UpdatePlayerMessage = {
   type: "updatePlayer"
   id: string
   position: number
-  player?: Player
+  player?: Partial<Player>
 }
 
-type UpdatePlayerMessage = {
-  type: "updateMyPlayer"
+type UpdateSelfPlayerMessage = {
+  type: "updateSelfPlayer"
   id: string
   name: string
   color: string
