@@ -166,7 +166,6 @@ type UpdateSelfPlayerMessage = {
 type StartMessage = {
   type: "start"
   id: string
-  setup: SetupState
 }
 
 type ReadyMessage = {
