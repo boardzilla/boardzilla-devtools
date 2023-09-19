@@ -176,4 +176,8 @@ type StartMessage = {
 type ReadyMessage = {
   type: 'ready'
 }
+
+// bootstrap data
+
+{userID: number, host: bool}
 ```
