@@ -114,7 +114,7 @@ function App() {
   const onCloseModal = () => setOpen(false);
 
   const bootstrap = useCallback((): string => {
-    return JSON.stringify({userID: possiblePlayers.find(p => p.position === currentPlayer)!.id})
+    return JSON.stringify({host: currentPlayer === 0, userID: possiblePlayers.find(p => p.position === currentPlayer)!.id})
   }, [currentPlayer])
 
   const sendToGame = useCallback((data: any) => {
@@ -294,7 +294,7 @@ function App() {
     }
 
     window.addEventListener('message', listener);
-    return () => window.removeEventListener('message', listener)
+    return () => window.removeEventListener('message', listener);
   }, [currentPlayer, history, initialState, numberOfPlayers, phase, players, sendToGame, sendToUI, setupState]);
 
   useEffect(() => {
