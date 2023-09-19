@@ -51,7 +51,7 @@ type PlayerState = {
 
 type GameSettings = Record<string, any>
 
-type GameState = any 
+type GameState = any
 /*
 {
   players: (Player & Record<string, any>)[] // Game-specific player object
@@ -102,6 +102,7 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 #### recv events by ui
 ```ts
 
+// host-only
 // indicates a user was added
 type UserEvent = {
   type: "user"
@@ -110,17 +111,24 @@ type UserEvent = {
   added: boolean
 }
 
+type PlayerUpdateEvent = {
+  type: "player"
+  id: string
+  name: string
+  color: string
+}
+
+// non-host
 // an update to the setup state
 type SetupUpdateEvent = {
-  type: "update"
-  phase: "new"
+  type: "setupUpdate"
   state: SetupState
 }
 
+// all players
 // an update to the current game state
 type GameUpdateEvent = {
-  type: "update"
-  phase: "started"
+  type: "gameUpdate"
   state: GameState
 }
 
@@ -135,23 +143,26 @@ type MessageProcessed = {
 #### sent events by ui
 
 ```ts
+// host-only
 // used to update the current setup json state
 type SetupUpdated = {
   type: "setupUpdated"
   data: SetupState
 }
 
+// non-host
 type PlayerUpdated = {
   type: "player"
   name: string
   color: string
 }
 
+// all players
 // used to send a move
 type MoveMessage = {
   id: string
   type: 'move'
-  data: string[]
+  data: any
 }
 
 // used to actually start the game
