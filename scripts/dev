@@ -4,3 +4,5 @@ $(cd site && npm run build:watch) &
 LIVE_DEV=1 go run cmd/dev/main.go "$1" &
 
 wait
+
+trap "pkill -P $$" EXIT

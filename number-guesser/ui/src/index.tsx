@@ -8,26 +8,41 @@ type Player = {
   color: string
 }
 
-type PlayerEvent = {
-  type: "player"
-  player: Player
+type UserEvent = {
+  type: "user"
+  name: string
+  id: string
   added: boolean
 }
 
-type UpdateEvent = {
-  type: "update"
-  phase: "new" | "started"
-  state: any
+// an update to the setup state
+type SetupUpdateEvent = {
+  type: "setupUpdate"
+  phase: "new"
+  state: SetupState<NumberGuesserSetupState>
 }
 
+// an update to the current game state
+type GameUpdateEvent = {
+  type: "gameUpdate"
+  phase: "started"
+  state: GameState
+}
+
+// indicates the disposition of a message that was processed
 type MessageProcessed = {
   type: "messageProcessed"
   id: string
   error: string | undefined
 }
 
-type SetupState = {
+type NumberGuesserSetupState = {
   evenOnly: boolean
+}
+
+type SetupState<T> = {
+  players: (Player & { settings: Record<string, any> })[] // permit add'l per-player settings
+  settings: T
 }
 
 type GameState = {
@@ -36,65 +51,89 @@ type GameState = {
   possibleGuesses: number[]
 }
 
+type SetupUpdated = {
+  type: "setupUpdated"
+  data: SetupState<NumberGuesserSetupState>
+}
+
+type PlayerUpdated = {
+  type: "player"
+  name: string
+  color: string
+}
+
+// used to send a move
+type MoveMessage<T> = {
+  id: string
+  type: 'move'
+  data: T
+}
+
+type NumberGuesserMove = {
+  number: number
+}
+
+// used to actually start the game
+type StartMessage = {
+  id: string
+  type: 'start'
+  setup: SetupState<NumberGuesserSetupState>
+}
+
+// used to tell the top that you're ready to recv events
+type ReadyMessage = {
+  type: 'ready'
+}
+
 const Game = () => {
   const [players, setPlayers] = useState<Player[]>([]);
   const [readySent, setReadySent] = useState<boolean>(false);
   const [phase, setPhase] = useState<"new" | "started">("new");
-  const [setupState, setSetupState] = useState<SetupState | undefined>({evenOnly: false});
+  const [setupState, setSetupState] = useState<NumberGuesserSetupState>({evenOnly: false});
   const [gameState, setGameState] = useState<GameState | undefined>();
   const [error, setError] = useState<string>("");
 
+  const sendToTop = useCallback((m: SetupUpdated | PlayerUpdated | MoveMessage<NumberGuesserMove> | StartMessage | ReadyMessage) => {
+    window.top!.postMessage(m, "*")
+  }, [])
+
   const makeMove = useCallback((n: number) => {
-    window.top!.postMessage({type: "move", id: crypto.randomUUID(), data: {number: n}}, "*")
+    sendToTop({type: "move", id: crypto.randomUUID(), data: {number: n}})
   }, [])
 
   const startGame = useCallback(() => {
-    window.top!.postMessage({type: "start", id: crypto.randomUUID(), setup: setupState, players}, "*")
+    sendToTop({type: "start", id: crypto.randomUUID(), setup: {settings: setupState!, players: players.map(p => {return {...p, settings: {}}})}})
   }, [setupState, players])
 
   useEffect(() => {
-    const listener = (event: MessageEvent<PlayerEvent | UpdateEvent | MessageProcessed>) => {
-      if (event.data.type === 'update') {
-        switch (event.data.phase) {
-          case 'new':
-            setSetupState(event.data.state)
-            setGameState(undefined)
-            break
-          case 'started':
-            setSetupState(undefined)
-            setGameState(event.data.state)
-            break
+    const listener = (event: MessageEvent<UserEvent | SetupUpdateEvent | GameUpdateEvent | MessageProcessed>) => {
+      const e = event.data
+      console.log("ui got", e.type, "event")
+      switch(e.type) {
+        case 'user':
+          if (e.added) {
+            setPlayers((players) => {
+              if (players.find(p => p.id === e.id)) return players
+              return [...players, { position: players.length, name: e.name, id: e.id, color: "#ee00ee" }]
+            })
+          } else {
+            setPlayers((players) => players.filter(p => p.id !== e.id))
           }
-        setPhase(event.data.phase)
-        return
-      }
-      switch (phase) {
-        case 'new':
-          switch(event.data.type) {
-            case 'player':
-              let player = event.data.player
-              if (event.data.added) {
-                setPlayers((players) => {
-                  if (players.find(p => p.id === player.id)) return players
-                  return [...players, player]
-                })
-              } else {
-                setPlayers((players) => players.filter(p => p.id !== player.id))
-              }
-              break;
-            case 'messageProcessed':
-              break;
-            }
+          break;
+        case 'setupUpdate':
+          setPhase('new');
+          setSetupState(e.state.settings);
+          setPlayers(e.state.players);
           break
-        case 'started':
-          switch(event.data.type) {
-            case 'messageProcessed':
-              setError(event.data.error || "");
-              break;
-          }
+        case 'gameUpdate':
+          setPhase('started');
+          setGameState(e.state);
           break
+        case 'messageProcessed':
+          setError(e.error || "");
+          break;
+        }
       }
-    }
 
     window.addEventListener('message', listener, false)
     if (!readySent) {

@@ -7,6 +7,11 @@ import { Modal } from 'react-responsive-modal';
 import 'react-responsive-modal/styles.css';
 import './App.css';
 
+type SetupState<T> = {
+  players: (Player & { settings: Record<string, any> })[] // permit add'l per-player settings
+  settings: T
+}
+
 type UIUserEvent = {
   type: "user"
   id: string
@@ -16,15 +21,13 @@ type UIUserEvent = {
 
 // an update to the setup state
 type UISetupUpdateEvent = {
-  type: "update"
-  phase: "new"
-  state: any
+  type: "setupUpdate"
+  state: SetupState<any>
 }
 
 // an update to the current game state
 type UIGameUpdateEvent = {
-  type: "update"
-  phase: "started"
+  type: "gameUpdate"
   state: any
 }
 
@@ -33,11 +36,6 @@ type UIMessageProcessed = {
   type: "messageProcessed"
   id: string
   error: string | undefined
-}
-
-type UISetupUpdated = {
-  type: "setupUpdated"
-  data: any
 }
 
 // used to send a move
@@ -107,13 +105,17 @@ function App() {
   const [setupState, setSetupState] = useState<any>({});
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState(1);
+  const [currentPlayer, setCurrentPlayer] = useState(0);
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [open, setOpen] = useState(false);
 
   const onOpenModal = () => setOpen(true);
   const onCloseModal = () => setOpen(false);
+
+  const bootstrap = useCallback((): string => {
+    return JSON.stringify({userID: possiblePlayers.find(p => p.position === currentPlayer)!.id})
+  }, [currentPlayer])
 
   const sendToGame = useCallback((data: any) => {
     (document.getElementById("game") as HTMLIFrameElement).contentWindow!.postMessage(data)
@@ -135,7 +137,7 @@ function App() {
     if (!gameLoaded) return
     const newInitialState = await new Promise<GameUpdate>((resolve, reject) => {
       initalStatePromise = {resolve, reject}
-      sendToGame({type: "initialState", players, setup: {}})
+      sendToGame({type: "initialState", setup: {players: players}})
     })
     let i = 0;
     let previousState = newInitialState
@@ -165,11 +167,11 @@ function App() {
   useEffect(() => {
     console.log("sending update")
     if (phase === 'new') {
-      return sendToUI({type: "update", phase, state: setupState});
+      return sendToUI({type: "setupUpdate", state: {players: players.map(p => {return {...p, settings: {}}}), settings: setupState}});
     }
     const currentState = history.length === 0 ? initialState : history[history.length - 1].data;
-    sendToUI({type: "update", phase, state: currentState?.players.find(p => p.position === currentPlayer)?.state});
-  }, [initialState, history, currentPlayer, phase, sendToUI, setupState]);
+    sendToUI({type: "gameUpdate", state: currentState?.players.find(p => p.position === currentPlayer)?.state});
+  }, [initialState, history, currentPlayer, phase, sendToUI, setupState, players]);
 
   useEffect(() => {
     console.log("events!", Math.random())
@@ -204,7 +206,7 @@ function App() {
 
   useEffect(() => {
     console.log("listener!", Math.random())
-    const listener = (e: MessageEvent<UISetupUpdated | UIMoveMessage | UIStartMessage | UIReadyMessage | GameInitialStateMessage | GameMoveProcessedMessage | UISwitchPlayerMessage>) => {
+    const listener = (e: MessageEvent<UISetupUpdateEvent | UIMoveMessage | UIStartMessage | UIReadyMessage | GameInitialStateMessage | GameMoveProcessedMessage | UISwitchPlayerMessage>) => {
       console.log("got one!")
       const path = (e.source! as WindowProxy).location.pathname
       let currentState
@@ -220,7 +222,7 @@ function App() {
               setInitialState(e.data.data);
               setPhase("started");
               setCurrentPlayer(e.data.data.players[0].position);
-              sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)?.state});
+              sendToUI({type: "gameUpdate", state: e.data.data.players.find(p => p.position === currentPlayer)?.state});
               break
             case 'moveProcessed':
               let p = pendingPromises.get(e.data.id)
@@ -244,15 +246,15 @@ function App() {
               }
               sendToUI({type: "messageProcessed", id: e.data.id, error: e.data.error})
               if (e.data.data) {
-                sendToUI({type: "update", phase: "started", state: e.data.data.players.find(p => p.position === currentPlayer)?.state});
+                sendToUI({type: "gameUpdate", state: e.data.data.players.find(p => p.position === currentPlayer)?.state});
               }
               break
             }
           break
         case '/ui.html':
           switch(e.data.type) {
-            case 'setupUpdated':
-              setSetupState(e.data.data)
+            case 'setupUpdate':
+              setSetupState(e.data.state)
               break
             case 'move':
               setHistory([...history, {
@@ -272,11 +274,13 @@ function App() {
               break
             case 'ready':
               currentState = history.length === 0 ? initialState! : history[history.length - 1].data!;
-              sendToUI({type: "update", phase, state: phase === 'new' ? setupState : currentState.players.find(p => p.position === currentPlayer)});
               if (phase === 'new') {
+                sendToUI({type: "setupUpdate", state: {players: [], settings: setupState}});
                 for (let player of possiblePlayers.slice(0, numberOfPlayers)) {
                   sendToUI({type: "user", name: player.name, id: player.id, added: true});
                 }
+              } else {
+                sendToUI({type: "gameUpdate", state: currentState.players.find(p => p.position === currentPlayer)});
               }
               break
             // special event for player switching
@@ -342,7 +346,7 @@ function App() {
           </span>
           <button  style={{fontSize: '20pt'}} className="button-link" onClick={onOpenModal}>ⓘ</button>
         </div>
-        <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src="/ui.html"></iframe>
+        <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
         <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div style={{width: '30vw', paddingLeft: '1em', height:'100vh', display: 'flex', flexDirection:'column'}}>

@@ -164,6 +164,27 @@ func (s *Server) Serve() error {
 		w.Header().Add("Cache-control", "no-store")
 		t.Execute(w, data)
 	})
+	r.Get("/ui.html", func(w http.ResponseWriter, r *http.Request) {
+		f, err := s.getFile("/ui.html")
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		t, err := template.New("ui.html").Parse(string(f))
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		var data struct {
+			Bootstrap string
+		}
+		data.Bootstrap = r.URL.Query().Get("bootstrap")
+		w.Header().Add("Content-type", "text/html")
+		w.Header().Add("Cache-control", "no-store")
+		t.Execute(w, data)
+	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 		ext := filepath.Ext(path)
