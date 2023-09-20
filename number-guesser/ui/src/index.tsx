@@ -18,14 +18,12 @@ type UserEvent = {
 // an update to the setup state
 type SetupUpdateEvent = {
   type: "setupUpdate"
-  phase: "new"
   state: SetupState<NumberGuesserSetupState>
 }
 
 // an update to the current game state
 type GameUpdateEvent = {
   type: "gameUpdate"
-  phase: "started"
   state: GameState
 }
 

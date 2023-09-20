@@ -80,16 +80,16 @@ const body = document.getElementsByTagName("body")[0];
 const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
 const minPlayers = parseInt(body.getAttribute("minPlayers")!);
 const possiblePlayers = [
-  {id: "0", position: 0, name: "Evelyn", color: "#ff0000"},
-  {id: "1", position: 1, name: "Logan", color: "#00ff00"},
-  {id: "2", position: 2, name: "Avery", color: "#0000ff"},
-  {id: "3", position: 3, name: "Jayden", color: "#666600"},
-  {id: "4", position: 4, name: "Aischa", color: "#006666"},
-  {id: "5", position: 5, name: "Shyamapada", color: "#660066"},
-  {id: "6", position: 6, name: "Iovica", color: "#333333"},
-  {id: "7", position: 7, name: "Liubika", color: "#ff6633"},
-  {id: "8", position: 8, name: "Zvezdelina", color: "#3366ff"},
-  {id: "9", position: 9, name: "Guadalupe", color: "#f01a44"},
+  {id: "0", position: 1, name: "Evelyn", color: "#ff0000"},
+  {id: "1", position: 2, name: "Logan", color: "#00ff00"},
+  {id: "2", position: 3, name: "Avery", color: "#0000ff"},
+  {id: "3", position: 4, name: "Jayden", color: "#666600"},
+  {id: "4", position: 5, name: "Aischa", color: "#006666"},
+  {id: "5", position: 6, name: "Shyamapada", color: "#660066"},
+  {id: "6", position: 7, name: "Iovica", color: "#333333"},
+  {id: "7", position: 8, name: "Liubika", color: "#ff6633"},
+  {id: "8", position: 9, name: "Zvezdelina", color: "#3366ff"},
+  {id: "9", position: 10, name: "Guadalupe", color: "#f01a44"},
 ]
 
 type pendingPromise = {
@@ -105,7 +105,7 @@ function App() {
   const [setupState, setSetupState] = useState<any>({});
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [currentPlayer, setCurrentPlayer] = useState(0);
+  const [currentPlayer, setCurrentPlayer] = useState(1);
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [open, setOpen] = useState(false);
@@ -114,7 +114,7 @@ function App() {
   const onCloseModal = () => setOpen(false);
 
   const bootstrap = useCallback((): string => {
-    return JSON.stringify({host: currentPlayer === 0, userID: possiblePlayers.find(p => p.position === currentPlayer)!.id})
+    return JSON.stringify({host: currentPlayer === 1, userID: possiblePlayers.find(p => p.position === currentPlayer)!.id})
   }, [currentPlayer])
 
   const sendToGame = useCallback((data: any) => {
@@ -346,7 +346,7 @@ function App() {
           </span>
           <button  style={{fontSize: '20pt'}} className="button-link" onClick={onOpenModal}>ⓘ</button>
         </div>
-        <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
+        <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
         <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div style={{width: '30vw', paddingLeft: '1em', height:'100vh', display: 'flex', flexDirection:'column'}}>

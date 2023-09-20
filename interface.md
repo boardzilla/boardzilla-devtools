@@ -133,7 +133,7 @@ type GameUpdateEvent = {
 type MessageProcessed = {
   type: "messageProcessed"
   id: string
-  error: string | undefined
+  error?: string
 }
 ```
 

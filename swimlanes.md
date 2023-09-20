@@ -17,20 +17,20 @@ Server -> Client: `SettingsUpdateEvent`
 
 
 -: *Host seats user*
-Client -> Server: `UpdatePlayerAsHostMessage`
+Client -> Server: `UpdatePlayerMessage`
 note: Host UI picks an available color, plus any default settings and includes here
 Server -> All Clients: `PlayerEvent`
 
 -: *Host unseats user*
-Client -> Server: `UpdatePlayerAsHostMessage` (`player=undefined`)
+Client -> Server: `UpdatePlayerMessage` (`player=undefined`)
 Server -> All Clients: `PlayerEvent`
 
 -: *Host reserves seat*
-Client -> Server: `UpdatePlayerAsHostMessage` (`player.userID=undefined`)
+Client -> Server: `UpdatePlayerMessage` (`player.userID=undefined`)
 Server -> All Clients: `PlayerEvent`
 
 -: *User changes own color/name*
-Client -> Server: `UpdatePlayerMessage`
+Client -> Server: `UpdateSelfPlayerMessage`
 Server -> All Clients: `PlayerEvent`
 
 -: *Host changes setting*
@@ -41,7 +41,7 @@ Server -> All Clients: `SettingsUpdateEvent`
 Client -> Server: `StartMessage`
 Server <-> Server Game: `InitialState` returns `GameUpdate`
 Server -> All Clients: route change to <session URL> + `GameUpdateEvent`
-note: server persists `GameUpdate.game` and broadcasts `GameUpdate.players[n]` to each player
+note: server persists `GameUpdate` and broadcasts `GameUpdate.players[n]` to each player
 All Clients -> Client Game: `game.setState`
 
 =: **Game Play**
@@ -51,18 +51,18 @@ Client <-> Client Game: `processMove` returns success or `Selection`
 Client -> Server: `MoveMessage`
 Server <-> Server Game: `processMove` returns `GameUpdate`
 Server -> All Clients: `GameUpdateEvent`
-note: server persists `GameUpdate.game` and broadcasts `GameUpdate.players[n]` to each player
+note: server persists `GameUpdate` and broadcasts `GameUpdate.players[n]` to each player
 All Clients -> Client Game: `game.setState`
 
 -: *Player joins game*
 Client -> Server: GET <session URL>
-Server <-> Server Game: `initialState` with persisted `GameState` returns `GameUpdate`
 Server -> Client: game page
 Client -> Client Game: `setup`
 Server -> All Clients: `UserEvent`
 note: included for chat
 Client -> Server: `ReadyMessage`
 Server -> Client: `GameUpdateEvent`
+note: `GameUpdate` from server persisted state
 Client -> Client Game: `game.setState`
 
 order: Server Game, Server, Client, All Clients, Client Game
