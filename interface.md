@@ -41,6 +41,7 @@ type Player = {
   userID?: string
   color: string
   name: string
+  position: number
   settings?: any
 }
 
@@ -89,8 +90,10 @@ window.addEventListener('message', (evt: MessageEvent<
   SettingsUpdateEvent |
   MessageProcessed
 >))
-window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayerMessage | UpdateSelfPlayerMessage | StartMessage | ReadyMessage)
+window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayerMessage | UnseatPlayerMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
 ```
+
+Only the host is permitted to send `UpdatePlayerMessage`.
 
 During "started", it will recv the following events.
 
@@ -113,7 +116,6 @@ type UserEvent = {
 
 type PlayerEvent = {
   type: "player"
-  position: number
   player: Player
 }
 
@@ -152,7 +154,22 @@ type UpdatePlayerMessage = {
   type: "updatePlayer"
   id: string
   position: number
-  player?: Partial<Player>
+  name: string
+  color: string
+  settings?: any
+}
+
+// host only
+type UnseatPlayerMessage = {
+  type: "unseatPlayer"
+  id: string
+  position: number
+}
+
+// host only
+type StartMessage = {
+  type: "start"
+  id: string
 }
 
 type UpdateSelfPlayerMessage = {
@@ -160,12 +177,6 @@ type UpdateSelfPlayerMessage = {
   id: string
   name: string
   color: string
-}
-
-// host only
-type StartMessage = {
-  type: "start"
-  id: string
 }
 
 type ReadyMessage = {
