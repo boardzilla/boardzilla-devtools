@@ -85,12 +85,12 @@ During "new", it will recv the following messages.
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
   UserEvent |
-  PlayerEvent |
+  PlayersEvent |
   GameUpdateEvent |
   SettingsUpdateEvent |
   MessageProcessed
 >))
-window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayerMessage | UnseatPlayerMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
+window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
 ```
 
 Only the host is permitted to send `UpdatePlayerMessage`.
@@ -114,9 +114,9 @@ type UserEvent = {
   added: boolean
 }
 
-type PlayerEvent = {
+type PlayersEvent = {
   type: "player"
-  player: Player
+  players: Player[]
 }
 
 // an update to the setup state
@@ -150,20 +150,10 @@ type UpdateSettingsMessage = {
 }
 
 // host only
-type UpdatePlayerMessage = {
+type UpdatePlayersMessage = {
   type: "updatePlayer"
   id: string
-  position: number
-  name: string
-  color: string
-  settings?: any
-}
-
-// host only
-type UnseatPlayerMessage = {
-  type: "unseatPlayer"
-  id: string
-  position: number
+  players: Partial<Player>[]
 }
 
 // host only
