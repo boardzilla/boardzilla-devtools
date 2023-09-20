@@ -17,21 +17,29 @@ Server -> Client: `SettingsUpdateEvent`
 
 
 -: *Host seats user*
-Client -> Server: `UpdatePlayerMessage`
+Client -> Server: `UpdatePlayersMessage[SeatOperation]`
 note: Host UI picks an available color, plus any default settings and includes here
-Server -> All Clients: `PlayerEvent`
+Server -> All Clients: `PlayersEvent`
+
+-: *Host swaps seats*
+Client -> Server: `UpdatePlayersMessage[SeatOperation, SeatOperation]`
+Server -> All Clients: `PlayersEvent`
 
 -: *Host unseats user*
-Client -> Server: `UpdatePlayerMessage` (`player=undefined`)
-Server -> All Clients: `PlayerEvent`
+Client -> Server: `UpdatePlayersMessage[UnseatOperation]`
+Server -> All Clients: `PlayersEvent`
 
 -: *Host reserves seat*
-Client -> Server: `UpdatePlayerMessage` (`player.userID=undefined`)
-Server -> All Clients: `PlayerEvent`
+Client -> Server: `UpdatePlayersMessage[ReserveOperation]`
+Server -> All Clients: `PlayersEvent`
+
+-: *Host changes player info*
+Client -> Server: `UpdatePlayersMessage[UpdateOperation]`
+Server -> All Clients: `PlayersEvent`
 
 -: *User changes own color/name*
 Client -> Server: `UpdateSelfPlayerMessage`
-Server -> All Clients: `PlayerEvent`
+Server -> All Clients: `PlayersEvent`
 
 -: *Host changes setting*
 Client -> Server: `UpdateSettingsMessage`

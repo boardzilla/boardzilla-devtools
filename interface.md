@@ -38,10 +38,10 @@ type User = {
 }
 
 type Player = {
+  position: number
   userID?: string
   color: string
   name: string
-  position: number
   settings?: any
 }
 
@@ -80,7 +80,7 @@ type Move = {
 
 The game ui occurs in two phases "new" and "started".  The phase will be indicated by
 
-During "new", it will recv the following messages.
+During "new", it will recv the following events, and send the following messages.
 
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
@@ -90,12 +90,13 @@ window.addEventListener('message', (evt: MessageEvent<
   SettingsUpdateEvent |
   MessageProcessed
 >))
+
 window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
 ```
 
 Only the host is permitted to send `UpdatePlayerMessage`.
 
-During "started", it will recv the following events.
+During "started", it will recv the following events, and send the following messages.
 
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
@@ -107,6 +108,37 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 
 #### recv events by ui
 ```ts
+type SeatOperation = {
+  type: 'seat'
+  position: number,
+  userID: string
+  color: string
+  name: string
+  settings?: any
+}
+
+type UnseatOperation = {
+  type: 'unseat'
+  position: number,
+}
+
+type UpdateOperation = {
+  type: 'update'
+  position: number,
+  color?: string
+  name?: string
+  settings?: any
+}
+
+type ReserveOperation = {
+  type: 'reserve'
+  position: number,
+  color: string
+  name: string
+  settings?: any
+}
+
+type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
 
 type UserEvent = {
   type: "user"
@@ -116,7 +148,7 @@ type UserEvent = {
 
 type PlayersEvent = {
   type: "player"
-  players: Player[]
+  operations: PlayerOperation[]
 }
 
 // an update to the setup state
@@ -153,7 +185,7 @@ type UpdateSettingsMessage = {
 type UpdatePlayersMessage = {
   type: "updatePlayer"
   id: string
-  players: Partial<Player>[]
+  operations: PlayerOperation[]
 }
 
 // host only
