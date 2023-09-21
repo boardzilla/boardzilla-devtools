@@ -1,69 +1,28 @@
-export type Player = {
-  position: number
-  name: string
-  color: string
-}
+import { NumberGuesserGameMove, NumberGuesserGameState, NumberGuesserGameUpdate, NumberGuesserSetupState } from "../../types";
 
-export type Message = {
-  position: number
-  body: string
-}
-
-export type PlayerState = {
-  position: number
-	winner : number | undefined
-	currentPlayer: number,
-	move: number,
-	possibleGuesses: number[]
-}
-
-export type GameUpdate = {
-  game: GameState
-  players: PlayerState[]
-  messages: Message[]
-}
-
-type GameState = {
-	currentPlayer: number
-	players: Player[]
-  number: number
-  finished: boolean
-  move: number
-	winner: number | undefined
-	possibleGuesses: number[]
-}
-
-type Move<T> = {
-	position: number
-	data: T
-}
-
-type NumberGuessingMove = {
-	number: number
-}
-
-export function initialState(players: Player[], setup: {evenOnly:boolean} | undefined): GameUpdate {
+export function initialState(setup: NumberGuesserSetupState): NumberGuesserGameUpdate {
 	const possibleGuesses: number[] = []
-	console.log("setup?.evenNumber", setup?.evenOnly)
-	for (let i = 0; i != 20; i += setup?.evenOnly ? 2 : 1) {
+	for (let i = 0; i != 20; i += setup.settings.evenOnly ? 2 : 1) {
 		possibleGuesses.push(i)
 	}
-	const currentPlayer = Math.min(...players.map(p => p.position))
+	const currentPlayer = Math.min(...setup.players.map(p => p.position))
 	const number = possibleGuesses[Math.floor(Math.random()*possibleGuesses.length)];
 	return {
-		game: {number, finished: false, move: 0, players, currentPlayer, winner: undefined, possibleGuesses},
-		players: players.map(p => { return {
+		game: {number, finished: false, move: 0, players: setup.players, currentPlayer, winner: undefined, possibleGuesses},
+		players: setup.players.map(p => ({
 			position: p.position,
-			currentPlayer,
-			winner: undefined,
-			move: 0,
-			possibleGuesses,
-		}}),
+			state: {
+				currentPlayer,
+				winner: undefined,
+				move: 0,
+				possibleGuesses,
+			}
+		})),
 		messages: []
 	}
 }
 
-export function processMove(state: GameState, move: Move<NumberGuessingMove>): GameUpdate {
+export function processMove(state: NumberGuesserGameState, move: NumberGuesserGameMove): NumberGuesserGameUpdate {
 	if (move.position !== state.currentPlayer) throw new Error ("not your turn");
 	if (move.data.number === state.number) {
 		state.finished = true
@@ -77,13 +36,15 @@ export function processMove(state: GameState, move: Move<NumberGuessingMove>): G
 	}
 	return {
 		game: state,
-		players: state.players.map(p => { return {
+		players: state.players.map(p => ({
 			position: p.position,
-			currentPlayer: state.currentPlayer,
-			winner: state.winner,
-			move: state.move,
-			possibleGuesses: state.possibleGuesses,
-		}}),
+			state: {
+				currentPlayer: state.currentPlayer,
+				winner: state.winner,
+				move: state.move,
+				possibleGuesses: state.possibleGuesses,
+			}
+		})),
 		messages: []
 	}
 }

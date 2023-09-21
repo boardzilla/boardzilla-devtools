@@ -32,13 +32,7 @@ Must export an object `game` with two functions, `initialState` and `processMove
 initialState(setup: SetupState): GameUpdate
 processMove(previousState: GameState, move: Move): GameUpdate
 
-type User = {
-  id: string
-  name: string
-}
-
 type Player = {
-  userID?: string
   color: string
   name: string
   position: number
@@ -52,11 +46,10 @@ type Message = {
 
 type PlayerState = {
   position: number
-  state: GameState
+  state: any
 }
 
 type GameSettings = Record<string, any>
-
 type GameState = any
 
 type SetupState = {
@@ -110,7 +103,8 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 
 type UserEvent = {
   type: "user"
-  user: User
+  userID: User
+  userName: string
   added: boolean
 }
 
@@ -127,7 +121,7 @@ type SettingsUpdateEvent = {
 
 type GameUpdateEvent = {
   type: "gameUpdate"
-  state: GameState
+  state: PlayerState
   messages: Message[]
 }
 
@@ -142,6 +136,10 @@ type MessageProcessedEvent = {
 #### sent events by ui
 
 ```ts
+type UserPlayer = Player & {
+  userID?: string
+}
+
 // host only
 type UpdateSettingsMessage = {
   type: "updateSettings"
@@ -153,7 +151,7 @@ type UpdateSettingsMessage = {
 type UpdatePlayersMessage = {
   type: "updatePlayers"
   id: string
-  players: Partial<Player>[]
+  players: Partial<UserPlayer>[]
 }
 
 // host only

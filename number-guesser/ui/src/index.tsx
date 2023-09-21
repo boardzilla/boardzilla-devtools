@@ -1,97 +1,94 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
+import { Message, NumberGuesserMove, NumberGuesserPlayer, NumberGuesserPlayerState, NumberGuesserSettings, PlayerState } from '../../types';
 
-type Player = {
+type User = {
   id: string
-  position: number
   name: string
-  color: string
 }
 
 type UserEvent = {
   type: "user"
-  name: string
-  id: string
+  userID: string
+  userName: string
   added: boolean
 }
 
-// an update to the setup state
-type SetupUpdateEvent = {
-  type: "setupUpdate"
-  state: SetupState<NumberGuesserSetupState>
+type PlayersEvent = {
+  type: "players"
+  players: NumberGuesserPlayer[]
 }
 
-// an update to the current game state
+// an update to the setup state
+type SettingsUpdateEvent = {
+  type: "settingsUpdate"
+  settings: NumberGuesserSettings
+}
+
 type GameUpdateEvent = {
   type: "gameUpdate"
-  state: GameState
+  state: PlayerState<NumberGuesserPlayerState>
+  messages: Message[]
 }
 
 // indicates the disposition of a message that was processed
-type MessageProcessed = {
+type MessageProcessedEvent = {
   type: "messageProcessed"
   id: string
-  error: string | undefined
+  error?: string
 }
 
-type NumberGuesserSetupState = {
-  evenOnly: boolean
+type UpdateSettingsMessage = {
+  type: "updateSettings"
+  id: string
+  settings: NumberGuesserSettings
 }
 
-type SetupState<T> = {
-  players: (Player & { settings: Record<string, any> })[] // permit add'l per-player settings
-  settings: T
+// host only
+type UpdatePlayersMessage = {
+  type: "updatePlayers"
+  id: string
+  players: Partial<NumberGuesserPlayer & {
+    userID: string
+  }>[]
 }
 
-type GameState = {
-  winner: number | undefined
-  position: number
-  possibleGuesses: number[]
+// host only
+type StartMessage = {
+  type: "start"
+  id: string
 }
 
-type SetupUpdated = {
-  type: "setupUpdated"
-  data: SetupState<NumberGuesserSetupState>
-}
-
-type PlayerUpdated = {
-  type: "player"
+type UpdateSelfPlayerMessage = {
+  type: "updateSelfPlayer"
+  id: string
   name: string
   color: string
 }
 
+type ReadyMessage = {
+  type: "ready"
+}
+
 // used to send a move
 type MoveMessage<T> = {
-  id: string
   type: 'move'
+  id: string
   data: T
 }
 
-type NumberGuesserMove = {
-  number: number
-}
-
-// used to actually start the game
-type StartMessage = {
-  id: string
-  type: 'start'
-  setup: SetupState<NumberGuesserSetupState>
-}
-
-// used to tell the top that you're ready to recv events
-type ReadyMessage = {
-  type: 'ready'
-}
+type NumberGuesserMoveMessage = MoveMessage<NumberGuesserMove>
 
 const Game = () => {
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [players, setPlayers] = useState<NumberGuesserPlayer[]>([]);
   const [readySent, setReadySent] = useState<boolean>(false);
   const [phase, setPhase] = useState<"new" | "started">("new");
-  const [setupState, setSetupState] = useState<NumberGuesserSetupState>({evenOnly: false});
-  const [gameState, setGameState] = useState<GameState | undefined>();
+  const [setupState, setSetupState] = useState<NumberGuesserSettings>({evenOnly: false});
+  const [gameState, setGameState] = useState<PlayerState<NumberGuesserPlayerState>>();
   const [error, setError] = useState<string>("");
 
-  const sendToTop = useCallback((m: SetupUpdated | PlayerUpdated | MoveMessage<NumberGuesserMove> | StartMessage | ReadyMessage) => {
+  const sendToTop = useCallback((m: UpdateSettingsMessage | UpdatePlayersMessage | UpdateSelfPlayerMessage | NumberGuesserMoveMessage | StartMessage | ReadyMessage) => {
     window.top!.postMessage(m, "*")
   }, [])
 
@@ -100,28 +97,35 @@ const Game = () => {
   }, [])
 
   const startGame = useCallback(() => {
-    sendToTop({type: "start", id: crypto.randomUUID(), setup: {settings: setupState!, players: players.map(p => {return {...p, settings: {}}})}})
+    sendToTop({type: "start", id: crypto.randomUUID()})
   }, [setupState, players])
 
   useEffect(() => {
-    const listener = (event: MessageEvent<UserEvent | SetupUpdateEvent | GameUpdateEvent | MessageProcessed>) => {
+    const listener = (event: MessageEvent<
+      UserEvent |
+      PlayersEvent |
+      GameUpdateEvent |
+      SettingsUpdateEvent |
+      MessageProcessedEvent
+    >) => {
       const e = event.data
       console.log("ui got", e.type, "event")
       switch(e.type) {
         case 'user':
           if (e.added) {
-            setPlayers((players) => {
-              if (players.find(p => p.id === e.id)) return players
-              return [...players, { position: players.length, name: e.name, id: e.id, color: "#ee00ee" }]
+            setUsers((users) => {
+              if (users.find(u => u.id === u.id)) return users
+              return [...users, { name: e.userName, id: e.userID }]
             })
           } else {
-            setPlayers((players) => players.filter(p => p.id !== e.id))
+            setUsers((users) => users.filter(u => u.id !== e.userID))
           }
           break;
-        case 'setupUpdate':
-          setPhase('new');
-          setSetupState(e.state.settings);
-          setPlayers(e.state.players);
+        case 'settingsUpdate':
+          setSetupState(e.settings);
+          break
+        case 'players':
+          setPlayers(e.players)
           break
         case 'gameUpdate':
           setPhase('started');
@@ -149,13 +153,13 @@ const Game = () => {
   return <div>
     {error !== "" && <div style={{backgroundColor: "#faa", margin: '4px'}}>{error}</div>}
     {gameState ? <>
-      {gameState.winner !== undefined ? <span>Game is done! {gameState.winner === gameState.position ? "YOU WIN": "YOU LOSE"}</span> : gameState.possibleGuesses.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}
+      {gameState.state.winner !== undefined ? <span>Game is done! {gameState.state.winner === gameState.position ? "YOU WIN": "YOU LOSE"}</span> : gameState.state.possibleGuesses.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}
       <pre>{JSON.stringify(gameState, null, 2)}</pre>
     </> : <>
       <input type="checkbox" checked={setupState ? setupState.evenOnly : false} onChange={e => setSetupState({evenOnly: e.currentTarget.checked})} />Even numbers only
       <h2>Players</h2>
       <ul>
-      {players.map(p => <li key={p.id}>{p.name}</li>)}
+      {players.map(p => <li key={p.position}>{p.name}</li>)}
       </ul>
       <button onClick={() => startGame()}>Start game</button>
     </>}
