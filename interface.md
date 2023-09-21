@@ -176,7 +176,7 @@ type ReserveOperation = {
   settings?: any
 }
 
-type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation |ReserveOperation
+type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
 
 // host only
 type UpdatePlayersMessage = {

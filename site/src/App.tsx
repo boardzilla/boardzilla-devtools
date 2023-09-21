@@ -8,7 +8,7 @@ import 'react-responsive-modal/styles.css';
 import './App.css';
 
 namespace Game {
-  type Player = {
+  export type Player = {
     color: string
     name: string
     position: number
@@ -78,7 +78,7 @@ namespace UI {
 
   export type PlayersEvent = {
     type: "players"
-    players: Player[]
+    players: Game.Player[]
   }
 
   // an update to the setup state
@@ -111,10 +111,43 @@ namespace UI {
   }
 
   // host only
+  type SeatOperation = {
+    type: 'seat'
+    position: number,
+    userID: string
+    color: string
+    name: string
+    settings?: any
+  }
+
+  type UnseatOperation = {
+    type: 'unseat'
+    position: number,
+  }
+
+  type UpdateOperation = {
+    type: 'update'
+    position: number,
+    color?: string
+    name?: string
+    settings?: any
+  }
+
+  type ReserveOperation = {
+    type: 'reserve'
+    position: number,
+    color: string
+    name: string
+    settings?: any
+  }
+
+  type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation |ReserveOperation
+
+  // host only
   export type UpdatePlayersMessage = {
     type: "updatePlayers"
     id: string
-    players: Partial<UserPlayer>[]
+    operations: PlayerOperation[]
   }
 
   // host only
@@ -176,7 +209,7 @@ function App() {
   const [phase, setPhase] = useState<"new" | "started">("new");
   const [setupState, setSetupState] = useState<any>({});
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<Game.Player[]>([]);
   const [settings, setSettings] = useState<Game.GameSettings>();
   const [currentPlayer, setCurrentPlayer] = useState(1);
   const [initialState, setInitialState] = useState<GameUpdate | undefined>();
@@ -307,12 +340,12 @@ function App() {
           break
         case 'processMoveResult':
           if (path !== '/game.html') return console.error("expected event from game.html!")
-          let p = pendingPromises.get(e.data.id)
-          if (p) {
+          let pending = pendingPromises.get(e.data.id)
+          if (pending) {
             if (e.data.error) {
-              p.reject(new Error(e.data.error))
+              pending.reject(new Error(e.data.error))
             } else {
-              p.resolve(e.data.state)
+              pending.resolve(e.data.state)
             }
             pendingPromises.delete(e.data.id)
             return
@@ -371,15 +404,31 @@ function App() {
           break
         case 'updatePlayers':
           let newPlayers = players.slice()
-          for (let op of e.data.players) {
-            let p = newPlayers.find(p => p.position === op.position)
-            if (!p) continue
-            if (op.color) {
-              p.color = op.color
+          let p: Game.Player | undefined
+          for (let op of e.data.operations) {
+            switch (op.type) {
+              case 'reserve':
+                break
+              case 'seat':
+                break
+              case 'unseat':
+                newPlayers = newPlayers.filter(p => p.position !== op.position)
+                break
+              case 'update':
+                p = newPlayers.find(p => p.position === op.position)
+                if (!p) continue
+                if (op.color) {
+                  p.color = op.color
+                }
+                if (op.name) {
+                  p.name = op.name
+                }
+                if (op.settings) {
+                  p.settings = op.settings
+                }
+                break
             }
-            if (op.name) {
-              p.color = op.color
-            }
+            setPlayers(newPlayers)
           }
           break
         case 'updateSelfPlayer':
@@ -410,6 +459,10 @@ function App() {
     window.addEventListener('keydown', l);
     return () => window.removeEventListener('keydown', l);
   }, [players])
+
+  useEffect(() => {
+    sendToUI({type: "players", players})
+  }, [players, sendToUI])
 
   const updateNumberOfPlayers = useCallback((n:string) => {
     const num = parseInt(n)
