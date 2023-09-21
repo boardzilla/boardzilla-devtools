@@ -115,7 +115,7 @@ type UserEvent = {
 }
 
 type PlayersEvent = {
-  type: "player"
+  type: "players"
   players: Player[]
 }
 
