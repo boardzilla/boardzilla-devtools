@@ -122,7 +122,6 @@ type SettingsUpdateEvent = {
 type GameUpdateEvent = {
   type: "gameUpdate"
   state: PlayerState
-  messages: Message[]
 }
 
 // indicates the disposition of a message that was processed
@@ -147,11 +146,43 @@ type UpdateSettingsMessage = {
   settings: GameSettings
 }
 
+type SeatOperation = {
+  type: 'seat'
+  position: number,
+  userID: string
+  color: string
+  name: string
+  settings?: any
+}
+
+type UnseatOperation = {
+  type: 'unseat'
+  position: number,
+}
+
+type UpdateOperation = {
+  type: 'update'
+  position: number,
+  color?: string
+  name?: string
+  settings?: any
+}
+
+type ReserveOperation = {
+  type: 'reserve'
+  position: number,
+  color: string
+  name: string
+  settings?: any
+}
+
+type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation |ReserveOperation
+
 // host only
 type UpdatePlayersMessage = {
   type: "updatePlayers"
   id: string
-  players: Partial<UserPlayer>[]
+  operations: PlayerOperation[]
 }
 
 // host only
