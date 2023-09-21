@@ -38,10 +38,10 @@ type User = {
 }
 
 type Player = {
-  position: number
   userID?: string
   color: string
   name: string
+  position: number
   settings?: any
 }
 
@@ -60,7 +60,7 @@ type GameSettings = Record<string, any>
 type GameState = any
 
 type SetupState = {
-  seats: Seat[] // defined below
+  players: Player[]
   settings: GameSettings
 }
 
@@ -80,7 +80,7 @@ type Move = {
 
 The game ui occurs in two phases "new" and "started".  The phase will be indicated by
 
-During "new", it will recv the following events, and send the following messages.
+During "new", it will recv the following messages.
 
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
@@ -90,13 +90,12 @@ window.addEventListener('message', (evt: MessageEvent<
   SettingsUpdateEvent |
   MessageProcessed
 >))
-
 window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
 ```
 
 Only the host is permitted to send `UpdatePlayerMessage`.
 
-During "started", it will recv the following events, and send the following messages.
+During "started", it will recv the following events.
 
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
@@ -109,36 +108,15 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 #### recv events by ui
 ```ts
 
-type Occupied = {
-  type: "occupied"
-  userID: string
-  color: string
-  name: string
-  settings?: any
-}
-
-type Unoccupied = {
-  type: "unoccupied"
-}
-
-type Reserved = {
-  type: "reserved"
-  color: string
-  name: string
-  settings?: any
-}
-
-type Seat = Occupied | Unoccupied | Reserved
-
 type UserEvent = {
   type: "user"
   user: User
   added: boolean
 }
 
-type SeatUpdateMessage = {
-  type: "seats"
-  operations: Seat[]
+type PlayersEvent = {
+  type: "player"
+  players: Player[]
 }
 
 // an update to the setup state
@@ -165,38 +143,6 @@ type MessageProcessed = {
 
 ```ts
 // host only
-type SeatOperation = {
-  type: 'seat'
-  position: number,
-  userID: string
-  color: string
-  name: string
-  settings?: any
-}
-
-type UnseatOperation = {
-  type: 'unseat'
-  position: number,
-}
-
-type UpdateOperation = {
-  type: 'update'
-  position: number,
-  color?: string
-  name?: string
-  settings?: any
-}
-
-type ReserveOperation = {
-  type: 'reserve'
-  position: number,
-  color: string
-  name: string
-  settings?: any
-}
-
-type SeatOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
-
 type UpdateSettingsMessage = {
   type: "updateSettings"
   id: string
@@ -204,10 +150,10 @@ type UpdateSettingsMessage = {
 }
 
 // host only
-type UpdateSeatsMessage = {
-  type: "updateSeats"
+type UpdatePlayersMessage = {
+  type: "updatePlayer"
   id: string
-  operations: SeatOperation[]
+  players: Partial<Player>[]
 }
 
 // host only
