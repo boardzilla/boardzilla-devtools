@@ -60,7 +60,7 @@ type GameSettings = Record<string, any>
 type GameState = any
 
 type SetupState = {
-  players: Player[]
+  seats: Seat[] // defined below
   settings: GameSettings
 }
 
@@ -108,6 +108,63 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 
 #### recv events by ui
 ```ts
+
+type Occupied = {
+  type: "occupied"
+  userID: string
+  color: string
+  name: string
+  settings?: any
+}
+
+type Unoccupied = {
+  type: "unoccupied"
+}
+
+type Reserved = {
+  type: "reserved"
+  color: string
+  name: string
+  settings?: any
+}
+
+type Seat = Occupied | Unoccupied | Reserved
+
+type UserEvent = {
+  type: "user"
+  user: User
+  added: boolean
+}
+
+type SeatUpdateMessage = {
+  type: "seats"
+  operations: Seat[]
+}
+
+// an update to the setup state
+type SettingsUpdateEvent = {
+  type: "settingsUpdate"
+  settings: GameSettings
+}
+
+type GameUpdateEvent = {
+  type: "gameUpdate"
+  state: GameState
+  messages: Message[]
+}
+
+// indicates the disposition of a message that was processed
+type MessageProcessed = {
+  type: "messageProcessed"
+  id: string
+  error?: string
+}
+```
+
+#### sent events by ui
+
+```ts
+// host only
 type SeatOperation = {
   type: 'seat'
   position: number,
@@ -138,43 +195,8 @@ type ReserveOperation = {
   settings?: any
 }
 
-type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
+type SeatOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
 
-type UserEvent = {
-  type: "user"
-  user: User
-  added: boolean
-}
-
-type PlayersEvent = {
-  type: "player"
-  operations: PlayerOperation[]
-}
-
-// an update to the setup state
-type SettingsUpdateEvent = {
-  type: "settingsUpdate"
-  settings: GameSettings
-}
-
-type GameUpdateEvent = {
-  type: "gameUpdate"
-  state: GameState
-  messages: Message[]
-}
-
-// indicates the disposition of a message that was processed
-type MessageProcessed = {
-  type: "messageProcessed"
-  id: string
-  error?: string
-}
-```
-
-#### sent events by ui
-
-```ts
-// host only
 type UpdateSettingsMessage = {
   type: "updateSettings"
   id: string
@@ -182,10 +204,10 @@ type UpdateSettingsMessage = {
 }
 
 // host only
-type UpdatePlayersMessage = {
-  type: "updatePlayer"
+type UpdateSeatsMessage = {
+  type: "updateSeats"
   id: string
-  operations: PlayerOperation[]
+  operations: SeatOperation[]
 }
 
 // host only
