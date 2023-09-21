@@ -151,7 +151,7 @@ type UpdateSettingsMessage = {
 
 // host only
 type UpdatePlayersMessage = {
-  type: "updatePlayer"
+  type: "updatePlayers"
   id: string
   players: Partial<Player>[]
 }
