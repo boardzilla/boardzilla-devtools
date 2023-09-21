@@ -86,9 +86,9 @@ During "new", it will recv the following messages.
 window.addEventListener('message', (evt: MessageEvent<
   UserEvent |
   PlayersEvent |
-  GameUpdateEvent |
   SettingsUpdateEvent |
-  MessageProcessed
+  GameUpdateEvent |
+  MessageProcessedEvent
 >))
 window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
 ```
@@ -132,7 +132,7 @@ type GameUpdateEvent = {
 }
 
 // indicates the disposition of a message that was processed
-type MessageProcessed = {
+type MessageProcessedEvent = {
   type: "messageProcessed"
   id: string
   error?: string
