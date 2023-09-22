@@ -1,6 +1,6 @@
 import { NumberGuesserGameMove, NumberGuesserGameState, NumberGuesserGameUpdate, NumberGuesserSetupState } from "../../types";
 
-export function initialState(setup: NumberGuesserSetupState): NumberGuesserGameUpdate {
+export function initialState(setup: NumberGuesserSetupState, rseed: string): NumberGuesserGameUpdate {
 	const possibleGuesses: number[] = []
 	for (let i = 0; i != 20; i += setup.settings.evenOnly ? 2 : 1) {
 		possibleGuesses.push(i)
@@ -22,7 +22,7 @@ export function initialState(setup: NumberGuesserSetupState): NumberGuesserGameU
 	}
 }
 
-export function processMove(state: NumberGuesserGameState, move: NumberGuesserGameMove): NumberGuesserGameUpdate {
+export function processMove(state: NumberGuesserGameState, move: NumberGuesserGameMove, rseed: string): NumberGuesserGameUpdate {
 	if (move.position !== state.currentPlayer) throw new Error ("not your turn");
 	if (move.data.number === state.number) {
 		state.finished = true
@@ -45,6 +45,6 @@ export function processMove(state: NumberGuesserGameState, move: NumberGuesserGa
 				possibleGuesses: state.possibleGuesses,
 			}
 		})),
-		messages: []
+		messages: [],
 	}
 }

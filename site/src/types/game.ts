@@ -37,12 +37,14 @@ export type Move = {
 export type InitialStateEvent = {
   type: "initialState"
   setup: SetupState
+  rseed: string
 }
 
 export type ProcessMoveEvent = {
   type: "processMove"
   previousState: GameState
   move: Move
+  rseed: string
 }
 
 export type InitialStateResultMessage = {
