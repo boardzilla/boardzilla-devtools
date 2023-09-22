@@ -60,12 +60,14 @@ class City extends Space {
   owners: PowergridPlayer[] = [];
   costToBuild() {
     const closestCity = this.closest(City);
+    console.log(closestCity);
     return [10, 15, 20][this.owners.length] + (closestCity ? this.distanceTo(closestCity)! : 0);
   }
   canBuild() {
     return this.owners.length < (this.board as PowergridBoard).step;
   }
   canBuildFor(elektro: number) {
+    console.log(elektro, this.costToBuild(), this.canBuild());
     return this.canBuild() && elektro >= this.costToBuild();
   }
 }
@@ -160,28 +162,24 @@ export default setup<PowergridPlayer, PowergridBoard>({
   ],
   setupBoard: (game, board) => {
     const map = board.create(Space, 'map');
-    const flensburg = map.create(City, 'Flensburg');
-    const kiel = map.create(City, 'Kiel');
-    const hamburg = map.create(City, 'Hamburg');
     const cuxhaven = map.create(City, 'Cuxhaven');
-    const wilhelmshaven = map.create(City, 'Wilhelmshaven');
-    const bremen = map.create(City, 'Bremen');
-    const hannover = map.create(City, 'Hannover');
-    flensburg.connectTo(kiel, 4);
-    kiel.connectTo(hamburg, 8);
-    hamburg.connectTo(cuxhaven, 11);
-    hamburg.connectTo(bremen, 11);
-    bremen.connectTo(hannover, 10);
-    bremen.connectTo(cuxhaven, 8);
-    bremen.connectTo(wilhelmshaven, 11);
-    hamburg.connectTo(hannover, 17);
+    const bremen = map.create(City, 'Bremen')
+      .connectTo(cuxhaven, 8)
+    const hannover = map.create(City, 'Hannover')
+      .connectTo(bremen, 10)
+    const hamburg = map.create(City, 'Hamburg')
+      .connectTo(cuxhaven, 11)
+      .connectTo(bremen, 11)
+      .connectTo(hannover, 17);;
+    const kiel = map.create(City, 'Kiel')
+      .connectTo(hamburg, 8);;
+    map.create(City, 'Flensburg')
+      .connectTo(kiel, 4);;
+    map.create(City, 'Wilhelmshaven')
+      .connectTo(bremen, 11);;
     
     const resources = board.create(Space, 'resources');
-    resources.create(ResourceSpace, 'uranium-16', { cost: 16, resource: 'uranium' });
-    resources.create(ResourceSpace, 'uranium-14', { cost: 14, resource: 'uranium' });
-    resources.create(ResourceSpace, 'uranium-12', { cost: 12, resource: 'uranium' });
-    resources.create(ResourceSpace, 'uranium-10', { cost: 10, resource: 'uranium' });
-    for (let cost = 8; cost > 0; cost -= 1) {
+    for (let cost = 1; cost <= 8; cost++) {
       resources.create(ResourceSpace, `coal-${cost}`, { cost, resource: 'coal' });
       resources.create(ResourceSpace, `coal-${cost}`, { cost, resource: 'coal' });
       resources.create(ResourceSpace, `coal-${cost}`, { cost, resource: 'coal' });
@@ -193,9 +191,14 @@ export default setup<PowergridPlayer, PowergridBoard>({
       resources.create(ResourceSpace, `garbage-${cost}`, { cost, resource: 'garbage' });
       resources.create(ResourceSpace, `garbage-${cost}`, { cost, resource: 'garbage' });
     };
+    resources.create(ResourceSpace, 'uranium-10', { cost: 10, resource: 'uranium' });
+    resources.create(ResourceSpace, 'uranium-12', { cost: 12, resource: 'uranium' });
+    resources.create(ResourceSpace, 'uranium-14', { cost: 14, resource: 'uranium' });
+    resources.create(ResourceSpace, 'uranium-16', { cost: 16, resource: 'uranium' });
 
     const powerplants = board.create(Space, 'powerplants');
     powerplants.onEnter(Card, c => c.showToAll());
+    powerplants.onEnter(Card, () => sortPowerplants(game, powerplants))
 
     const deck = board.create(Space, 'deck');
     deck.onEnter(Card, c => c.hideFromAll());
@@ -205,8 +208,6 @@ export default setup<PowergridPlayer, PowergridBoard>({
     board.pile.createMany(24, Resource, 'oil', { type: 'oil' });
     board.pile.createMany(24, Resource, 'garbage', { type: 'garbage' });
     board.pile.createMany(24, Resource, 'uranium', { type: 'uranium' });
-
-    powerplants.onEnter(Card, () => sortPowerplants(game, powerplants))
 
     for (const player of game.players) {
       const mat = board.create(PlayerMat, 'player-mat', { player });
@@ -258,7 +259,7 @@ export default setup<PowergridPlayer, PowergridBoard>({
     const resources = board.first(Space, 'resources')!;
 
     const costOf = (resource: ResourceType, amount: number) => {
-      return resources.lastN(amount, resource).sum(resource => resource.container(ResourceSpace)!.cost)
+      return resources.firstN(amount, resource).sum(resource => resource.container(ResourceSpace)!.cost)
     };
 
     return {
@@ -425,11 +426,11 @@ export default setup<PowergridPlayer, PowergridBoard>({
           }
         ],
         move: (type: ResourceType, amount: number) => {
+          player.elektro -= costOf(type, amount);
           const factories = board.all(Card, {mine: true}, c => c.resources !== 0);
-          for (const resource of resources.lastN(amount, Resource, {type})) {
+          for (const resource of resources.firstN(amount, Resource, {type})) {
             resource.putInto(factories.first(Card, card => card.spaceFor(resource.type) > 0)!)
           }
-          player.elektro -= costOf(type, amount);
         },
       }),
 

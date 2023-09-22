@@ -29,8 +29,8 @@
 Must export an object `game` with two functions, `initialState` and `processMove`.
 
 ```ts
-initialState(setup: SetupState): GameUpdate
-processMove(previousState: GameState, move: Move): GameUpdate
+initialState(setup: SetupState, rseed: string): GameUpdate
+processMove(previousState: GameState, move: Move, rseed: string): GameUpdate
 
 type Player = {
   color: string

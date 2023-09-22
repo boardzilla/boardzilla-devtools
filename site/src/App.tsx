@@ -33,21 +33,27 @@ type pendingPromise = {
 let pending: pendingPromise | undefined;
 
 function App() {
-  const [numberOfPlayers, setNumberOfPlayers] = useState(minPlayers);
-  const [phase, setPhase] = useState<"new" | "started">("new");
+
+  const initialHistory = JSON.parse(localStorage.getItem('history') || '[]');
+  const initialPlayers = JSON.parse(localStorage.getItem('players') || '[]');
+  let initialPhase: "new" | "started" = 'new'
+  if (initialHistory[0]) initialPhase = 'started';
+
+  const [numberOfUsers, setNumberOfUsers] = useState(initialPlayers.length || 1);
+  const [phase, setPhase] = useState<"new" | "started">(initialPhase);
+  const [currentPlayer, setCurrentPlayer] = useState(1);
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
-  const [players, setPlayers] = useState<UI.UserPlayer[]>([]);
+  const [players, setPlayers] = useState<UI.UserPlayer[]>(initialPlayers);
   const [settings, setSettings] = useState<Game.GameSettings>();
-  const [currentPlayer, setCurrentPlayer] = useState(0);
   const [initialState, setInitialState] = useState<Game.GameUpdate | undefined>();
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>(initialHistory);
   const [open, setOpen] = useState(false);
 
   const onOpenModal = () => setOpen(true);
   const onCloseModal = () => setOpen(false);
 
   const bootstrap = useCallback((): string => {
-    return JSON.stringify({host: currentPlayer === 0, userID: possiblePlayers.find(p => p.position === currentPlayer)!.id})
+    return JSON.stringify({ userID: possiblePlayers.find(p => p.position === currentPlayer)!.id })
   }, [currentPlayer])
 
   const sendToGame = useCallback(async (data: Game.InitialStateEvent | Game.ProcessMoveEvent): Promise<Game.GameUpdate> => {
@@ -66,6 +72,7 @@ function App() {
     setSettings(undefined)
     setInitialState(undefined)
     setHistory([])
+    localStorage.removeItem('history');
   }, [])
 
   const reprocessHistory = useCallback(async () => {
@@ -181,12 +188,15 @@ function App() {
           console.log("move!", e.data)
           try {
             const out = await sendToGame({type: "processMove", previousState: previousState.game, move: {position: currentPlayer, data: e.data.data}});
-            setHistory([...history, {
+            const newHistory = [...history, {
               position: currentPlayer,
               seq: history.length,
               data: out,
               move: e.data
-            }]);
+            }];
+            setHistory(newHistory);
+            localStorage.setItem('history', JSON.stringify(newHistory));
+            if (out.game.currentPlayerPosition) setCurrentPlayer(out.game.currentPlayerPosition);
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
             sendToUI({type: "gameUpdate", state: out.players.find(p => p.position === currentPlayer)!})
           } catch(err) {
@@ -217,7 +227,7 @@ function App() {
               sendToUI({type: "settingsUpdate", settings});
             }
             sendToUI({type: "players", players: players});
-            for (let player of possiblePlayers.slice(0, numberOfPlayers)) {
+            for (let player of possiblePlayers.slice(0, numberOfUsers)) {
               sendToUI({type: "user", userName: player.name, userID: player.id, added: true});
             }
           } else {
@@ -263,6 +273,7 @@ function App() {
                 }
                 break
             }
+            localStorage.setItem('players', JSON.stringify(newPlayers));
             setPlayers(newPlayers)
           }
           sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
@@ -280,7 +291,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfPlayers, phase, players, sendToGame, sendToUI, settings]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToGame, sendToUI, settings]);
 
   useEffect(() => {
     console.log("keys!")
@@ -300,10 +311,10 @@ function App() {
     sendToUI({type: "players", players})
   }, [players, sendToUI])
 
-  const updateNumberOfPlayers = useCallback((n:string) => {
+  const updateNumberOfUsers = useCallback((n:string) => {
     const num = parseInt(n)
     if (Number.isNaN(num)) return
-    setNumberOfPlayers((previousNumber) => {
+    setNumberOfUsers((previousNumber) => {
       const playerDifference = num - previousNumber
       if (playerDifference > 0) {
         for (let player of possiblePlayers.slice(previousNumber, num)) {
@@ -328,7 +339,7 @@ function App() {
       </Modal>
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
-          <input style={{width: '3em'}} disabled={phase === 'started'} type="number" value={numberOfPlayers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfPlayers(v.currentTarget.value)}/>
+          <input style={{width: '3em'}} disabled={phase === 'started'} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfUsers(v.currentTarget.value)}/>
           <span style={{flexGrow: 1}}>{players.map(p =>
             <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>
           )}
