@@ -121,8 +121,10 @@ const colors = [
   "#ff6633",
   "#3366ff",
   "#f01a44",
-
 ]
+
+const body = document.getElementsByTagName("body")[0];
+const bootstrap = JSON.parse(body.getAttribute("data-bootstrap-json")!);
 
 type pendingPromise = {
   resolve: (d: any) => void
@@ -237,6 +239,7 @@ const Game = () => {
   }, [error])
 
   return <div>
+    {JSON.stringify(bootstrap)}
     {error !== "" && <div style={{backgroundColor: "#faa", margin: '4px'}}>{error}</div>}
     {gameState ? <>
       {gameState.state.winner !== undefined ? <span>Game is done! {gameState.state.winner === gameState.position ? "YOU WIN": "YOU LOSE"}</span> : gameState.state.possibleGuesses.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}

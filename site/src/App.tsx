@@ -103,15 +103,6 @@ function App() {
     setGameLoaded(true);
   }, [gameLoaded, history, phase, players, sendToGame, settings]);
 
-  // useEffect(() => {
-  //   console.log("sending update")
-  //   if (phase === 'new') {
-  //     return sendToUI({type: "setupUpdate", state: {players: players.map(p => {return {...p, settings: {}}}), settings: setupState}});
-  //   }
-  //   const currentState = history.length === 0 ? initialState : history[history.length - 1].data;
-  //   sendToUI({type: "gameUpdate", state: currentState?.players.find(p => p.position === currentPlayer)?.state});
-  // }, [initialState, history, currentPlayer, phase, sendToUI, setupState, players]);
-
   useEffect(() => {
     console.log("events!")
     const evtSource = new ReconnectingEventSource("/events");
