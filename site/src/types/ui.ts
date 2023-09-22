@@ -9,7 +9,7 @@ export type UserEvent = {
 
 export type PlayersEvent = {
   type: "players"
-  players: Game.Player[]
+  players: UserPlayer[]
 }
 
 // an update to the setup state

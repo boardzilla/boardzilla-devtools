@@ -36,7 +36,7 @@ function App() {
   const [numberOfPlayers, setNumberOfPlayers] = useState(minPlayers);
   const [phase, setPhase] = useState<"new" | "started">("new");
   const [gameLoaded, setGameLoaded] = useState<boolean>(false);
-  const [players, setPlayers] = useState<Game.Player[]>([]);
+  const [players, setPlayers] = useState<UI.UserPlayer[]>([]);
   const [settings, setSettings] = useState<Game.GameSettings>();
   const [currentPlayer, setCurrentPlayer] = useState(0);
   const [initialState, setInitialState] = useState<Game.GameUpdate | undefined>();
@@ -89,7 +89,7 @@ function App() {
         }
         i++;
       }
-        setHistory(newHistory);
+      setHistory(newHistory);
     } catch(e) {
       console.error("reprocess initial state", e)
     }
@@ -237,11 +237,13 @@ function App() {
                   color: op.color,
                   name: op.name,
                   position: op.position,
+                  userID: op.userID,
                 })
                 newPlayers.push({
                   color: op.color,
                   name: op.name,
                   position: op.position,
+                  userID: op.userID,
                 })
                 break
               case 'unseat':

@@ -100,17 +100,20 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 
 #### recv events by ui
 ```ts
+type UserPlayer = Player & {
+  userID?: string
+}
 
 type UserEvent = {
   type: "user"
-  userID: User
+  userID: string
   userName: string
   added: boolean
 }
 
 type PlayersEvent = {
   type: "players"
-  players: Player[]
+  players: UserPlayer[]
 }
 
 // an update to the setup state
@@ -135,10 +138,6 @@ type MessageProcessedEvent = {
 #### sent events by ui
 
 ```ts
-type UserPlayer = Player & {
-  userID?: string
-}
-
 // host only
 type UpdateSettingsMessage = {
   type: "updateSettings"
