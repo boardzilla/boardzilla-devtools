@@ -110,6 +110,26 @@ type MoveMessage<T> = {
 
 type NumberGuesserMoveMessage = MoveMessage<NumberGuesserMove>
 
+const colors = [
+  "#ff0000",
+  "#00ff00",
+  "#0000ff",
+  "#666600",
+  "#006666",
+  "#660066",
+  "#333333",
+  "#ff6633",
+  "#3366ff",
+  "#f01a44",
+
+]
+
+type pendingPromise = {
+  resolve: (d: any) => void
+  reject: (e: Error) => void
+}
+const pendingPromises = new Map<string, pendingPromise>()
+
 const Game = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [players, setPlayers] = useState<NumberGuesserPlayer[]>([]);
@@ -119,16 +139,41 @@ const Game = () => {
   const [gameState, setGameState] = useState<PlayerState<NumberGuesserPlayerState>>();
   const [error, setError] = useState<string>("");
 
-  const sendToTop = useCallback((m: UpdateSettingsMessage | UpdatePlayersMessage | UpdateSelfPlayerMessage | NumberGuesserMoveMessage | StartMessage | ReadyMessage) => {
-    window.top!.postMessage(m, "*")
+  const sendToTop = useCallback(async (m:
+    Omit<UpdateSettingsMessage, "id"> |
+    Omit<UpdatePlayersMessage, "id"> |
+    Omit<UpdateSelfPlayerMessage, "id"> |
+    Omit<NumberGuesserMoveMessage, "id"> |
+    Omit<StartMessage, "id"> |
+    Omit<ReadyMessage, "id">) =>
+  {
+    const id = crypto.randomUUID()
+    await new Promise((resolve, reject) => {
+      pendingPromises.set(id, {resolve, reject})
+      window.top!.postMessage({...m, id }, "*")
+    })
   }, [])
 
-  const makeMove = useCallback((n: number) => {
-    sendToTop({type: "move", id: crypto.randomUUID(), data: {number: n}})
+  const makeMove = useCallback(async (n: number) => {
+    await sendToTop({type: "move", data: {number: n}})
   }, [])
 
-  const startGame = useCallback(() => {
-    sendToTop({type: "start", id: crypto.randomUUID()})
+  const startGame = useCallback(async () => {
+    console.log("starting game...", setupState)
+    await sendToTop({type: "updateSettings", settings: setupState})
+    console.log("done sending settings")
+    for (let u of users) {
+      await sendToTop({type: "updatePlayers", operations: users.map((u, i) => ({
+        type: "seat",
+        position: i,
+        userID: u.id,
+        color: colors[i],
+        name: u.name
+      }))})
+    }
+    console.log("done stting players")
+    sendToTop({type: "start"})
+    console.log("done stting")
   }, [setupState, players])
 
   useEffect(() => {
@@ -140,12 +185,12 @@ const Game = () => {
       MessageProcessedEvent
     >) => {
       const e = event.data
-      console.log("ui got", e.type, "event")
+      console.log("got a", e.type, "message", e)
       switch(e.type) {
         case 'user':
           if (e.added) {
             setUsers((users) => {
-              if (users.find(u => u.id === u.id)) return users
+              if (users.find(u => e.userID === u.id)) return users
               return [...users, { name: e.userName, id: e.userID }]
             })
           } else {
@@ -153,6 +198,7 @@ const Game = () => {
           }
           break;
         case 'settingsUpdate':
+          console.log("!!!! got settings", e)
           setSetupState(e.settings);
           break
         case 'players':
@@ -160,10 +206,17 @@ const Game = () => {
           break
         case 'gameUpdate':
           setPhase('started');
+          console.log("e", e)
           setGameState(e.state);
           break
         case 'messageProcessed':
-          setError(e.error || "");
+          console.log("about to resolve", e.id, pendingPromises)
+          if (e.error) {
+            pendingPromises.get(e.id)!.reject(new Error(e.error))
+          } else {
+            pendingPromises.get(e.id)!.resolve(null)
+          }
+          delete pendingPromises[e.id];
           break;
         }
       }
@@ -188,9 +241,9 @@ const Game = () => {
       <pre>{JSON.stringify(gameState, null, 2)}</pre>
     </> : <>
       <input type="checkbox" checked={setupState ? setupState.evenOnly : false} onChange={e => setSetupState({evenOnly: e.currentTarget.checked})} />Even numbers only
-      <h2>Players</h2>
+      <h2>Users</h2>
       <ul>
-      {players.map(p => <li key={p.position}>{p.name}</li>)}
+      {users.map(p => <li key={p.id}>{p.name}</li>)}
       </ul>
       <button onClick={() => startGame()}>Start game</button>
     </>}

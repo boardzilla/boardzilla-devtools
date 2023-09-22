@@ -1,19 +1,21 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { HistoryItem, Player } from './types';
+import { HistoryItem } from './types';
+import * as Game from './types/game'
+
 import JsonView from '@uiw/react-json-view';
 import './History.css'
 type HistoryProps = {
   items: HistoryItem[]
   initialState: any
   revertTo: (n: number) => void
-  players: Player[]
+  players: Game.Player[]
 }
 
 export default function History({items, initialState, revertTo, players}: HistoryProps) {
   console.log("players", players)
   const historyEndRef = useRef<HTMLDivElement>(null)
 
-  const player = useCallback((pos: number): Player => {
+  const player = useCallback((pos: number): Game.Player => {
     const p = players.find(p => p.position === pos)
     if (!p) {
       throw new Error("cannot find player")

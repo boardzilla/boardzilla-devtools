@@ -1,36 +1,9 @@
-export type Message = {
-  position: number
-  body: string
-}
-
-export type Player = {
-  position: number
-  name: string
-  color: string
-}
-
-export type PlayerState = {
-  position: number
-  state: any
-}
-
-export type GameState = any
-
-export type GameUpdate = {
-  game: GameState
-  players: PlayerState[]
-  messages: Message[]
-}
-
-export type Move = {
-  id: string
-  data: any
-}
+import * as Game from './types/game'
 
 export type HistoryItem = {
   seq: number
-  data: GameUpdate | undefined
-  move: Move
+  data: Game.GameUpdate | undefined
+  move: any
   position: number
 }
 
