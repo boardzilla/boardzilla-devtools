@@ -27,11 +27,10 @@ const possiblePlayers = [
 ]
 
 type pendingPromise = {
-  resolve: (d: any) => void
+  resolve: (d: Game.GameUpdate) => void
   reject: (e: Error) => void
 }
-let initalStatePromise: pendingPromise | undefined;
-const pendingPromises = new Map<string, pendingPromise>()
+let pending: pendingPromise | undefined;
 
 function App() {
   const [numberOfPlayers, setNumberOfPlayers] = useState(minPlayers);
@@ -51,8 +50,11 @@ function App() {
     return JSON.stringify({host: currentPlayer === 0, userID: possiblePlayers.find(p => p.position === currentPlayer)!.id})
   }, [currentPlayer])
 
-  const sendToGame = useCallback((data: Game.InitialStateEvent | Game.ProcessMoveEvent) => {
-    (document.getElementById("game") as HTMLIFrameElement).contentWindow!.postMessage(data)
+  const sendToGame = useCallback(async (data: Game.InitialStateEvent | Game.ProcessMoveEvent): Promise<Game.GameUpdate> => {
+    return await new Promise((resolve, reject) => {
+      pending = {resolve, reject};
+      (document.getElementById("game") as HTMLIFrameElement).contentWindow!.postMessage(data)
+    })
   }, [])
 
   const sendToUI = useCallback((data: UI.UserEvent | UI.PlayersEvent | UI.GameUpdateEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
@@ -61,6 +63,7 @@ function App() {
 
   const resetGame = useCallback(() => {
     setPhase("new")
+    setSettings(undefined)
     setInitialState(undefined)
     setHistory([])
   }, [])
@@ -140,7 +143,7 @@ function App() {
 
   useEffect(() => {
     console.log("listener!", Math.random())
-    const listener = (e: MessageEvent<
+    const listener = async (e: MessageEvent<
       Game.InitialStateResultMessage |
       Game.ProcessMoveResultMessage |
       UI.UpdateSettingsMessage |
@@ -157,38 +160,19 @@ function App() {
       switch(e.data.type) {
         case 'initialStateResult':
           if (path !== '/game.html') return console.error("expected event from game.html!")
-          if (initalStatePromise) {
-            initalStatePromise.resolve(e.data.state)
-            initalStatePromise = undefined;
-            return;
+          if (e.data.error) {
+            pending!.reject(new Error(e.data.error))
+          } else {
+            pending!.resolve(e.data.state)
           }
-          console.log("event!", e, currentPlayer, e.data.state.players);
-          setInitialState(e.data.state);
-          setPhase("started");
-          sendToUI({type: "gameUpdate", state: e.data.state.players.find(p => p.position === currentPlayer)!});
+          pending = undefined
           break
         case 'processMoveResult':
           if (path !== '/game.html') return console.error("expected event from game.html!")
-          let pending = pendingPromises.get(e.data.id)
-          if (pending) {
-            if (e.data.error) {
-              pending.reject(new Error(e.data.error))
-            } else {
-              pending.resolve(e.data.state)
-            }
-            pendingPromises.delete(e.data.id)
-            return
-          }
-          console.log("e!", e)
           if (e.data.error) {
-            setHistory([...history.slice(0, history.length - 1)]);
+            pending!.reject(new Error(e.data.error))
           } else {
-            let lastHistory = history[history.length - 1]
-            setHistory([...history.slice(0, history.length - 1), {
-              ...lastHistory,
-              data: e.data.state
-            }])
-            sendToUI({type: "gameUpdate", state: e.data.state.players.find(p => p.position === currentPlayer)!});
+            pending!.resolve(e.data.state)
           }
           break
         case 'updateSettings':
@@ -198,26 +182,37 @@ function App() {
           break
         case 'move':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
-          setHistory([...history, {
-            position: currentPlayer,
-            seq: history.length,
-            data: undefined,
-            move: e.data
-          }]);
           const previousState = history.length === 0 ? initialState! : history[history.length - 1].data!;
           console.log("move!", e.data)
-
-          sendToGame({type: "processMove", previousState: previousState.game, move: {position: currentPlayer, data: e.data.data}});
-          sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
+          try {
+            const out = await sendToGame({type: "processMove", previousState: previousState.game, move: {position: currentPlayer, data: e.data.data}});
+            setHistory([...history, {
+              position: currentPlayer,
+              seq: history.length,
+              data: out,
+              move: e.data
+            }]);
+            sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
+            sendToUI({type: "gameUpdate", state: out.players.find(p => p.position === currentPlayer)!})
+          } catch(err) {
+            sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
+          }
           break
         case 'start':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
-          sendToGame({type: "initialState", setup: {
-            players,
-            settings: settings!,
-          }})
+          try {
+            const out = await sendToGame({type: "initialState", setup: {
+              players,
+              settings: settings!,
+            }})
+            setInitialState(out);
+            setPhase("started");
+            sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
+            sendToUI({type: "gameUpdate", state: out.players.find(p => p.position === currentPlayer)!})
+          } catch(err) {
+            sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
+          }
           // this is a bit of a lie, it doesn't actually know how it was processed by game
-          sendToUI({type: "messageProcessed", id: e.data.id, error: undefined});
           break
         case 'ready':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
@@ -235,6 +230,7 @@ function App() {
           }
           break
         case 'updatePlayers':
+          console.log("UPDATING PLAYERRRRS!")
           let newPlayers = players.slice()
           let p: Game.Player | undefined
           for (let op of e.data.operations) {
@@ -242,6 +238,11 @@ function App() {
               case 'reserve':
                 break
               case 'seat':
+                console.log("===>", {
+                  color: op.color,
+                  name: op.name,
+                  position: op.position,
+                })
                 newPlayers.push({
                   color: op.color,
                   name: op.name,

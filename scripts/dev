@@ -1,5 +1,10 @@
 #!/bin/bash
 
+set -Eeuo pipefail
+
+cd site
+npm run build
+cd -
 $(cd site && npm run build:watch) &
 LIVE_DEV=1 go run cmd/dev/main.go "$1" &
 

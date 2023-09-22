@@ -155,26 +155,28 @@ const Game = () => {
   }, [])
 
   const makeMove = useCallback(async (n: number) => {
-    await sendToTop({type: "move", data: {number: n}})
+    try {
+      await sendToTop({type: "move", data: {number: n}});
+    } catch(e) {
+      setError(String(e));
+    }
   }, [])
 
   const startGame = useCallback(async () => {
     console.log("starting game...", setupState)
     await sendToTop({type: "updateSettings", settings: setupState})
-    console.log("done sending settings")
-    for (let u of users) {
-      await sendToTop({type: "updatePlayers", operations: users.map((u, i) => ({
-        type: "seat",
-        position: i,
-        userID: u.id,
-        color: colors[i],
-        name: u.name
-      }))})
-    }
+    console.log("done sending settings", users.length)
+    await sendToTop({type: "updatePlayers", operations: users.map((u, i) => ({
+      type: "seat",
+      position: i,
+      userID: u.id,
+      color: colors[i],
+      name: u.name
+    }))})
     console.log("done stting players")
     sendToTop({type: "start"})
     console.log("done stting")
-  }, [setupState, players])
+  }, [setupState, players, users])
 
   useEffect(() => {
     const listener = (event: MessageEvent<
@@ -210,13 +212,13 @@ const Game = () => {
           setGameState(e.state);
           break
         case 'messageProcessed':
-          console.log("about to resolve", e.id, pendingPromises)
+          console.log("about to resolve", e.id, e.error, pendingPromises)
           if (e.error) {
             pendingPromises.get(e.id)!.reject(new Error(e.error))
           } else {
             pendingPromises.get(e.id)!.resolve(null)
           }
-          delete pendingPromises[e.id];
+          pendingPromises.delete(e.id);
           break;
         }
       }
