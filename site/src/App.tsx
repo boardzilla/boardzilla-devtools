@@ -68,38 +68,33 @@ function App() {
     setHistory([])
   }, [])
 
-  // const reprocessHistory = useCallback(async () => {
-  //   console.log("pre")
-  //   if (phase !== "started") return
-  //   if (!gameLoaded) return
-  //   const newInitialState = await new Promise<GameUpdate>((resolve, reject) => {
-  //     initalStatePromise = {resolve, reject}
-  //     sendToGame({type: "initialState", setup: {players, settings: settings!}})
-  //   })
-  //   let i = 0;
-  //   let previousState = newInitialState
-  //   const newHistory: HistoryItem[] = []
-  //   while(i < history.length) {
-  //     let move = history[i].move
-  //     let position = history[i].position
-  //     try {
-  //       let p = new Promise<GameUpdate>((resolve, reject) => {
-  //         const id = crypto.randomUUID()
-  //         pendingPromises.set(id, {resolve, reject});
-  //         sendToGame({type: "processMove", previousState: previousState.game, move: {...move, position, id}})
-  //       })
-  //       const res = await p
-  //       newHistory.push({position, move, seq: i, data: res})
-  //     } catch(e) {
-  //       console.error("error while reprocessing history", e)
-  //       break
-  //     }
-  //     i++;
-  //   }
-  //   setInitialState(newInitialState);
-  //   setHistory(newHistory);
-  //   setGameLoaded(true);
-  // }, [gameLoaded, history, phase, players, sendToGame, settings]);
+  const reprocessHistory = useCallback(async () => {
+    if (phase !== "started") return
+    if (!gameLoaded) return
+    try {
+      let newInitialState = await sendToGame({type: "initialState", setup: {players, settings: settings!}})
+      setInitialState(newInitialState)
+      let previousState = newInitialState
+      let i = 0;
+      const newHistory: HistoryItem[] = []
+      while(i < history.length) {
+        let move = history[i].move
+        let position = history[i].position
+        try {
+          const out = await sendToGame({type: "processMove", previousState: previousState.game, move: {...move, position}})
+          newHistory.push({position, move, seq: i, data: out})
+        } catch(e) {
+          console.error("error while reprocessing history", e)
+          break
+        }
+        i++;
+      }
+        setHistory(newHistory);
+    } catch(e) {
+      console.error("reprocess initial state", e)
+    }
+    setGameLoaded(true);
+  }, [gameLoaded, history, phase, players, sendToGame, settings]);
 
   // useEffect(() => {
   //   console.log("sending update")
@@ -339,8 +334,7 @@ function App() {
           <button  style={{fontSize: '20pt'}} className="button-link" onClick={onOpenModal}>ⓘ</button>
         </div>
         <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
-        {/* onLoad={() => reprocessHistory()}  */}
-        <iframe style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
+        <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div style={{width: '30vw', paddingLeft: '1em', height:'100vh', display: 'flex', flexDirection:'column'}}>
         <h2>History <button onClick={() => resetGame()}>Reset game</button></h2>
