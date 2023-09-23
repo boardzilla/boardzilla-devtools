@@ -59,15 +59,13 @@ class ResourceSpace extends Space {
 class City extends Space {
   owners: PowergridPlayer[] = [];
   costToBuild() {
-    const closestCity = this.closest(City);
-    console.log(closestCity);
+    const closestCity = this.closest(City, city => !!city.first(Building, {mine: true}));
     return [10, 15, 20][this.owners.length] + (closestCity ? this.distanceTo(closestCity)! : 0);
   }
   canBuild() {
     return this.owners.length < (this.board as PowergridBoard).step;
   }
   canBuildFor(elektro: number) {
-    console.log(elektro, this.costToBuild(), this.canBuild());
     return this.canBuild() && elektro >= this.costToBuild();
   }
 }
@@ -76,7 +74,6 @@ export class PlayerMat extends Space {
 }
 
 export class Building extends Piece {
-  color: string;
   powered?: boolean;
 }
 
@@ -211,7 +208,7 @@ export default setup<PowergridPlayer, PowergridBoard>({
 
     for (const player of game.players) {
       const mat = board.create(PlayerMat, 'player-mat', { player });
-      mat.createMany(22, Building, 'building', { color: player.color });
+      mat.createMany(22, Building, 'building', { player });
       mat.onEnter(Card, c => c.auction = false);
     };
 
