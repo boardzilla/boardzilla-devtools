@@ -5,9 +5,10 @@ import setup, {
   Board,
   Space,
   Piece,
+  Player,
   Sequence,
   PlayerAction,
-  Player,
+  Loop,
   Step,
   EachPlayer,
   IfElse,
@@ -79,7 +80,7 @@ export class Building extends Piece {
 
 class PowergridBoard extends Board {
   step: number = 1;
-  turn: number = 1;
+  turn: number = 0;
   lastBid?: number;
   playerWithHighestBid?: PowergridPlayer;
 }
@@ -270,6 +271,7 @@ export default setup<PowergridPlayer, PowergridBoard>({
 
       build: player => new MoveAction({
         prompt: 'Build',
+        promptTo: 'Which city?',
         piece: board.first(PlayerMat, {mine: true})!.first(Building),
         to: {
           chooseFrom: map.all(City, city => city.canBuildFor(player.elektro))
@@ -287,6 +289,7 @@ export default setup<PowergridPlayer, PowergridBoard>({
         condition: !player.passedThisAuction,
         selections: [{
           selectNumber: {
+            default: board.lastBid ? board.lastBid + 1 : board.first(Card, {auction: true})!.cost,
             min: board.lastBid ? board.lastBid + 1 : board.first(Card, {auction: true})!.cost,
             max: player.elektro,
           }
@@ -479,9 +482,13 @@ export default setup<PowergridPlayer, PowergridBoard>({
     const powerplants = board.first(Space, 'powerplants')!;
     const map = board.first(Space, 'map')!;
 
-    return new Sequence({name: 'main', steps: [
+    return new Loop({name: 'round', while: () => true, do: new Sequence({name: 'phases', steps: [
       new Step({
-        command: () => game.players.sortBy('score', 'desc')
+        command: () => {
+          game.players.sortBy('score', 'desc');
+          board.turn += 1;
+          for (const player of game.players) player.havePassedAuctionPhase = false;
+        }
       }),
       new EachPlayer({
         name: 'auctionPlayer',
@@ -580,6 +587,6 @@ export default setup<PowergridPlayer, PowergridBoard>({
           }}),
         ]}),
       }),
-    ]})
+    ]})})
   }
 });

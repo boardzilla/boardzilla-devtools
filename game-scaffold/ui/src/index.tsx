@@ -17,10 +17,12 @@ render(setup, {
   appearance: {
     PlayerMat: (el: PlayerMat, contents) => <>
       {el.player?.name}<br/>
+      Score: {(el.player as PowergridPlayer)?.score}<br/>
       Buildings: {el.all(Building).length}<br/>
       Elektro: {(el.player as PowergridPlayer)?.elektro}
       <div>{contents}</div>
     </>,
+    Building: (building: Building) => <div>{building.player?.name}</div>,
     Card: (card: Card, contents) => <div>
       {card.cost && <>
         ({card.cost})<br/>

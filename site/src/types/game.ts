@@ -10,22 +10,22 @@ export type Message = {
   body: string
 }
 
-export type PlayerState = {
-  position: number
-  state: any
-}
 
 export type GameSettings = Record<string, any>
-type GameState = any
+export type GameState = Record<string, any>
+export type PlayerState = Record<string, any>
 
-type SetupState = {
+export type SetupState = {
   players: Player[]
   settings: GameSettings
 }
 
 export type GameUpdate = {
   game: GameState
-  players: PlayerState[]
+  players: {
+    position: number
+    state: PlayerState
+  }[]
   messages: Message[]
 }
 
@@ -37,6 +37,7 @@ export type Move = {
 export type InitialStateEvent = {
   type: "initialState"
   setup: SetupState
+  id: string
   rseed: string
 }
 
@@ -44,12 +45,20 @@ export type ProcessMoveEvent = {
   type: "processMove"
   previousState: GameState
   move: Move
+  id: string
   rseed: string
+}
+
+export type GetPlayerStateEvent = {
+  type: "getPlayerState"
+  id: string
+  state: GameState
+  position: number
 }
 
 export type InitialStateResultMessage = {
   type: "initialStateResult"
-  error: string | undefined
+  id: string
   state: GameUpdate
 }
 
@@ -58,4 +67,10 @@ export type ProcessMoveResultMessage = {
   id: string
   error: string | undefined
   state: GameUpdate
+}
+
+export type GetPlayerStateMessage = {
+  type: "getPlayerStateResult"
+  id: string
+  state: GameState
 }

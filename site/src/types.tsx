@@ -1,18 +1,17 @@
 import * as Game from './types/game'
+import * as UI from './types/ui'
 
 export type HistoryItem = {
   seq: number
-  data: Game.GameUpdate
+  state: Game.GameState
   move: any
   rseed: string
   position: number
 }
 
 export type InitialStateHistoryItem = {
-  data: Game.GameUpdate
-  players: Game.Player[]
+  state: Game.GameState
+  players: UI.UserPlayer[]
   settings: any
   rseed: string
 }
-
-

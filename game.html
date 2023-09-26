@@ -6,16 +6,22 @@
       case 'initialState':
         console.debug("game generating initial state", event.data.setup);
         const initialState = game.initialState(event.data.setup, event.data.rseed);
-        window.top.postMessage({type: "initialStateResult", state: initialState}, "*")
+        window.top.postMessage({type: "initialStateResult", id: event.data.id, state: initialState}, "*")
+        break;
+      case 'getPlayerState':
+        console.debug("game updating from state", event.data);
+        const state = game.getPlayerState(event.data.state, event.data.position);
+        window.top.postMessage({type: "getPlayerStateResult", id: event.data.id, state}, "*")
         break;
       case 'processMove':
-        console.debug("game proccessing move", event.data);
+        console.debug("game processing move", event.data);
         try {
           const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data}, event.data.rseed);
-          window.top.postMessage({type: "processMoveResult", id: event.data.move.id, error: undefined, state: gameUpdate}, "*")
+          console.debug("game posting results", gameUpdate.game);
+          window.top.postMessage({type: "processMoveResult", id: event.data.id, error: undefined, state: gameUpdate}, "*")
         } catch (e) {
           console.error(e);
-          window.top.postMessage({type: "processMoveResult", id: event.data.move.id, error: String(e), state: undefined}, "*")
+          window.top.postMessage({type: "processMoveResult", id: event.data.id, error: String(e), state: undefined}, "*")
         }
         break;
       }

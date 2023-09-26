@@ -9,59 +9,59 @@ import './App.css';
 
 import * as UI from './types/ui'
 import * as Game from './types/game'
+import { sendInitialState, processMove, getPlayerState, resolveGamePromise, rejectGamePromise } from './game';
 
 const body = document.getElementsByTagName("body")[0];
 const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
 const minPlayers = parseInt(body.getAttribute("minPlayers")!);
-const possiblePlayers = [
-  {id: "0", position: 0, name: "Evelyn", color: "#ff0000"},
-  {id: "1", position: 1, name: "Logan", color: "#00ff00"},
-  {id: "2", position: 2, name: "Avery", color: "#0000ff"},
-  {id: "3", position: 3, name: "Jayden", color: "#666600"},
-  {id: "4", position: 4, name: "Aischa", color: "#006666"},
-  {id: "5", position: 5, name: "Shyamapada", color: "#660066"},
-  {id: "6", position: 6, name: "Iovica", color: "#333333"},
-  {id: "7", position: 7, name: "Liubika", color: "#ff6633"},
-  {id: "8", position: 8, name: "Zvezdelina", color: "#3366ff"},
-  {id: "9", position: 9, name: "Guadalupe", color: "#f01a44"},
+const possibleUsers = [
+  {id: "0", name: "Evelyn"},
+  {id: "1", name: "Logan"},
+  {id: "2", name: "Avery"},
+  {id: "3", name: "Jayden"},
+  {id: "4", name: "Aischa"},
+  {id: "5", name: "Shyamapada"},
+  {id: "6", name: "Iovica"},
+  {id: "7", name: "Liubika"},
+  {id: "8", name: "Zvezdelina"},
+  {id: "9", name: "Guadalupe"},
 ]
 
-type pendingPromise = {
-  resolve: (d: Game.GameUpdate) => void
-  reject: (e: Error) => void
-}
-let pending: pendingPromise | undefined;
-
 function App() {
+  const savedInitialState: InitialStateHistoryItem | undefined = JSON.parse(localStorage.getItem('initialState') || 'null') || undefined;
+  const savedHistory = JSON.parse(localStorage.getItem('history') || '[]') as HistoryItem[];
+  const savedPlayers = savedInitialState?.players || [];
+  const savedSettings = savedInitialState?.settings || {};
 
-  const initialHistory = JSON.parse(localStorage.getItem('history') || '[]');
-  const initialPlayers = JSON.parse(localStorage.getItem('players') || '[]');
-  let initialPhase: "new" | "started" = 'new'
-  if (initialHistory[0]) initialPhase = 'started';
+  const [initialState, setInitialState] = useState(savedInitialState);
 
-  const [numberOfUsers, setNumberOfUsers] = useState<number>(minPlayers);
-  const [phase, setPhase] = useState<"new" | "started">(initialPhase);
-  const [currentPlayer, setCurrentPlayer] = useState(1);
-  const [gameLoaded, setGameLoaded] = useState<boolean>(false);
-  const [players, setPlayers] = useState<UI.UserPlayer[]>(initialPlayers);
-  const [settings, setSettings] = useState<Game.GameSettings>();
-  const [initialState, setInitialState] = useState<InitialStateHistoryItem | undefined>();
-  const [history, setHistory] = useState<HistoryItem[]>(initialHistory);
+  const getCurrentState = (history?: HistoryItem[]): Game.GameState => (
+    history?.length ? history[history.length - 1].state! : initialState?.state!
+  );
+
+  const currentState: Game.GameState = getCurrentState(savedHistory);
+  const initialCurrentPlayer = currentState?.currentPlayerPosition || 1;
+  const initialPhase: "new" | "started" = savedHistory?.length ? 'started' : 'new'
+  const initialMinPlayers = savedPlayers.length || 1;
+
+  const [numberOfUsers, setNumberOfUsers] = useState(initialMinPlayers);
+  const [phase, setPhase] = useState(initialPhase);
+  const [currentPlayer, setCurrentPlayer] = useState(initialCurrentPlayer);
+  const [gameLoaded, setGameLoaded] = useState(false);
+  const [players, setPlayers] = useState(savedPlayers);
+  const [settings, setSettings] = useState<Game.GameSettings>(savedSettings);
+  const [history, setHistory] = useState(savedHistory || []);
   const [open, setOpen] = useState(false);
 
   const onOpenModal = () => setOpen(true);
   const onCloseModal = () => setOpen(false);
 
   const bootstrap = useCallback((): string => {
-    return JSON.stringify({ host: currentPlayer === possiblePlayers[0].position, userID: possiblePlayers.find(p => p.position === currentPlayer)!.id })
-  }, [currentPlayer])
-
-  const sendToGame = useCallback(async (data: Game.InitialStateEvent | Game.ProcessMoveEvent): Promise<Game.GameUpdate> => {
-    return await new Promise((resolve, reject) => {
-      pending = {resolve, reject};
-      (document.getElementById("game") as HTMLIFrameElement).contentWindow!.postMessage(data)
+    return JSON.stringify({
+      host: currentPlayer === players[0]?.position,
+      userID: players.find(p => p.position === currentPlayer)?.userID || possibleUsers[0].id
     })
-  }, [])
+  }, [currentPlayer])
 
   const sendToUI = useCallback((data: UI.UserEvent | UI.PlayersEvent | UI.GameUpdateEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
@@ -69,38 +69,33 @@ function App() {
 
   const resetGame = useCallback(() => {
     setPhase("new")
-    setSettings(undefined)
+    setSettings({})
     setInitialState(undefined)
     setHistory([])
     setPlayers([])
     setCurrentPlayer(1)
-    setNumberOfUsers(minPlayers)
+    localStorage.removeItem('initialState');
     localStorage.removeItem('history');
+    (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
+    (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
   }, [])
 
   const reprocessHistory = useCallback(async () => {
-    if (phase !== "started") return
-    if (!gameLoaded) return
+    console.log('reprocessing history items', history.length);
+    if (!initialState) return
     if (!settings) return
+    let previousUpdate: Game.GameUpdate;
     try {
-      const initialStateSeed = initialState ? initialState.rseed : crypto.randomUUID();
-      let newInitialState = await sendToGame({type: "initialState", setup: {players, settings}, rseed: initialStateSeed})
-      setInitialState({
-        data: newInitialState,
-        players,
-        settings,
-        rseed: initialStateSeed
-      })
-      let previousState = newInitialState
+      previousUpdate = await sendInitialState({players, settings}, initialState.rseed)
       let i = 0;
       const newHistory: HistoryItem[] = []
       while(i < history.length) {
-        let move = history[i].move
-        let position = history[i].position
-        let rseed = history[i].rseed
+        const move = history[i].move
+        const position = history[i].position
+        const rseed = history[i].rseed
         try {
-          const out = await sendToGame({type: "processMove", previousState: previousState.game, move: {...move, position}, rseed })
-          newHistory.push({position, move, seq: i, data: out, rseed})
+          previousUpdate = await processMove(previousUpdate.game, {...move, position}, rseed);
+          newHistory.push({position, move, seq: i, state: previousUpdate.game, rseed})
         } catch(e) {
           console.error("error while reprocessing history", e)
           break
@@ -108,11 +103,12 @@ function App() {
         i++;
       }
       setHistory(newHistory);
+      updateUI(previousUpdate);
     } catch(e) {
-      console.error("reprocess initial state", e)
+      console.error("reprocess", e)
     }
     setGameLoaded(true);
-  }, [gameLoaded, history, initialState, phase, players, sendToGame, settings]);
+  }, [gameLoaded, history, initialState, players, settings]);
 
   useEffect(() => {
     console.log("events!")
@@ -145,11 +141,27 @@ function App() {
     return () => evtSource.close()
   }, [])
 
+  const updateUI = useCallback((update: Game.GameUpdate) => {
+    if (update.game.currentPlayerPosition) {
+      console.log('setCurrentPlayer from', currentPlayer, update.game.currentPlayerPosition);
+      setCurrentPlayer(update.game.currentPlayerPosition);
+    }
+    sendToUI({type: "gameUpdate", state: update.players.find(p => p.position === currentPlayer)!.state});
+  }, [sendToUI, currentPlayer]);
+
+  const updateUIFromState = useCallback(async (state: Game.GameState, position: number) => {
+    setCurrentPlayer(position);
+    sendToUI({
+      type: "gameUpdate",
+      state: await getPlayerState(state, position)
+    });
+  }, [updateUI, getPlayerState]);
+
   useEffect(() => {
-    console.log("listener!", Math.random())
     const listener = async (e: MessageEvent<
       Game.InitialStateResultMessage |
       Game.ProcessMoveResultMessage |
+      Game.GetPlayerStateMessage |
       UI.UpdateSettingsMessage |
       UI.UpdatePlayersMessage |
       UI.StartMessage |
@@ -158,26 +170,24 @@ function App() {
       UI.MoveMessage |
       UI.SwitchPlayerMessage
     >) => {
-      console.log("got one!")
       const path = (e.source! as WindowProxy).location.pathname
-      let currentState
+      console.log("got event", path, e.data.type)
       switch(e.data.type) {
         case 'initialStateResult':
           if (path !== '/game.html') return console.error("expected event from game.html!")
-          if (e.data.error) {
-            pending!.reject(new Error(e.data.error))
-          } else {
-            pending!.resolve(e.data.state)
-          }
-          pending = undefined
+          resolveGamePromise(e.data.id, e.data.state)
           break
         case 'processMoveResult':
           if (path !== '/game.html') return console.error("expected event from game.html!")
           if (e.data.error) {
-            pending!.reject(new Error(e.data.error))
+            rejectGamePromise(e.data.id, e.data.error)
           } else {
-            pending!.resolve(e.data.state)
+            resolveGamePromise(e.data.id, e.data.state)
           }
+          break
+        case 'getPlayerStateResult':
+          if (path !== '/game.html') return console.error("expected event from game.html!")
+          resolveGamePromise(e.data.id, e.data.state)
           break
         case 'updateSettings':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
@@ -186,23 +196,22 @@ function App() {
           break
         case 'move':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
-          const previousState = history.length === 0 ? initialState!.data : history[history.length - 1].data!;
+          const previousState = history.length === 0 ? initialState!.state : history[history.length - 1].state!;
           console.log("move!", e.data)
           try {
             const rseed = crypto.randomUUID()
-            const out = await sendToGame({type: "processMove", previousState: previousState.game, move: {position: currentPlayer, data: e.data.data}, rseed});
+            const moveUpdate = await processMove(previousState, {position: currentPlayer, data: e.data.data}, rseed);
             const newHistory = [...history, {
               position: currentPlayer,
               seq: history.length,
-              data: out,
+              state: moveUpdate.game,
               move: e.data,
               rseed,
             }];
-            setHistory(newHistory);
             localStorage.setItem('history', JSON.stringify(newHistory));
-            if (out.game.currentPlayerPosition) setCurrentPlayer(out.game.currentPlayerPosition);
+            setHistory(newHistory);
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
-            sendToUI({type: "gameUpdate", state: out.players.find(p => p.position === currentPlayer)!})
+            updateUI(moveUpdate);
           } catch(err) {
             sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
           }
@@ -211,22 +220,18 @@ function App() {
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
           try {
             const rseed = crypto.randomUUID()
-            const out = await sendToGame({
-              type: "initialState", setup: {
-                players,
-                settings: settings!,
-              },
-              rseed
-            })
-            setInitialState({
-              data: out,
+            const initialUpdate = await sendInitialState({ players, settings }, rseed);
+            const newInitialState = {
+              state: initialUpdate.game,
               players,
               settings,
               rseed,
-            });
+            };
+            localStorage.setItem('initialState', JSON.stringify(newInitialState));
+            setInitialState(newInitialState);
             setPhase("started");
-            sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
-            sendToUI({type: "gameUpdate", state: out.players.find(p => p.position === currentPlayer)!})
+            sendToUI({type: "messageProcessed", id: e.data.id, error: undefined});
+            updateUI(initialUpdate);
           } catch(err) {
             sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
           }
@@ -234,22 +239,21 @@ function App() {
           break
         case 'ready':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
-          if (phase === 'new') {
+          console.log('ready', initialState);
+          if (!initialState) {
             if (settings) {
               sendToUI({type: "settingsUpdate", settings});
             }
-            sendToUI({type: "players", players: players});
-            for (let player of possiblePlayers.slice(0, numberOfUsers)) {
-              console.log("hi", player)
+            sendToUI({type: "players", players});
+            for (const player of possibleUsers.slice(0, numberOfUsers)) {
               sendToUI({type: "user", userName: player.name, userID: player.id, added: true});
             }
           } else {
-            currentState = history.length === 0 ? initialState!.data : history[history.length - 1].data!;
-            sendToUI({type: "gameUpdate", state: currentState.players.find(p => p.position === currentPlayer)!});
+            sendToUI({type: "players", players});
+            updateUIFromState(getCurrentState(history), currentPlayer);
           }
           break
         case 'updatePlayers':
-          console.log("UPDATING PLAYERRRRS!")
           let newPlayers = players.slice()
           let p: Game.Player | undefined
           for (let op of e.data.operations) {
@@ -257,12 +261,6 @@ function App() {
               case 'reserve':
                 break
               case 'seat':
-                console.log("===>", {
-                  color: op.color,
-                  name: op.name,
-                  position: op.position,
-                  userID: op.userID,
-                })
                 newPlayers.push({
                   color: op.color,
                   name: op.name,
@@ -305,10 +303,9 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToGame, sendToUI, settings]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, updateUIFromState, settings]);
 
   useEffect(() => {
-    console.log("keys!")
     const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
     const validKeys = keys.slice(0, players.length)
     const l = (e: globalThis.KeyboardEvent):any => {
@@ -331,11 +328,11 @@ function App() {
     setNumberOfUsers((previousNumber) => {
       const playerDifference = num - previousNumber
       if (playerDifference > 0) {
-        for (let player of possiblePlayers.slice(previousNumber, num)) {
+        for (const player of possibleUsers.slice(previousNumber, num)) {
           sendToUI({type: "user", userID: player.id, userName: player.name, added: true});
         }
       } else if (playerDifference < 0) {
-        for (let player of possiblePlayers.slice(num, previousNumber)) {
+        for (const player of possibleUsers.slice(num, previousNumber)) {
           sendToUI({type: "user", userID: player.id, userName: player.name, added: false});
         }
       }
@@ -365,10 +362,15 @@ function App() {
       </div>
       <div style={{width: '30vw', paddingLeft: '1em', height:'100vh', display: 'flex', flexDirection:'column'}}>
         <h2>History <button onClick={() => resetGame()}>Reset game</button></h2>
-        <History players={players} revertTo={(n) => setHistory(history.slice(0, n+1))} initialState={initialState} items={history}/>
+      <History
+        players={players}
+        view={n => updateUIFromState(n === -1 ? initialState!.state : history[n].state, currentPlayer)}
+        revertTo={n => { setHistory(history.slice(0, n+1)); updateUIFromState(history[n].state, currentPlayer) }}
+        initialState={initialState}
+        items={history}/>
       </div>
     </div>
-      );
+  );
 }
 
 export default App;
