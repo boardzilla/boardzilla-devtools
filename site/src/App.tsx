@@ -71,7 +71,13 @@ function App() {
       console.log('setCurrentPlayer from', currentPlayer, update.game.currentPlayerPosition);
       setCurrentPlayer(update.game.currentPlayerPosition);
     }
-    sendToUI({type: "gameUpdate", state: update.players.find(p => p.position === currentPlayer)!.state});
+    sendToUI({
+      type: "gameUpdate",
+      state: {
+        position: currentPlayer,
+        state: update.players.find(p => p.position === currentPlayer)!.state
+      }
+    });
   }, [sendToUI, currentPlayer]);
 
   const resetGame = useCallback(() => {
@@ -150,7 +156,10 @@ function App() {
     setCurrentPlayer(position);
     sendToUI({
       type: "gameUpdate",
-      state: await getPlayerState(state, position)
+      state: {
+        position: currentPlayer,
+        state: await getPlayerState(state, position)
+      }
     });
   }, [sendToUI]);
 
@@ -246,7 +255,6 @@ function App() {
               sendToUI({type: "user", userName: player.name, userID: player.id, added: true});
             }
           } else {
-            sendToUI({type: "players", players});
             updateUIFromState(getCurrentState(history), currentPlayer);
           }
           break

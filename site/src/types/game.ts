@@ -13,7 +13,12 @@ export type Message = {
 
 export type GameSettings = Record<string, any>
 export type GameState = Record<string, any>
-export type PlayerState = Record<string, any>
+export type PlayerGameState = Record<string, any>
+
+export type PlayerState = {
+  position: number
+  state: PlayerGameState
+}
 
 export type SetupState = {
   players: Player[]
@@ -22,10 +27,7 @@ export type SetupState = {
 
 export type GameUpdate = {
   game: GameState
-  players: {
-    position: number
-    state: PlayerState
-  }[]
+  players: PlayerState[]
   messages: Message[]
 }
 
@@ -72,5 +74,5 @@ export type ProcessMoveResultMessage = {
 export type GetPlayerStateMessage = {
   type: "getPlayerStateResult"
   id: string
-  state: GameState
+  state: PlayerGameState
 }
