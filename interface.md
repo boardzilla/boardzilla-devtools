@@ -146,21 +146,18 @@ type UpdateSettingsMessage = {
 
 type SeatOperation = {
   type: 'seat'
-  position: number,
+  position: number
   userID: string
-  color: string
-  name: string
-  settings?: any
 }
 
 type UnseatOperation = {
   type: 'unseat'
-  position: number,
+  position: number
 }
 
 type UpdateOperation = {
   type: 'update'
-  position: number,
+  position: number
   color?: string
   name?: string
   settings?: any
@@ -168,7 +165,7 @@ type UpdateOperation = {
 
 type ReserveOperation = {
   type: 'reserve'
-  position: number,
+  position: number
   color: string
   name: string
   settings?: any
