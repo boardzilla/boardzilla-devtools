@@ -148,6 +148,9 @@ type SeatOperation = {
   type: 'seat'
   position: number
   userID: string
+  color: string
+  name: string
+  settings?: any
 }
 
 type UnseatOperation = {
