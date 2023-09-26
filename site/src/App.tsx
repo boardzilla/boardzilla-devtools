@@ -35,9 +35,9 @@ function App() {
 
   const [initialState, setInitialState] = useState(savedInitialState);
 
-  const getCurrentState = (history?: HistoryItem[]): Game.GameState => (
+  const getCurrentState = useCallback((history?: HistoryItem[]): Game.GameState => (
     history?.length ? history[history.length - 1].state! : initialState?.state!
-  );
+  ), [initialState]);
 
   const currentState: Game.GameState = getCurrentState(savedHistory);
   const initialCurrentPlayer = currentState?.currentPlayerPosition || 1;
@@ -47,7 +47,6 @@ function App() {
   const [numberOfUsers, setNumberOfUsers] = useState(initialMinPlayers);
   const [phase, setPhase] = useState(initialPhase);
   const [currentPlayer, setCurrentPlayer] = useState(initialCurrentPlayer);
-  const [gameLoaded, setGameLoaded] = useState(false);
   const [players, setPlayers] = useState(savedPlayers);
   const [settings, setSettings] = useState<Game.GameSettings>(savedSettings);
   const [history, setHistory] = useState(savedHistory || []);
@@ -61,11 +60,19 @@ function App() {
       host: currentPlayer === players[0]?.position,
       userID: players.find(p => p.position === currentPlayer)?.userID || possibleUsers[0].id
     })
-  }, [currentPlayer])
+  }, [currentPlayer, players])
 
   const sendToUI = useCallback((data: UI.UserEvent | UI.PlayersEvent | UI.GameUpdateEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
+
+  const updateUI = useCallback((update: Game.GameUpdate) => {
+    if (update.game.currentPlayerPosition) {
+      console.log('setCurrentPlayer from', currentPlayer, update.game.currentPlayerPosition);
+      setCurrentPlayer(update.game.currentPlayerPosition);
+    }
+    sendToUI({type: "gameUpdate", state: update.players.find(p => p.position === currentPlayer)!.state});
+  }, [sendToUI, currentPlayer]);
 
   const resetGame = useCallback(() => {
     setPhase("new")
@@ -107,8 +114,7 @@ function App() {
     } catch(e) {
       console.error("reprocess", e)
     }
-    setGameLoaded(true);
-  }, [gameLoaded, history, initialState, players, settings]);
+  }, [history, initialState, players, settings, updateUI]);
 
   useEffect(() => {
     console.log("events!")
@@ -124,7 +130,6 @@ function App() {
               break
             case "game":
               console.debug("Game reloading due to changes");
-              setGameLoaded(false);
               (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
               break
           }
@@ -141,21 +146,13 @@ function App() {
     return () => evtSource.close()
   }, [])
 
-  const updateUI = useCallback((update: Game.GameUpdate) => {
-    if (update.game.currentPlayerPosition) {
-      console.log('setCurrentPlayer from', currentPlayer, update.game.currentPlayerPosition);
-      setCurrentPlayer(update.game.currentPlayerPosition);
-    }
-    sendToUI({type: "gameUpdate", state: update.players.find(p => p.position === currentPlayer)!.state});
-  }, [sendToUI, currentPlayer]);
-
   const updateUIFromState = useCallback(async (state: Game.GameState, position: number) => {
     setCurrentPlayer(position);
     sendToUI({
       type: "gameUpdate",
       state: await getPlayerState(state, position)
     });
-  }, [updateUI, getPlayerState]);
+  }, [sendToUI]);
 
   useEffect(() => {
     const listener = async (e: MessageEvent<
@@ -303,7 +300,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, updateUIFromState, settings]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, updateUIFromState, settings, getCurrentState]);
 
   useEffect(() => {
     const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
