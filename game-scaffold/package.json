@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "license": "MIT",
   "dependencies": {
-    "boardzilla": "link:../../boardzilla-core"
+    "boardzilla": "link:../../boardzilla-core",
+    "react": "^18.2.0"
   },
   "devDependencies": {
-    "@types/node": "^20.6.2",
+    "@types/react": "^18.2.23",
     "esbuild": "^0.19.2",
     "typescript": "^5.2.2"
   },

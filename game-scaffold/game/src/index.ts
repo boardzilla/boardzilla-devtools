@@ -1,10 +1,29 @@
+/**
+ * TODO
+ * resource resupply
+ * after, in step 1+2, replace the highest plant and put it bottom of DECK
+ * discount token
+ * - add each auction
+ * - redraw if new powerplant lower than discount and discard discount
+ * - discard when purchased
+ * - discard and replace plant if unpurchased
+ * rest of map
+ * - playing zones
+ * germany nuclear plant, no uranium resupply if nuclear-39 purchased
+ * step 2/3
+ * - replace the lowest plant at end of step3 round and beginning (only) of step2
+ * - after step3 drawn, becomes highest plant. discard step3 and lowest after auction (or immediately if not auction) and do not replace(?), shuffle remainder
+ * - step3 takes effect AFTER the current phase
+ * - step3 triggers before step2, trigger step2 first
+ * victory
+ * - upon hitting score
+ * - income instead creates the victory condition: # of cities powered, remaining elektro
+ * 2-player rules add Trust...
+ */
+
 import setup, {
-  Game,
   Action,
   MoveAction,
-  Board,
-  Space,
-  Piece,
   Player,
   Sequence,
   PlayerAction,
@@ -13,16 +32,47 @@ import setup, {
   EachPlayer,
   IfElse,
   repeat,
+  boardClasses,
 } from 'boardzilla/game';
+
+const { Board, Space, Piece } = boardClasses<PowergridPlayer>();
 
 import { cards } from './cards';
 
 const resourceTypes = ['coal', 'oil', 'garbage', 'uranium'];
 type ResourceType = (typeof resourceTypes)[number];
 
+class PowergridBoard extends Board {
+  step: number = 1;
+  turn: number = 0;
+  lastBid?: number;
+  playerWithHighestBid?: PowergridPlayer;
+
+  applyMinimumRule() {
+    const powerplants = this.first('powerplants')!;
+    for (const card of powerplants.all(Card)) {
+      if (card.cost <= this.game.players.max('score')) {
+        card.remove();
+        this.first('deck')!.top(Card)?.putInto(powerplants);
+      }
+    }
+  };
+
+  sortPowerplants() {
+    this.first('powerplants')!.sortBy('cost');
+    this.applyMinimumRule();
+  };
+
+  refillResources(resource: ResourceType, amount: number) {
+    for (const space of this.lastN(amount, ResourceSpace, {resource})) {
+      this.pile.first(Resource, 'coal')!.putInto(space)
+    };
+  }
+}
+
 export class Card extends Piece {
   image: string;
-  cost?: number;
+  cost: number;
   resourceType?: ResourceType | 'hybrid';
   resources?: number;
   power?: number;
@@ -78,13 +128,6 @@ export class Building extends Piece {
   powered?: boolean;
 }
 
-class PowergridBoard extends Board {
-  step: number = 1;
-  turn: number = 0;
-  lastBid?: number;
-  playerWithHighestBid?: PowergridPlayer;
-}
-
 export class PowergridPlayer extends Player {
   score: number = 0;
   elektro: number = 50;
@@ -129,23 +172,7 @@ const refill: Record<string, number[][]> = {
 
 const income = [10, 22, 33, 44, 54, 64, 73, 82, 90, 98, 105, 112, 118, 124, 129, 134, 138, 142, 145, 148, 150];
 
-// convenience methods
-const applyMinimumRule = (game: Game<PowergridPlayer, PowergridBoard>, powerplants: Space) => {
-  for (const card of powerplants.all(Card)) {
-    if (card.cost !== undefined && card.cost <= game.players.max('score')) {
-      card.remove();
-      game.board.first('deck')!.top(Card)?.putInto(powerplants);
-    }
-  }
-};
-
-const sortPowerplants = (game: Game<PowergridPlayer, PowergridBoard>, powerplants: Space) => {
-  powerplants.sortBy('cost');
-  applyMinimumRule(game, powerplants);
-};
-
-
-export default setup<PowergridPlayer, PowergridBoard>({
+export default setup({
   minPlayers: 1,
   maxPlayers: 4,
   playerClass: PowergridPlayer,
@@ -178,16 +205,10 @@ export default setup<PowergridPlayer, PowergridBoard>({
     
     const resources = board.create(Space, 'resources');
     for (let cost = 1; cost <= 8; cost++) {
-      resources.create(ResourceSpace, `coal-${cost}`, { cost, resource: 'coal' });
-      resources.create(ResourceSpace, `coal-${cost}`, { cost, resource: 'coal' });
-      resources.create(ResourceSpace, `coal-${cost}`, { cost, resource: 'coal' });
+      resources.createMany(3, ResourceSpace, `coal-${cost}`, { cost, resource: 'coal' });
+      resources.createMany(3, ResourceSpace, `oil-${cost}`, { cost, resource: 'oil' });
+      resources.createMany(3, ResourceSpace, `garbage-${cost}`, { cost, resource: 'garbage' });
       resources.create(ResourceSpace, `uranium-${cost}`, { cost, resource: 'uranium' });
-      resources.create(ResourceSpace, `oil-${cost}`, { cost, resource: 'oil' });
-      resources.create(ResourceSpace, `oil-${cost}`, { cost, resource: 'oil' });
-      resources.create(ResourceSpace, `oil-${cost}`, { cost, resource: 'oil' });
-      resources.create(ResourceSpace, `garbage-${cost}`, { cost, resource: 'garbage' });
-      resources.create(ResourceSpace, `garbage-${cost}`, { cost, resource: 'garbage' });
-      resources.create(ResourceSpace, `garbage-${cost}`, { cost, resource: 'garbage' });
     };
     resources.create(ResourceSpace, 'uranium-10', { cost: 10, resource: 'uranium' });
     resources.create(ResourceSpace, 'uranium-12', { cost: 12, resource: 'uranium' });
@@ -196,7 +217,7 @@ export default setup<PowergridPlayer, PowergridBoard>({
 
     const powerplants = board.create(Space, 'powerplants');
     powerplants.onEnter(Card, c => c.showToAll());
-    powerplants.onEnter(Card, () => sortPowerplants(game, powerplants))
+    powerplants.onEnter(Card, () => board.sortPowerplants())
 
     const deck = board.create(Space, 'deck');
     deck.onEnter(Card, c => c.hideFromAll());
@@ -215,46 +236,38 @@ export default setup<PowergridPlayer, PowergridBoard>({
 
     // setup board
     deck.shuffle();
-    deck.firstN(8, Card, card => card.cost! <= 15).putInto(powerplants);
+    deck.firstN(8, Card, card => card.cost <= 15).putInto(powerplants);
 
     let removals = 0;
     if (game.players.length === 4) removals = 1;
     if (game.players.length === 3) removals = 2;
     if (game.players.length === 2) removals = 1;
-    deck.firstN(removals, Card, card => card.cost! <= 15).remove();
+    deck.firstN(removals, Card, card => card.cost <= 15).remove();
 
     removals = 0;
     if (game.players.length === 4) removals = 3;
     if (game.players.length === 3) removals = 6;
     if (game.players.length === 2) removals = 5;
-    deck.firstN(removals, Card, card => card.cost! > 15).remove();
+    deck.firstN(removals, Card, card => card.cost > 15).remove();
 
-    deck.first(Card, card => card.cost! <= 15)!.putInto(deck);
+    deck.first(Card, card => card.cost <= 15)!.putInto(deck);
     deck.first(Card, 'step-3')!.putInto(deck, {fromBottom: 0});
 
     // initial resources
-    for (const space of board.all(ResourceSpace, {resource: 'coal'})) {
-      board.pile.first(Resource, 'coal')!.putInto(space)
-    };
-    for (const space of board.all(ResourceSpace, s => s.resource === 'oil' && s.cost > 2)) {
-      board.pile.first(Resource, 'oil')!.putInto(space)
-    };
-    for (const space of board.all(ResourceSpace, s => s.resource === 'garbage' && s.cost > 6)) {
-      board.pile.first(Resource, 'garbage')!.putInto(space)
-    };
-    for (const space of board.all(ResourceSpace, s => s.resource === 'uranium' && s.cost >= 14)) {
-      board.pile.first(Resource, 'uranium')!.putInto(space)
-    };
+    board.refillResources('coal', 24);
+    board.refillResources('oil', 18);
+    board.refillResources('garbage', 9);
+    board.refillResources('uranium', 2);
 
     game.players.shuffle();
     game.players.next();
   },
 
   actions: (game, board) => {
-    const map = board.first(Space, 'map')!;
-    const deck = board.first(Space, 'deck')!;
-    const powerplants = board.first(Space, 'powerplants')!;
-    const resources = board.first(Space, 'resources')!;
+    const map = board.first('map')!;
+    const deck = board.first('deck')!;
+    const powerplants = board.first('powerplants')!;
+    const resources = board.first('resources')!;
 
     const costOf = (resource: ResourceType, amount: number) => {
       return resources.firstN(amount, resource).sum(resource => resource.container(ResourceSpace)!.cost)
@@ -280,7 +293,7 @@ export default setup<PowergridPlayer, PowergridBoard>({
           player.elektro -= city.costToBuild();
           city.owners.push(player);
           player.score = map.all(Building, {mine: true}).length;
-          applyMinimumRule(game, powerplants);
+          board.applyMinimumRule();
         },
       }),
 
@@ -348,36 +361,6 @@ export default setup<PowergridPlayer, PowergridBoard>({
         }
       }),
 
-      //   log: '$0 powered $1',
-      //   key: 'p',
-      //   action: (card: Card, oilChoice: number) => {
-      //     const resources = card.resources!;
-      //     const resourceType = card.resourceType;
-      //     if (resourceType === 'hybrid') {
-      //       let oil = Math.min(resources, card.count('oil'));
-      //       let coal = Math.min(resources, card.count('coal'));
-      //       const overage = oil + coal - resources;
-      //       if (overage < 0) throw new InvalidChoiceError('Not enough oil/coal to power this plant');
-      //       if (overage > 0 && oilChoice === undefined) {
-      //         const choices: Record<string, string> = {};
-      //         for (let o = oil; o + overage >= oil; o--) choices[o] = `${o} oil + ${resources - o} coal`;
-      //         throw new IncompleteActionError({ prompt: 'Power with?', choices });
-      //       }
-      //       if (oilChoice !== undefined) {
-      //         oil = oilChoice;
-      //         coal = resources - oilChoice;
-      //       }
-      //       if (oil) card.clearIntoBoard.Pile('oil', oil);
-      //       if (coal) card.clearIntoBoard.Pile('coal', coal);
-      //     } else {
-      //       if (card.count(`${resourceType}`) < resources) throw new InvalidChoiceError(`Not enough ${resourceType} to power this plant`);
-      //       if (resourceType) card.clearIntoBoard.Pile(`${resourceType}`, resources);
-      //     }
-      //     times(card.power!, () => Building.find('map building.mine:not([powered])').powered = true);
-      //     card.powered = true;
-      //   },
-      // },
-
       remove: player => new Action({
         prompt: 'Remove',
         selections: [{
@@ -434,22 +417,6 @@ export default setup<PowergridPlayer, PowergridBoard>({
         },
       }),
 
-      refill: player => new Action({
-        prompt: 'Refill resources',
-        selections: [{
-          selectFromChoices: {
-            choices: {'1': 'Step 1', '2': 'Step 2', '3': 'Step 3' },
-          }
-        }],
-        move: (step: number) => {
-          for (const resource in resourceTypes) {
-            resources.all(ResourceSpace, {resource});
-            refill[resource][game.players.length - 1][step - 1];
-            //.forEach(r => r.addFromBoard.Pile(`${resource}`, 1)));
-          }
-        },
-      }),
-
       // adjustElektro: {
       //   prompt: 'Elektro +/-',
       //   key: 'e',
@@ -485,7 +452,7 @@ export default setup<PowergridPlayer, PowergridBoard>({
     return new Loop({name: 'round', while: () => true, do: new Sequence({name: 'phases', steps: [
       new Step({
         command: () => {
-          game.players.sortBy('score', 'desc');
+          game.players.sortBy('score', 'desc'); // and powerplants
           board.turn += 1;
           for (const player of game.players) player.havePassedAuctionPhase = false;
         }
@@ -587,6 +554,11 @@ export default setup<PowergridPlayer, PowergridBoard>({
           }}),
         ]}),
       }),
+      new Step({ name: 'refill', command: () => {
+        for (const r of resourceTypes) {
+          board.refillResources(r, refill[r][game.players.length - 1][board.step - 1]);
+        }
+      }})
     ]})})
   }
 });

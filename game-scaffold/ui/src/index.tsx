@@ -3,7 +3,7 @@ import render, { toggleSetting, choiceSetting, textSetting, numberSetting } from
 
 import setup from '../../game/src/index';
 
-import { Card, PlayerMat, Building, PowergridPlayer } from '../../game/src/index';
+import { Card, PlayerMat, Building } from '../../game/src/index';
 
 import './style.scss';
 
@@ -17,9 +17,9 @@ render(setup, {
   appearance: {
     PlayerMat: (el: PlayerMat, contents) => <>
       {el.player?.name}<br/>
-      Score: {(el.player as PowergridPlayer)?.score}<br/>
+      Score: {(el.player)?.score}<br/>
       Buildings: {el.all(Building).length}<br/>
-      Elektro: {(el.player as PowergridPlayer)?.elektro}
+      Elektro: {(el.player)?.elektro}
       <div>{contents}</div>
     </>,
     Building: (building: Building) => <div>{building.player?.name}</div>,
