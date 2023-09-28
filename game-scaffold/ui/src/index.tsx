@@ -25,7 +25,7 @@ render(setup, {
     Building: (building: Building) => <div>{building.player?.name}</div>,
     Card: (card: Card, contents) => <div>
       {card.cost && <>
-        ({card.cost})<br/>
+      [{card.discount ? 1 : card.cost}{card.discount && <i> discount</i>}]<br/>
         {card.resources ? `${card.resources}x ${card.resourceType}` : 'wind'}-&gt;{card.power}
         {card.powered && "*"}
       </> || card.name}

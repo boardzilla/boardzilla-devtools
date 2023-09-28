@@ -5,6 +5,24 @@
 .City {
   display: inline-block;
 }
+.City[data-zone="green"] {
+  color: green;
+}
+.City[data-zone="red"] {
+  color: red;
+}
+.City[data-zone="brown"] {
+  color: brown;
+}
+.City[data-zone="yellow"] {
+  color: #550;
+}
+.City[data-zone="blue"] {
+  color: blue;
+}
+.City[data-zone="purple"] {
+  color: purple;
+}
 
 .PlayerMat .Building {
   display: none;

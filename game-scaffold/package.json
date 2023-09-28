@@ -12,7 +12,7 @@
     "typescript": "^5.2.2"
   },
   "scripts": {
-    "build:ui": "esbuild --format=iife --asset-names=assets/[hash]/[name] --loader:.png=file --loader:.scss=css --bundle --outdir=ui/build ui/src/index.tsx",
-    "build:game": "esbuild --format=iife --global-name=game --bundle --outdir=game/build game/src/game-interface.ts"
+    "build:ui": "esbuild --format=iife --asset-names=assets/[hash]/[name] --loader:.png=file --loader:.scss=css --keep-names --bundle --outdir=ui/build ui/src/index.tsx",
+    "build:game": "esbuild --format=iife --global-name=game --keep-names --bundle --outdir=game/build game/src/game-interface.ts"
   }
 }

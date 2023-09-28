@@ -1,6 +1,6 @@
 import type { Card } from './index';
 
-export const cards: Record<string, Partial<Card> & {image: string}> = {
+export const cards: Record<string, Partial<Card>> = {
   "oil-03": {
     cost: 3,
     resourceType: 'oil',
