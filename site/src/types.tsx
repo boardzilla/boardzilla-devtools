@@ -7,6 +7,7 @@ export type HistoryItem = {
   move: any
   rseed: string
   position: number
+  messages: Game.Message[]
 }
 
 export type InitialStateHistoryItem = {

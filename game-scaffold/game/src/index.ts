@@ -57,11 +57,15 @@ class PowergridBoard extends Board {
     if (powerplants.has('step-3')) advanceToStep3 = true;
 
     if (advanceToStep2) {
+      this.game.message('Now in step 2');
       this.step = 2;
       powerplants.first(Card)?.remove();
       this.first('deck')!.top(Card)?.putInto(powerplants);
     }
-    if (advanceToStep3) this.step = 3;
+    if (advanceToStep3) {
+      this.game.message('Now in step 3');
+      this.step = 3;
+    }
   }
 
   sortPlayers(direction: 'asc' | 'desc') {
@@ -416,14 +420,6 @@ export default setup({
     };
 
     return {
-      play: () => new MoveAction({
-        prompt: 'Play factory',
-        piece: {
-          chooseFrom: deck.all(Card),
-        },
-        to: powerplants
-      }),
-
       build: player => new MoveAction({
         prompt: 'Build',
         promptTo: 'Which city?',
@@ -552,6 +548,7 @@ export default setup({
         }],
         condition: !board.first(Card, {auction: true}),
         move: (card: Card) => card.auction = true,
+        message: '$player put $1 up for auction'
       })
     };
   },
@@ -599,7 +596,7 @@ export default setup({
 
                   new Step({ command: ({ auctionPlayer }) => {
                     const winner = board.playerWithHighestBid!;
-                    console.log('bid won', winner.name, board.lastBid);
+                    game.message('$1 won the bid with $2', winner.name, board.lastBid!);
                     winner.elektro -= board.lastBid!;
                     board.lastBid = undefined;
                     powerplants.first(Card, {auction: true})!.putInto(board.first(PlayerMat, {player: winner})!);

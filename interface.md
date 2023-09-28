@@ -41,7 +41,7 @@ type Player = {
 }
 
 type Message = {
-  position: number
+  position?: number
   body: string
 }
 
@@ -213,5 +213,5 @@ type MoveMessage = {
 }
 
 // bootstrap data
-{userID: string, host: bool}
+{userID: string, host: bool, minPlayers: number, maxPlayers: number}
 ```

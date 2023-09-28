@@ -10,7 +10,6 @@ export type Message = {
   body: string
 }
 
-
 export type GameSettings = Record<string, any>
 export type GameState = Record<string, any>
 export type PlayerGameState = Record<string, any>

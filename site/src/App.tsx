@@ -58,7 +58,9 @@ function App() {
   const bootstrap = useCallback((): string => {
     return JSON.stringify({
       host: currentPlayer === players[0]?.position,
-      userID: players.find(p => p.position === currentPlayer)?.userID || possibleUsers[0].id
+      userID: players.find(p => p.position === currentPlayer)?.userID || possibleUsers[0].id,
+      minPlayers,
+      maxPlayers
     })
   }, [currentPlayer, players])
 
@@ -103,12 +105,10 @@ function App() {
       let i = 0;
       const newHistory: HistoryItem[] = []
       while(i < history.length) {
-        const move = history[i].move
-        const position = history[i].position
-        const rseed = history[i].rseed
+        const { move, position, rseed } = history[i]
         try {
           previousUpdate = await processMove(previousUpdate.game, {...move, position}, rseed);
-          newHistory.push({position, move, seq: i, state: previousUpdate.game, rseed})
+          newHistory.push({position, move, seq: i, state: previousUpdate.game, messages: previousUpdate.messages, rseed})
         } catch(e) {
           console.error("error while reprocessing history", e)
           break
@@ -161,7 +161,7 @@ function App() {
         state: await getPlayerState(state, position)
       }
     });
-  }, [sendToUI]);
+  }, [sendToUI, currentPlayer]);
 
   useEffect(() => {
     const listener = async (e: MessageEvent<
@@ -211,6 +211,7 @@ function App() {
               position: currentPlayer,
               seq: history.length,
               state: moveUpdate.game,
+              messages: moveUpdate.messages,
               move: e.data,
               rseed,
             }];
