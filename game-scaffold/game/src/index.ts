@@ -1,12 +1,6 @@
 /**
  * TODO
  * playing zones
- new Set(board.all(City, c => c.zone !== 'blue' && board.all(City, {zone: 'blue'}).some(c2 => c.adjacentTo(c2))).map(c => c.zone))
- * step 2/3
- * - replace the lowest plant at end of step3 round and beginning (only) of step2
- * - after step3 drawn, becomes highest plant. discard step3 and lowest after auction (or immediately if not auction) and do not replace(?), shuffle remainder
- * - step3 takes effect AFTER the current phase
- * - step3 triggers before step2, trigger step2 first
  * victory
  * - upon hitting score
  * - income instead creates the victory condition: # of cities powered, remaining elektro
