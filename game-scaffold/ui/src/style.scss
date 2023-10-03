@@ -1,29 +1,36 @@
-.ResourceSpace {
-  display: inline-block;
-}
+#play-area {
+  .City {
+    &[data-zone="green"] {
+      color: green;
+    }
+    &[data-zone="red"] {
+      color: red;
+    }
+    &[data-zone="brown"] {
+      color: brown;
+    }
+    &[data-zone="yellow"] {
+      color: #550;
+    }
+    &[data-zone="blue"] {
+      color: blue;
+    }
+    &[data-zone="purple"] {
+      color: purple;
+    }
+  }
 
-.City {
-  display: inline-block;
-}
-.City[data-zone="green"] {
-  color: green;
-}
-.City[data-zone="red"] {
-  color: red;
-}
-.City[data-zone="brown"] {
-  color: brown;
-}
-.City[data-zone="yellow"] {
-  color: #550;
-}
-.City[data-zone="blue"] {
-  color: blue;
-}
-.City[data-zone="purple"] {
-  color: purple;
-}
+  &.fluid {
+    .ResourceSpace {
+      display: inline-block;
+    }
 
-.PlayerMat .Building {
-  display: none;
+    .City {
+      display: inline-block;
+    }
+
+    .PlayerMat .Building {
+      display: none;
+    }
+  }
 }
