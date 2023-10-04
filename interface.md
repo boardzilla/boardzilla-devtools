@@ -137,6 +137,15 @@ type MessageProcessedEvent = {
   id: string
   error?: string
 }
+
+type HighlightEvent = {
+  type: "highlight"
+  id: string
+}
+
+type UnhighlightAllEvent = {
+  type: "unhighlightAll"
+}
 ```
 
 #### sent events by ui

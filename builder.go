@@ -32,10 +32,10 @@ func (b *Builder) Build() error {
 	}
 
 	// run game/ui build
-	if err := b.buildUI(manifest); err != nil {
+	if err := b.buildUI(manifest, false); err != nil {
 		return err
 	}
-	if err := b.buildGame(manifest); err != nil {
+	if err := b.buildGame(manifest, false); err != nil {
 		return err
 	}
 	return nil
@@ -62,12 +62,16 @@ func (b *Builder) BuildUI() error {
 	if err != nil {
 		return err
 	}
-	return b.buildUI(manifest)
+	return b.buildUI(manifest, false)
 }
 
-func (b *Builder) buildUI(m *ManifestV1) error {
+func (b *Builder) buildUI(m *ManifestV1, prod bool) error {
 	fmt.Printf("Buidling UI %s\n", m.UI.BuildCommand)
-	args := strings.Fields(m.UI.BuildCommand)
+	buildCmd := m.UI.BuildCommand.Dev
+	if prod {
+		buildCmd = m.UI.BuildCommand.Production
+	}
+	args := strings.Fields(buildCmd)
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -82,12 +86,16 @@ func (b *Builder) BuildGame() error {
 	if err != nil {
 		return err
 	}
-	return b.buildGame(manifest)
+	return b.buildGame(manifest, false)
 }
 
-func (b *Builder) buildGame(m *ManifestV1) error {
+func (b *Builder) buildGame(m *ManifestV1, prod bool) error {
 	fmt.Printf("Buidling Game %s\n", m.Game.BuildCommand)
-	args := strings.Fields(m.Game.BuildCommand)
+	buildCmd := m.Game.BuildCommand.Dev
+	if prod {
+		buildCmd = m.Game.BuildCommand.Production
+	}
+	args := strings.Fields(buildCmd)
 	cmd := exec.Command(args[0], args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -110,3 +118,51 @@ func (b *Builder) Manifest() (*ManifestV1, error) {
 	}
 	return manifest, nil
 }
+
+func (b *Builder) Clean() error {
+	manifest, err := b.Manifest()
+	if err != nil {
+		return err
+	}
+	gameOutPath := path.Join(b.root, manifest.Game.Root, manifest.Game.OutputFile)
+	_, err = os.Stat(gameOutPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+	} else {
+		if err := os.Remove(gameOutPath); err != nil {
+			return err
+		}
+	}
+	uiOutDir := path.Join(b.root, manifest.UI.Root, manifest.UI.OutputDirectory)
+	files, err := os.ReadDir(uiOutDir)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		if err := os.RemoveAll(path.Join(uiOutDir, f.Name())); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b *Builder) BuildProd() error {
+	manifest, err := b.Manifest()
+	if err != nil {
+		return err
+	}
+	if err := b.buildUI(manifest, true); err != nil {
+		return err
+	}
+	if err := b.buildGame(manifest, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+// clean
+// run prod build for game and ui
+// start a post with a zip body
