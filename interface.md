@@ -104,20 +104,19 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 
 #### recv events by ui
 ```ts
-type UserPlayer = Player & {
-  userID?: string
+type User = {
+  id: string
+  name: string
 }
 
-type UserEvent = {
-  type: "user"
-  userID: string
-  userName: string
-  added: boolean
+type UserPlayer = Player & {
+  userID?: string
 }
 
 type PlayersEvent = {
   type: "players"
   players: UserPlayer[]
+  users: User[]
 }
 
 // an update to the setup state
