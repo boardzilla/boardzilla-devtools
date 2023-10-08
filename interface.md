@@ -109,7 +109,11 @@ type User = {
   name: string
 }
 
-type UserPlayer = Player & {
+type UserPlayer = {
+  color: string
+  name: string
+  position: number
+  settings?: any
   userID?: string
 }
 

@@ -7,16 +7,10 @@ type User = {
   name: string
 }
 
-type UserEvent = {
-  type: "user"
-  userID: string
-  userName: string
-  added: boolean
-}
-
 type PlayersEvent = {
   type: "players"
   players: NumberGuesserPlayer[]
+  users: User[]
 }
 
 // an update to the setup state
@@ -182,7 +176,6 @@ const Game = () => {
 
   useEffect(() => {
     const listener = (event: MessageEvent<
-      UserEvent |
       PlayersEvent |
       GameUpdateEvent |
       SettingsUpdateEvent |
@@ -191,22 +184,13 @@ const Game = () => {
       const e = event.data
       console.log("got a", e.type, "message", e)
       switch(e.type) {
-        case 'user':
-          if (e.added) {
-            setUsers((users) => {
-              if (users.find(u => e.userID === u.id)) return users
-              return [...users, { name: e.userName, id: e.userID }]
-            })
-          } else {
-            setUsers((users) => users.filter(u => u.id !== e.userID))
-          }
-          break;
         case 'settingsUpdate':
           console.log("!!!! got settings", e)
           setSetupState(e.settings);
           break
         case 'players':
           setPlayers(e.players)
+          setUsers(e.users)
           break
         case 'gameUpdate':
           setPhase('started');

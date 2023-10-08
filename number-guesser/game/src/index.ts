@@ -1,4 +1,4 @@
-import { NumberGuesserGameMove, NumberGuesserGameState, NumberGuesserGameUpdate, NumberGuesserSetupState } from "../../types";
+import { NumberGuesserGameMove, NumberGuesserGameState, NumberGuesserGameUpdate, NumberGuesserSetupState, NumberGuesserPlayerState } from "../../types";
 
 export function initialState(setup: NumberGuesserSetupState, rseed: string): NumberGuesserGameUpdate {
 	const possibleGuesses: number[] = []
@@ -7,16 +7,12 @@ export function initialState(setup: NumberGuesserSetupState, rseed: string): Num
 	}
 	const currentPlayer = Math.min(...setup.players.map(p => p.position))
 	const number = possibleGuesses[Math.floor(Math.random()*possibleGuesses.length)];
+	const game = {number, finished: false, move: 0, players: setup.players, currentPlayer, winner: undefined, possibleGuesses}
 	return {
-		game: {number, finished: false, move: 0, players: setup.players, currentPlayer, winner: undefined, possibleGuesses},
+		game,
 		players: setup.players.map(p => ({
 			position: p.position,
-			state: {
-				currentPlayer,
-				winner: undefined,
-				move: 0,
-				possibleGuesses,
-			}
+			state: getPlayerState(game, p.position)
 		})),
 		messages: []
 	}
@@ -38,13 +34,17 @@ export function processMove(state: NumberGuesserGameState, move: NumberGuesserGa
 		game: state,
 		players: state.players.map(p => ({
 			position: p.position,
-			state: {
-				currentPlayer: state.currentPlayer,
-				winner: state.winner,
-				move: state.move,
-				possibleGuesses: state.possibleGuesses,
-			}
+			state: getPlayerState(state, p.position)
 		})),
 		messages: [],
+	}
+}
+
+export function getPlayerState(state: NumberGuesserGameState, position: number): NumberGuesserPlayerState {
+	return {
+		currentPlayer: state.currentPlayer,
+		winner: state.winner,
+		move: state.move,
+		possibleGuesses: state.possibleGuesses,
 	}
 }
