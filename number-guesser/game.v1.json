@@ -4,6 +4,7 @@
   "description": "Play stupid games, win stupid prizes",
   "minPlayers": 1,
   "maxPlayers": 5,
+  "image": "guess.jpg",
   "ui": {
     "root": ".",
     "build": {
