@@ -5,7 +5,7 @@
       switch (event.data.type) {
       case 'initialState':
         console.debug("game generating initial state", event.data.setup);
-        const initialState = game.initialState(event.data.setup, event.data.rseed);
+        const initialState = game.initialState(event.data.setup);
         window.top.postMessage({type: "initialStateResult", id: event.data.id, state: initialState}, "*")
         break;
       case 'getPlayerState':
@@ -16,7 +16,7 @@
       case 'processMove':
         console.debug("game processing move", event.data);
         try {
-          const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data}, event.data.rseed);
+          const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data});
           console.debug("game posting results", gameUpdate.game);
           window.top.postMessage({type: "processMoveResult", id: event.data.id, error: undefined, state: gameUpdate}, "*")
         } catch (e) {

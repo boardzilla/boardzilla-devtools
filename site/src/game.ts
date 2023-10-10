@@ -18,12 +18,12 @@ const sendToGame = async (data: any) => {
   });
 };
 
-export const sendInitialState = (setup: Game.SetupState, rseed: string) => {
-  return sendToGame({ type: 'initialState', setup, rseed }) as Promise<Game.GameUpdate>;
+export const sendInitialState = (setup: Game.SetupState) => {
+  return sendToGame({ type: 'initialState', setup }) as Promise<Game.GameUpdate>;
 };
 
-export const processMove = (previousState: Game.GameState, move: Game.Move, rseed: string) => {
-  return sendToGame({ type: 'processMove', previousState, move, rseed }) as Promise<Game.GameUpdate>;
+export const processMove = (previousState: Game.GameState, move: Game.Move) => {
+  return sendToGame({ type: 'processMove', previousState, move }) as Promise<Game.GameUpdate>;
 }
 
 export const getPlayerState = (state: Game.GameState, position: number) => {

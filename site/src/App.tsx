@@ -101,14 +101,14 @@ function App() {
     if (!settings) return
     let previousUpdate: Game.GameUpdate;
     try {
-      previousUpdate = await sendInitialState({players, settings}, initialState.rseed)
+      previousUpdate = await sendInitialState({players, settings})
       let i = 0;
       const newHistory: HistoryItem[] = []
       while(i < history.length) {
-        const { move, position, rseed } = history[i]
+        const { move, position } = history[i]
         try {
-          previousUpdate = await processMove(previousUpdate.game, {...move, position}, rseed);
-          newHistory.push({position, move, seq: i, state: previousUpdate.game, messages: previousUpdate.messages, rseed})
+          previousUpdate = await processMove(previousUpdate.game, {...move, position});
+          newHistory.push({position, move, seq: i, state: previousUpdate.game, messages: previousUpdate.messages})
         } catch(e) {
           console.error("error while reprocessing history", e)
           break
@@ -205,15 +205,13 @@ function App() {
           const previousState = history.length === 0 ? initialState!.state : history[history.length - 1].state!;
           console.log("move!", e.data)
           try {
-            const rseed = crypto.randomUUID()
-            const moveUpdate = await processMove(previousState, {position: currentPlayer, data: e.data.data}, rseed);
+            const moveUpdate = await processMove(previousState, {position: currentPlayer, data: e.data.data});
             const newHistory = [...history, {
               position: currentPlayer,
               seq: history.length,
               state: moveUpdate.game,
               messages: moveUpdate.messages,
               move: e.data,
-              rseed,
             }];
             localStorage.setItem('history', JSON.stringify(newHistory));
             setHistory(newHistory);
@@ -226,13 +224,11 @@ function App() {
         case 'start':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
           try {
-            const rseed = crypto.randomUUID()
-            const initialUpdate = await sendInitialState({ players, settings }, rseed);
+            const initialUpdate = await sendInitialState({ players, settings });
             const newInitialState = {
               state: initialUpdate.game,
               players,
               settings,
-              rseed,
             };
             localStorage.setItem('initialState', JSON.stringify(newInitialState));
             setInitialState(newInitialState);
