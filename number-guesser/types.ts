@@ -6,7 +6,7 @@ export type Player<T> = {
 }
 
 export type Message = {
-  position: number
+  position?: number
   body: string
 }
 

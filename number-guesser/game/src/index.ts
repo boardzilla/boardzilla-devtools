@@ -14,11 +14,14 @@ export function initialState(setup: NumberGuesserSetupState, rseed: string): Num
 			position: p.position,
 			state: getPlayerState(game, p.position)
 		})),
-		messages: []
+		messages: [{
+			body: "Let's guess some numbers!"
+		}]
 	}
 }
 
 export function processMove(state: NumberGuesserGameState, move: NumberGuesserGameMove, rseed: string): NumberGuesserGameUpdate {
+	const currentPlayer = state.players.find(p => p.position === state.currentPlayer)
 	if (move.position !== state.currentPlayer) throw new Error ("not your turn");
 	if (move.data.number === state.number) {
 		state.finished = true
@@ -36,7 +39,9 @@ export function processMove(state: NumberGuesserGameState, move: NumberGuesserGa
 			position: p.position,
 			state: getPlayerState(state, p.position)
 		})),
-		messages: [],
+		messages: [{
+			body: `${currentPlayer!.name} guessed ${move.data.number}`
+		}]
 	}
 }
 
