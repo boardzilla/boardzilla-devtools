@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -178,9 +180,13 @@ func runPublisher() error {
 		pipeReader, pipeWriter := io.Pipe()
 		errs := make(chan error)
 		mpw := multipart.NewWriter(pipeWriter)
-		gw := newGameWriter(mpw, *root)
+		gw := newGameWriter(serverURL, manifest.Name, mpw, *root)
 		go func() {
 			if err := gw.addFile("game.v1.json", *root, "game.v1.json"); err != nil {
+				errs <- err
+				return
+			}
+			if err := gw.addFile(manifest.Image, *root, manifest.Image); err != nil {
 				errs <- err
 				return
 			}
@@ -231,24 +237,45 @@ func runPublisher() error {
 }
 
 type gameWriter struct {
-	mpw  *multipart.Writer
-	root string
+	mpw       *multipart.Writer
+	root      string
+	name      string
+	serverURL string
 }
 
-func newGameWriter(mpw *multipart.Writer, root string) *gameWriter {
+func newGameWriter(serverURL, name string, mpw *multipart.Writer, root string) *gameWriter {
 	return &gameWriter{
-		mpw:  mpw,
-		root: root,
+		serverURL: serverURL,
+		name:      name,
+		mpw:       mpw,
+		root:      root,
 	}
 }
 
 func (gw *gameWriter) addFile(target string, src ...string) error {
-	fmt.Printf("adding file %s from %s\n", target, path.Join(src...))
-	writer, err := gw.mpw.CreateFormFile(target, target)
+	assetPath := path.Join(src...)
+	fmt.Printf("adding file %s from %s\n", target, assetPath)
+	f, err := os.ReadFile(assetPath)
 	if err != nil {
 		return err
 	}
-	f, err := os.ReadFile(path.Join(src...))
+	digest := sha256.Sum256(f)
+	req, err := http.NewRequest(http.MethodHead, fmt.Sprintf("%s/assets/%s/%s", gw.serverURL, url.PathEscape(gw.name), assetPath), nil)
+	if err != nil {
+		return err
+	}
+	res, err := http.DefaultClient.Do(req)
+	if res.StatusCode == 204 {
+		parts := strings.SplitN(req.Header.Get("Digest"), "=", 2)
+		serverDigest, err := base64.RawURLEncoding.DecodeString(parts[1])
+		if err != nil {
+			return err
+		}
+		if [32]byte(serverDigest) == digest {
+			return nil
+		}
+	}
+	writer, err := gw.mpw.CreateFormFile(target, target)
 	if err != nil {
 		return err
 	}
@@ -273,7 +300,7 @@ func (gw *gameWriter) addDir(target string, src ...string) error {
 			}
 			continue
 		}
-		fmt.Printf("file\n")
+		fmt.Printf("file %s\n", e.Name())
 		if err := gw.addFile(path.Join(target, e.Name()), path.Join(append(src, e.Name())...)); err != nil {
 			return err
 		}
