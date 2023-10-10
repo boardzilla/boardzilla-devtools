@@ -64,7 +64,7 @@ function App() {
     })
   }, [currentPlayer, players])
 
-  const sendToUI = useCallback((data: UI.UserEvent | UI.PlayersEvent | UI.GameUpdateEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
+  const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
 
@@ -251,10 +251,7 @@ function App() {
             if (settings) {
               sendToUI({type: "settingsUpdate", settings});
             }
-            sendToUI({type: "players", players});
-            for (const player of possibleUsers.slice(0, numberOfUsers)) {
-              sendToUI({type: "user", userName: player.name, userID: player.id, added: true});
-            }
+            sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});
           } else {
             updateUIFromState(getCurrentState(history), currentPlayer);
           }
@@ -325,26 +322,8 @@ function App() {
   }, [players])
 
   useEffect(() => {
-    sendToUI({type: "players", players})
-  }, [players, sendToUI])
-
-  const updateNumberOfUsers = useCallback((n:string) => {
-    const num = parseInt(n)
-    if (Number.isNaN(num)) return
-    setNumberOfUsers((previousNumber) => {
-      const playerDifference = num - previousNumber
-      if (playerDifference > 0) {
-        for (const player of possibleUsers.slice(previousNumber, num)) {
-          sendToUI({type: "user", userID: player.id, userName: player.name, added: true});
-        }
-      } else if (playerDifference < 0) {
-        for (const player of possibleUsers.slice(num, previousNumber)) {
-          sendToUI({type: "user", userID: player.id, userName: player.name, added: false});
-        }
-      }
-      return num;
-    });
-  }, [sendToUI])
+    sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});
+  }, [numberOfUsers, players, sendToUI])
 
   return (
     <div style={{display:'flex', flexDirection:'row'}}>
@@ -356,7 +335,7 @@ function App() {
       </Modal>
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
-          <input style={{width: '3em'}} disabled={phase === 'started'} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => updateNumberOfUsers(v.currentTarget.value)}/>
+          <input style={{width: '3em'}} disabled={phase === 'started'} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>
           <span style={{flexGrow: 1}}>{players.map(p =>
             <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>
           )}

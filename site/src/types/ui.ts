@@ -1,15 +1,14 @@
 import * as Game from './game'
 
-export type UserEvent = {
-  type: "user"
-  userID: string
-  userName: string
-  added: boolean
+export type User = {
+  id: string
+  name: string
 }
 
 export type PlayersEvent = {
   type: "players"
   players: UserPlayer[]
+  users: User[]
 }
 
 // an update to the setup state
