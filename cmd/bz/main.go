@@ -22,15 +22,25 @@ import (
 )
 
 func main() {
-	if err := runPublisher(); err != nil {
+	if err := runBZ(); err != nil {
 		panic(err)
 	}
 }
 
-func runPublisher() error {
+func runBZ() error {
 	serverURL := os.Getenv("SERVER_URL")
 	if serverURL == "" {
 		serverURL = "https://boardzilla.io/api"
+	}
+
+	if len(os.Args) == 1 {
+		fmt.Println("usage: bz [command]")
+		fmt.Println("")
+		fmt.Println("info -root <game root>                         Get info about the game at root")
+		fmt.Println("register                                       Register a user for publishing a game")
+		fmt.Println("publish -root <game root> -version <version>   Publish a game")
+		fmt.Println("")
+		os.Exit(1)
 	}
 
 	command := os.Args[1]
@@ -41,6 +51,11 @@ func runPublisher() error {
 		root := infoCmd.String("root", "", "game root")
 		if err := infoCmd.Parse(os.Args[2:]); err != nil {
 			return err
+		}
+
+		if *root == "" {
+			fmt.Println("Requires -root <game root>")
+			os.Exit(1)
 		}
 
 		builder, err := devtools.NewBuilder(*root)
@@ -110,6 +125,16 @@ func runPublisher() error {
 		version := infoCmd.String("version", "", "version")
 		if err := infoCmd.Parse(os.Args[2:]); err != nil {
 			return err
+		}
+
+		if *root == "" {
+			fmt.Println("Requires -root <game root>")
+			os.Exit(1)
+		}
+
+		if *version == "" {
+			fmt.Println("Requires -version <version>")
+			os.Exit(1)
 		}
 
 		builder, err := devtools.NewBuilder(*root)
@@ -216,7 +241,6 @@ func runPublisher() error {
 		if err != nil {
 			return err
 		}
-		// res, err := http.Post(, "application/zip", pipeReader)
 		if err := <-errs; err != nil {
 			return err
 		}
