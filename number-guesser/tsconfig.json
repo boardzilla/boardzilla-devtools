@@ -9,6 +9,6 @@
     "jsx": "react",
     "resolveJsonModule": true
   },
-  "include": ["game", "ui", "./index.d.ts"],
+  "include": ["game", "ui"],
   "exclude": ["**/node_modules", "**/.*/"]
 }

@@ -11,7 +11,8 @@
   },
   "devDependencies": {
     "@types/react": "^18.2.21",
-    "@types/react-dom": "^18.2.7"
+    "@types/react-dom": "^18.2.7",
+    "typescript": "^5.2.2"
   },
   "scripts": {
     "build:ui": "esbuild --format=iife --asset-names=assets/[hash]/[name] --loader:.png=file --bundle --outdir=ui/build ui/src/index.tsx",

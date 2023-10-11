@@ -6,6 +6,7 @@
  * - income instead creates the victory condition: # of cities powered, remaining elektro
  * 2-player rules add Trust...
  */
+import React from 'react';
 
 import setup, {
   Player,
@@ -16,6 +17,14 @@ import setup, {
 } from 'boardzilla/game';
 
 import { whileLoop, eachPlayer } from 'boardzilla/game/flow';
+
+import gavel from '../../ui/src/assets/gavel.svg';
+import germany from '../../ui/src/assets/germany.svg';
+import city from './city-svg';
+import coal from '../../ui/src/assets/coal.svg';
+import oil from '../../ui/src/assets/oil.svg';
+import garbage from '../../ui/src/assets/garbage.svg';
+import uranium from '../../ui/src/assets/uranium.svg';
 
 import { cards } from './cards';
 
@@ -142,6 +151,7 @@ class City extends Space {
 }
 
 export class PlayerMat extends Space {
+  player: PowergridPlayer
 }
 
 export class Building extends Piece {
@@ -186,8 +196,6 @@ const refill = {
 const income = [10, 22, 33, 44, 54, 64, 73, 82, 90, 98, 105, 112, 118, 124, 129, 134, 138, 142, 145, 148, 150];
 
 export default setup({
-  minPlayers: 1,
-  maxPlayers: 4,
   playerClass: PowergridPlayer,
   boardClass: PowergridBoard,
   elementClasses: [
@@ -655,5 +663,105 @@ export default setup({
         }
       ]
     });
+  },
+
+  setupLayout: board => {
+    const map = board.first(Space)!;
+    const deck = board.first(Space, 'deck')!;
+    const resources = board.first(Space, 'resources')!;
+    const powerplants = board.first(Space, 'powerplants')!;
+
+    Card.aspectRatio = 3 / 4;
+    Building.aspectRatio = 1;
+    City.aspectRatio = 1;
+
+    board.all(PlayerMat).layout(Building, null);
+    board.layout(map, {
+      area: { left: 0, top: 0, width: 60, height: 100 }
+    });
+    board.layout(board.all(PlayerMat, { mine: false }), {
+      area: { left: 60, top: 0, width: 40, height: 20 },
+      gap: 1,
+    });
+    board.layout(powerplants, {
+      area: { left: 60, top: 20, width: 30, height: 20 },
+    });
+    board.layout(resources, {
+      area: { left: 60, top: 40, width: 40, height: 40 },
+    });
+    board.layout(deck, {
+      area: { left: 90, top: 20, width: 10, height: 20 },
+    });
+    board.layout(board.all(PlayerMat, { mine: true }), {
+      area: { left: 60, top: 80, width: 40, height: 20 },
+    });
+
+    map.layout(City, {
+      slots: [
+        { top: 20, left: 28, width: 8, height: 8 },
+        { top: 27, left: 31, width: 8, height: 8 },
+        { top: 34, left: 43, width: 8, height: 8 },
+        { top: 22, left: 41, width: 8, height: 8 },
+        { top: 12.5, left: 40, width: 8, height: 8 },
+        { top: 6, left: 35, width: 8, height: 8 },
+        { top: 24, left: 20, width: 8, height: 8 },
+      ]
+    });
+
+    powerplants.layout(Card, {
+      direction: 'ltr',
+      rows: 2,
+      columns: 4,
+      gap: 1,
+      margin: 1
+    });
+
+    resources.layout(ResourceSpace, {
+      gap: 1,
+      margin: 1,
+      rows: 10,
+      direction: 'ttb'
+    });
+
+    board.all(PlayerMat).layout(Card, {
+      area: { top: 30, left: 0, width: 100, height: 70 },
+      margin: 1
+    });
+
+    deck.layout(Card, {
+      direction: 'ltr',
+      offsetColumn: { x: 10, y: 10 },
+      margin: 1,
+      rows: 1,
+      limit: 3
+    });
+
+    board.all(PlayerMat).appearance(mat => <>
+      {mat.player.name}<br/>
+      Score: {mat.player.score} | Elektro: {mat.player.elektro}
+    </>);
+
+    map.appearance(() => <img src={germany}/>);
+
+    board.all(City).appearance(city);
+
+    board.all(Building).appearance(building => <div>{building.player?.name}</div>)
+
+    board.all(Card).appearance(card => <>
+      {card.cost && <>
+      [{card.discount ? 1 : card.cost}{card.discount && <i> discount</i>}]<br/>
+        {card.resources ? `${card.resources}x ${card.resourceType}` : 'wind'}-&gt;{card.power}
+        {card.powered && "*"}
+      </> || card.name}
+      {card.auction && <img src={gavel}/>}
+    </>);
+
+    board.all(ResourceSpace).appearance(s => <div className={'cost' + (s.isEmpty() ? ' empty' : '')}>{s.cost}</div>);
+    board.all(Resource, {type: 'coal'}).appearance(() => <img src={coal}/>);
+    board.all(Resource, {type: 'oil'}).appearance(() => <img src={oil}/>);
+    board.all(Resource, {type: 'garbage'}).appearance(() => <img src={garbage}/>);
+    board.all(Resource, {type: 'uranium'}).appearance(() => <img src={uranium}/>);
+
+    map.showConnections();
   }
 });

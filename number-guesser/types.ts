@@ -2,7 +2,7 @@ export type Player<T> = {
   color: string
   name: string
   position: number
-  settings?: any
+  settings?: T
 }
 
 export type Message = {

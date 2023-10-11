@@ -2,6 +2,8 @@ import React from 'react';
 import render, { toggleSetting, choiceSetting, textSetting, numberSetting } from 'boardzilla/ui';
 
 import setup from '../../game/src/index';
+import buildingIcon from './assets/building.png';
+import gavel from './assets/gavel.png';
 
 import { Card, PlayerMat, Building } from '../../game/src/index';
 
@@ -22,15 +24,17 @@ render(setup, {
       Elektro: {(el.player)?.elektro}
       <div>{contents}</div>
     </>,
-    Building: (building: Building) => <div>{building.player?.name}</div>,
+    Building: (building: Building) => <div>
+      <img src={buildingIcon}/>{building.player?.name}
+    </div>,
     Card: (card: Card, contents) => <div>
       {card.cost && <>
       [{card.discount ? 1 : card.cost}{card.discount && <i> discount</i>}]<br/>
         {card.resources ? `${card.resources}x ${card.resourceType}` : 'wind'}-&gt;{card.power}
         {card.powered && "*"}
       </> || card.name}
-      {card.auction && <div>auction</div>}
+      {card.auction && <img src={gavel}/>}
       <div>{contents}</div>
-    </div>
+    </div>,
   }
 });

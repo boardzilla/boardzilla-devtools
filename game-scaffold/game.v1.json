@@ -1,10 +1,16 @@
 {
-  "name": "Your game",
+  "name": "your-game",
+  "friendlyName": "Your game",
+  "description": "Your description",
   "minPlayers": 1,
   "maxPlayers": 4,
+  "image": "image.png",
   "ui": {
     "root": ".",
-    "build": "npm run build:ui",
+    "build": {
+      "dev": "npm run build:ui",
+      "prod": "npm run build:ui"
+    },
     "watchPaths": [
       "node_modules/boardzilla/ui",
       "node_modules/boardzilla/game",
@@ -15,7 +21,10 @@
   },
   "game": {
     "root": ".",
-    "build": "npm run build:game",
+    "build": {
+      "dev": "npm run build:game",
+      "prod": "npm run build:game"
+    },
     "watchPaths": [
       "node_modules/boardzilla/game",
       "game/src"

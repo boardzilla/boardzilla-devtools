@@ -3,15 +3,16 @@ import { sassPlugin } from 'esbuild-sass-plugin'
 
 await esbuild.build({
   format: 'iife',
+  globalName: 'game',
   assetNames: 'assets/[name]-[hash]',
   loader: {
-    '.png': 'dataurl',
-    '.svg': 'dataurl',
+    '.png': 'file',
+    '.svg': 'file',
     '.scss': 'css'
   },
   keepNames: true,
-  outdir: 'ui/build',
-  entryPoints: ['ui/src/index.tsx'],
+  outdir: 'game/build',
+  entryPoints: ['game/src/game-interface.ts'],
   bundle: true,
   plugins: [sassPlugin()]
 })

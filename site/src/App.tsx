@@ -96,6 +96,7 @@ function App() {
   }, [])
 
   const reprocessHistory = useCallback(async () => {
+    return;
     console.log('reprocessing history items', history.length);
     if (!initialState) return
     if (!settings) return

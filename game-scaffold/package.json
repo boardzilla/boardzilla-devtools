@@ -14,6 +14,6 @@
   },
   "scripts": {
     "build:ui": "npx node ui/esbuild.mjs",
-    "build:game": "esbuild --format=iife --global-name=game --keep-names --bundle --outdir=game/build game/src/game-interface.ts"
+    "build:game": "npx node game/esbuild.mjs"
   }
 }

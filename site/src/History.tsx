@@ -40,7 +40,7 @@ export default function History({items, initialState, revertTo, view, players}: 
         <span style={{marginLeft: '3px', padding: '1px', border: `2px ${player(i.position).color} solid`}}>{player(i.position).name}</span>
         <button className="history" onClick={() => view(i.seq)}>View</button>
         <button className="history" onClick={() => revertTo(i.seq)}>Revert</button>
-        <code>{i.move.data?.action}({i.move.data?.args.join(', ')})</code>
+        <div><code>{i.move.data?.action}({i.move.data?.args.join(', ')})</code></div>
         {Object.entries(i.messages || []).map(([key, m]) => (
           <div key={key} dangerouslySetInnerHTML={{ __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>') }}/>
         ))}
