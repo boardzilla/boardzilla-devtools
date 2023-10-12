@@ -12,19 +12,30 @@ import setup, {
   Player,
   playerActions,
   ifElse,
+  whileLoop,
+  eachPlayer,
   repeat,
   imports,
+  times
 } from 'boardzilla/game';
 
-import { whileLoop, eachPlayer } from 'boardzilla/game/flow';
-
 import gavel from '../../ui/src/assets/gavel.svg';
-import germany from '../../ui/src/assets/germany.svg';
+import germany from '../../ui/src/assets/germany2.svg';
 import city from './city-svg';
+import building from './building-svg';
 import coal from '../../ui/src/assets/coal.svg';
 import oil from '../../ui/src/assets/oil.svg';
 import garbage from '../../ui/src/assets/garbage.svg';
 import uranium from '../../ui/src/assets/uranium.svg';
+import BuildingOutline from './building-outline-svg';
+import coalOutline from '../../ui/src/assets/coal-outline.svg';
+import oilOutline from '../../ui/src/assets/oil-outline.svg';
+import garbageOutline from '../../ui/src/assets/garbage-outline.svg';
+import uraniumOutline from '../../ui/src/assets/uranium-outline.svg';
+import hybridOutline from '../../ui/src/assets/hybrid-outline.svg';
+import arrow from '../../ui/src/assets/arrow.svg';
+import powerplant from '../../ui/src/assets/powerplant.svg';
+import powerLabel from './power-label-svg';
 
 import { cards } from './cards';
 
@@ -100,7 +111,7 @@ class PowergridBoard extends Board {
 export class Card extends Piece {
   image: string;
   cost: number;
-  resourceType?: ResourceType | 'hybrid';
+  resourceType?: ResourceType | 'hybrid' | 'clean';
   resources?: number;
   power?: number;
   auction?: boolean = false;
@@ -671,7 +682,7 @@ export default setup({
     const resources = board.first(Space, 'resources')!;
     const powerplants = board.first(Space, 'powerplants')!;
 
-    Card.aspectRatio = 3 / 4;
+    Card.aspectRatio = 1;
     Building.aspectRatio = 1;
     City.aspectRatio = 1;
 
@@ -702,9 +713,56 @@ export default setup({
         { top: 27, left: 31, width: 8, height: 8 },
         { top: 34, left: 43, width: 8, height: 8 },
         { top: 22, left: 41, width: 8, height: 8 },
-        { top: 12.5, left: 40, width: 8, height: 8 },
-        { top: 6, left: 35, width: 8, height: 8 },
-        { top: 24, left: 20, width: 8, height: 8 },
+        { top: 14.5, left: 40, width: 8, height: 8 },
+        { top: 8, left: 35, width: 8, height: 8 },
+        { top: 24, left: 18, width: 8, height: 8 },
+
+        { top: 32, left: 24, width: 8, height: 8 },
+        { top: 37.5, left: 22, width: 8, height: 8 },
+        { top: 41, left: 11, width: 8, height: 8 },
+        { top: 40, left: 4, width: 8, height: 8 },
+        { top: 47, left: 6, width: 8, height: 8 },
+        { top: 44, left: 25, width: 8, height: 8 },
+        { top: 44.5, left: 36, width: 8, height: 8 },
+
+        { top: 17, left: 51, width: 8, height: 8 },
+        { top: 23, left: 58, width: 8, height: 8 },
+        { top: 16, left: 63, width: 8, height: 8 },
+        { top: 23, left: 80, width: 8, height: 8 },
+        { top: 33, left: 76, width: 8, height: 8 },
+        { top: 35.5, left: 60, width: 8, height: 8 },
+        { top: 35, left: 87, width: 8, height: 8 },
+
+        { top: 43, left: 63, width: 8, height: 8 },
+        { top: 45, left: 70, width: 8, height: 8 },
+        { top: 49, left: 85, width: 8, height: 8 },
+        { top: 51.5, left: 57, width: 8, height: 8 },
+        { top: 54, left: 44, width: 8, height: 8 },
+        { top: 62, left: 45, width: 8, height: 8 },
+        { top: 65, left: 57, width: 8, height: 8 },
+
+        { top: 52.5, left: 13, width: 8, height: 8 },
+        { top: 53.5, left: 2.5, width: 8, height: 8 },
+        { top: 62, left: 6, width: 8, height: 8 },
+        { top: 58, left: 22, width: 8, height: 8 },
+        { top: 57, left: 28.4, width: 8, height: 8 },
+        { top: 69, left: 14, width: 8, height: 8 },
+        { top: 68, left: 27, width: 8, height: 8 },
+
+        { top: 74, left: 31, width: 8, height: 8 },
+        { top: 79, left: 20, width: 8, height: 8 },
+        { top: 83, left: 31, width: 8, height: 8 },
+        { top: 77, left: 47, width: 8, height: 8 },
+        { top: 71, left: 63, width: 8, height: 8 },
+        { top: 81, left: 60, width: 8, height: 8 },
+        { top: 74, left: 78, width: 8, height: 8 },
+      ]
+    });
+    board.all(City).layout(Building, {
+      slots: [
+        { top: 5, left: 30, width: 40, height: 40 },
+        { top: 50, left: 5, width: 40, height: 40 },
+        { top: 50, left: 55, width: 40, height: 40 },
       ]
     });
 
@@ -724,8 +782,7 @@ export default setup({
     });
 
     board.all(PlayerMat).layout(Card, {
-      area: { top: 30, left: 0, width: 100, height: 70 },
-      margin: 1
+      area: { top: 30, left: 0, width: 100, height: 70 }
     });
 
     deck.layout(Card, {
@@ -736,25 +793,50 @@ export default setup({
       limit: 3
     });
 
-    board.all(PlayerMat).appearance(mat => <>
-      {mat.player.name}<br/>
-      Score: {mat.player.score} | Elektro: {mat.player.elektro}
-    </>);
+    board.all(PlayerMat).appearance(mat => (
+      <div style={{color: mat.player.color}}>
+        {mat.player.name}<br/>
+        Score: {mat.player.score} | Elektro: {mat.player.elektro}
+      </div>
+    ));
 
-    map.appearance(() => <img src={germany}/>);
+    map.appearance(() => <img id="germany" src={germany}/>);
 
     board.all(City).appearance(city);
 
-    board.all(Building).appearance(building => <div>{building.player?.name}</div>)
+    board.all(Building).appearance(building);
 
-    board.all(Card).appearance(card => <>
-      {card.cost && <>
-      [{card.discount ? 1 : card.cost}{card.discount && <i> discount</i>}]<br/>
-        {card.resources ? `${card.resources}x ${card.resourceType}` : 'wind'}-&gt;{card.power}
-        {card.powered && "*"}
-      </> || card.name}
-      {card.auction && <img src={gavel}/>}
-    </>);
+    const resourceSvgs = {
+      coal: coalOutline,
+      oil: oilOutline,
+      garbage: garbageOutline,
+      uranium: uraniumOutline,
+      hybrid: hybridOutline,
+      clean: null
+    }
+
+    board.all(Card).appearance(card => <div className="outer">
+      {card.isVisible() && <>
+        <img className="background" src={powerplant}/>
+        <div className="inner">
+        {card.cost && <>
+          <div className={"cost" + (card.discount ? ' discount' : '')}>{String((card.discount ? 1 : card.cost) + 100).slice(-2)}</div>
+          <div className={"production " + card.resourceType}>
+          {card.resourceType === 'hybrid' && <div className='hybrid2'/>}
+          {times(card.resources!, i => <img key={i} src={resourceSvgs[card.resourceType!]}/>)}
+          <img src={arrow}/>
+          <BuildingOutline number={card.resources!}/>
+          </div>
+        </>}
+        {card.auction && <img src={gavel}/>}
+        </div>
+      </>}
+    </div>);
+
+    board.all(Card).layout(Resource, {
+      area: { left: 10, top: 25, width: 80, height: 50 },
+      gap: 1,
+    });
 
     board.all(ResourceSpace).appearance(s => <div className={'cost' + (s.isEmpty() ? ' empty' : '')}>{s.cost}</div>);
     board.all(Resource, {type: 'coal'}).appearance(() => <img src={coal}/>);
@@ -762,6 +844,13 @@ export default setup({
     board.all(Resource, {type: 'garbage'}).appearance(() => <img src={garbage}/>);
     board.all(Resource, {type: 'uranium'}).appearance(() => <img src={uranium}/>);
 
-    map.showConnections();
+    map.showConnections({
+      thickness: .2,
+      color: 'black',
+      style: 'double',
+      fill: 'white',
+      label: powerLabel,
+      labelScale: 0.045,
+    });
   }
 });

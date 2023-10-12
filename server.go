@@ -186,9 +186,12 @@ func (s *Server) Serve() error {
 		t.Execute(w, data)
 	})
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		ext := filepath.Ext(path)
-		f, err := s.getFile(path)
+		url := r.URL.Path
+		ext := filepath.Ext(url)
+		f, err := s.getFile(url)
+		if err != nil {
+			f, err = os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, url))
+		}
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)

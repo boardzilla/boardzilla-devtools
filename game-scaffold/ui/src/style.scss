@@ -1,5 +1,15 @@
 #play-area {
   font-size: 8%;
+  font-family: 'DIN Condensed';
+
+  img#germany {
+    width: 166.67%;
+    height: 100%;
+  }
+
+  #deck, #powerplants, #resources, .PlayerMat {
+    background: #fffa
+  }
 
   .City {
     .name {
@@ -38,12 +48,12 @@
   .ResourceSpace .cost {
     position: absolute;
     left: 0;
-    top: 20%;
+    top: 25%;
     width: 100%;
     height: 100%;
     z-index: 10;
     color: white;
-    font-size: 500%;
+    font-size: 600%;
     text-align: center;
     font-weight: bold;
     &.empty {
@@ -53,6 +63,108 @@
 
   .Resource {
     background: none;
+  }
+
+  .Building {
+    background: none;
+  }
+
+  .Card {
+    background: none;
+    &.hilite div.outer {
+      background: #fe6;
+      transform: scale(1.2);
+      outline: .1em solid black;
+    }
+    > div.outer {
+      border-radius: 7%;
+      border: .1em solid white;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      background: #999;
+      img.background {
+        left: 7%;
+        top: 7%;
+        width: 86%;
+        height: 70%;
+        position: absolute;
+      }
+      > div.inner {
+        box-sizing: border-box;
+        border-radius: 4%;
+        border: 0.1em solid black;
+        position: absolute;
+        left: 7%;
+        top: 7%;
+        width: 86%;
+        height: 86%;
+        .cost {
+          font-weight: bold;
+          color: white;
+          text-shadow:
+            0.1em 0 0 #000,
+            -0.05em 0 0 #000,
+            0 -0.05em 0 #000,
+            0 0.1em 0 #000,
+            0.1em -0.05em 0 #000,
+            -0.05em -0.05em 0 #000,
+            0.1em 0.1em 0 #000,
+            -0.05em 0.1em 0 #000;
+          font-size: 280%;
+          position: absolute;
+          left: -3%;
+          top: -5%;
+          &.discount {
+            font-size: 360%;
+            color: yellow;
+          }
+        }
+        .production {
+          position: absolute;
+          width: 100%;
+          height: 20%;
+          left: 0%;
+          bottom: 0%;
+          &.oil {
+            background: #555;
+          }
+          &.coal, &.hybrid {
+            background: #a17c45;
+          }
+          &.garbage {
+            background: #fc6;
+          }
+          &.uranium {
+            background: #d44;
+          }
+          &.clean {
+            background: #35f;
+          }
+          text-align: center;
+          > img {
+            width: 15%;
+            height: 70%;
+            top: -10%;
+            position: relative;
+            margin: 1%;
+          }
+          > svg {
+            top: 0%;
+            position: relative;
+            width: 22%;
+            height: 100%;
+          }
+        }
+        .hybrid2 {
+          background: #555;
+          position: absolute;
+          top: 50%;
+          height: 50%;
+          width: 100%;
+        }
+      }
+    }
   }
 
   &.fluid {

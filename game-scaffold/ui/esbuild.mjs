@@ -5,8 +5,8 @@ await esbuild.build({
   format: 'iife',
   assetNames: 'assets/[name]-[hash]',
   loader: {
-    '.png': 'dataurl',
-    '.svg': 'dataurl',
+    '.png': 'file',
+    '.svg': 'file',
     '.scss': 'css'
   },
   keepNames: true,

@@ -4,8 +4,8 @@
 <svg
    version="1.1"
    id="svg2"
-   width="163.34018"
-   height="169.05676"
+   width="100%"
+   height="100%"
    viewBox="0 0 163.34018 169.05676"
    sodipodi:docname="coal.svg"
    inkscape:version="1.3 (0e150ed, 2023-07-21)"
@@ -26,14 +26,14 @@
      inkscape:deskcolor="#d1d1d1"
      showgrid="false"
      inkscape:zoom="1.2885813"
-     inkscape:cx="43.070625"
-     inkscape:cy="46.950861"
+     inkscape:cx="43.070623"
+     inkscape:cy="46.95086"
      inkscape:window-width="1440"
      inkscape:window-height="878"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="g8" />
+     inkscape:current-layer="g10" />
   <g
      id="g8"
      inkscape:groupmode="layer"
@@ -44,23 +44,23 @@
        transform="scale(0.1)">
       <path
          d="m 1397.29,9886.46 c 0,0 252.12,181.24 542.39,63.81 l -28.78,-133.42 -378.01,-69.13 -135.6,138.74"
-         style="fill:#2c2b2a;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         style="fill:#a17c45;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="path40" />
       <path
          d="m 1692.41,8721.93 c 0,0 -143.57,31.9 -231.31,119.65 0,0 -90.35,-108.85 -264.52,1.41 l 184.76,596.8 239.4,-71.79 71.67,-646.07"
-         style="fill:#1b1b1b;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         style="fill:#3c361b;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="path42" />
       <path
          d="m 1532.89,9559.43 c 0,0 -336.31,118.49 -566.312,0 0,0 23.93,183.46 103.692,215.36 0,0 199.4,-23.93 327.02,111.67 0,0 135.6,7.97 215.36,-63.81 l -79.76,-263.22"
-         style="fill:#1f1d1b;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         style="fill:#604e2c;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="path44" />
       <path
          d="m 1692.41,8721.93 c 0,0 -114.33,313.67 -71.78,526.43 7.97,39.89 2.33,233.49 -85.06,319.91 l 77.08,254.38 c 0,0 239.29,39.88 327.03,127.62 l 168.62,-202.55 c 0,0 134.47,-882.22 -415.89,-1025.79"
-         style="fill:#0b0b0c;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         style="fill:#6a4b33;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="path46" />
       <path
          d="m 966.578,9559.43 c -175.473,-287.14 39.882,-501.16 39.882,-501.16 31.3,-26.73 60.59,-71.64 82.4,-110.53 l 0.03,0.04 0.7,-1.27 c 0.97,-1.74 1.79,-3.3 2.73,-5.02 58.04,-115.02 191.47,-141.01 234.47,-146.4 -41.48,536.2 293.84,453.27 293.84,453.27 19.07,232.15 -85.06,319.91 -85.06,319.91 -239.29,175.48 -568.992,-8.84 -568.992,-8.84"
-         style="fill:#2c2929;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         style="fill:#514025;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="path48" />
       <path
          d="m 1088.89,8947.78 -0.03,-0.04 0.73,-1.23 z"
@@ -68,7 +68,7 @@
          id="path50" />
       <path
          d="m 1620.63,9248.36 c 0,0 490.96,-138.68 487.67,499.36 0,0 -28.92,166.67 -168.62,202.55 0,0 -220.47,-118.13 -327.03,-127.62 l -77.08,-254.38 c 0,0 84.93,-85.88 85.06,-319.91"
-         style="fill:#191819;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         style="fill:#4a3c1b;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="path52" />
     </g>
   </g>
