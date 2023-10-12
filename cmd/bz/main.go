@@ -139,11 +139,11 @@ func runBZ() error {
 
 		builder, err := devtools.NewBuilder(*root)
 		if err != nil {
-			return err
+			return fmt.Errorf("new builder: %w", err)
 		}
 		manifest, err := builder.Manifest()
 		if err != nil {
-			return err
+			return fmt.Errorf("manifest: %w", err)
 		}
 		home, err := os.UserHomeDir()
 		if err != nil {

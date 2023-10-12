@@ -120,22 +120,31 @@ func (b *Builder) Manifest() (*ManifestV1, error) {
 }
 
 func (b *Builder) Clean() error {
+	// load json manifest
 	manifest, err := b.Manifest()
 	if err != nil {
 		return err
 	}
-	gameOutPath := path.Join(b.root, manifest.Game.Root, manifest.Game.OutputFile)
-	_, err = os.Stat(gameOutPath)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return err
-		}
-	} else {
-		if err := os.Remove(gameOutPath); err != nil {
-			return err
-		}
+
+	// run game/ui build
+	if err := b.cleanUI(manifest); err != nil {
+		return err
 	}
+	if err := b.cleanGame(manifest); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Builder) cleanUI(manifest *ManifestV1) error {
 	uiOutDir := path.Join(b.root, manifest.UI.Root, manifest.UI.OutputDirectory)
+	_, err := os.Stat(uiOutDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
 	files, err := os.ReadDir(uiOutDir)
 	if err != nil {
 		return err
@@ -143,10 +152,22 @@ func (b *Builder) Clean() error {
 
 	for _, f := range files {
 		if err := os.RemoveAll(path.Join(uiOutDir, f.Name())); err != nil {
-			return err
+			return fmt.Errorf("remove ui path: %w", err)
 		}
 	}
 	return nil
+}
+
+func (b *Builder) cleanGame(manifest *ManifestV1) error {
+	gameOutPath := path.Join(b.root, manifest.Game.Root, manifest.Game.OutputFile)
+	_, err := os.Stat(gameOutPath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return os.RemoveAll(gameOutPath)
 }
 
 func (b *Builder) BuildProd() error {

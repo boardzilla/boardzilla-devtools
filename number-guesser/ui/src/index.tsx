@@ -2,6 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Message, NumberGuesserMove, NumberGuesserPlayer, NumberGuesserPlayerState, NumberGuesserSettings, PlayerState } from '../../types';
 
+type Bootstrap = {
+  userID: string
+  host: boolean
+  minPlayers: number
+  maxPlayers: number
+}
+
 type User = {
   id: string
   name: string
@@ -118,7 +125,7 @@ const colors = [
 ]
 
 const body = document.getElementsByTagName("body")[0];
-const bootstrap = JSON.parse(body.getAttribute("data-bootstrap-json")!);
+const bootstrap = JSON.parse(body.getAttribute("data-bootstrap-json")!) as Bootstrap;
 
 type pendingPromise = {
   resolve: (d: any) => void
@@ -229,12 +236,12 @@ const Game = () => {
       {gameState.state.winner !== undefined ? <span>Game is done! {gameState.state.winner === gameState.position ? "YOU WIN": "YOU LOSE"}</span> : gameState.state.possibleGuesses.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}
       <pre>{JSON.stringify(gameState, null, 2)}</pre>
     </> : <>
-      <input type="checkbox" checked={setupState ? setupState.evenOnly : false} onChange={e => setSetupState({evenOnly: e.currentTarget.checked})} />Even numbers only
+      {bootstrap.host && <p><input type="checkbox" checked={setupState ? setupState.evenOnly : false} onChange={e => setSetupState({evenOnly: e.currentTarget.checked})} />Even numbers only</p>}
       <h2>Users</h2>
       <ul>
       {users.map(p => <li key={p.id}>{p.name}</li>)}
       </ul>
-      <button onClick={() => startGame()}>Start game</button>
+      {bootstrap.host && <button onClick={() => startGame()}>Start game</button>}
     </>}
   </div>
 }
