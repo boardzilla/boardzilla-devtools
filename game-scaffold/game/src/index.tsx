@@ -129,7 +129,13 @@ export class Card extends Piece {
 
   resourcesAvailableToPower() {
     const availableResources = this.all(Resource);
-    if (availableResources.length >= this.resources!) return availableResources;
+    if (availableResources.length >= this.resources!) {
+      if (availableResources.min('type') !== availableResources.max('type')) {
+        return availableResources
+      } else {
+        return availableResources.slice(0, this.resources);
+      }
+    }
   }
 }
 Card.hiddenAttributes = ['name', 'image', 'cost', 'resourceType', 'resources', 'power'];
@@ -470,6 +476,20 @@ export default setup({
         () => player.passedThisAuction = true
       ),
 
+      scrap: player => action({
+        prompt: 'You must scrap one of your powerplants',
+      }).chooseOnBoard({
+        choices: board.all(Card, { player })
+      }).do(
+        card => {
+          for (const resource of card.all(Resource)) {
+            const other = resource.container(Card)!.first(Card, other => other !== card && other.spaceFor(resource.type) > 0);
+            if (other) resource.putInto(other);
+          }
+          card.remove();
+        }
+      ),
+
       pass: () => action({ prompt: 'Pass' }),
 
       build: player => action({
@@ -581,6 +601,11 @@ export default setup({
                     }),
                   }),
 
+                  ifElse({
+                    if: () => board.all(Card, { player: board.playerWithHighestBid }).length >= 3,
+                    do: playerActions({ actions: { scrap: null } }),
+                  }),
+
                   ({ auctionPlayer }) => {
                     const winner = board.playerWithHighestBid!;
                     game.message('$1 won the bid with $2', winner.name, board.lastBid!);
@@ -676,7 +701,7 @@ export default setup({
     });
   },
 
-  setupLayout: board => {
+  setupLayout: (board, aspectRatio) => {
     const map = board.first(Space)!;
     const deck = board.first(Space, 'deck')!;
     const resources = board.first(Space, 'resources')!;
@@ -686,25 +711,27 @@ export default setup({
     Building.aspectRatio = 1;
     City.aspectRatio = 1;
 
+    Board.aspectRatio = 6/5;
+
     board.all(PlayerMat).layout(Building, null);
     board.layout(map, {
-      area: { left: 0, top: 0, width: 60, height: 100 }
+      area: { left: 3, top: -10, width: 60, height: 120 }
     });
     board.layout(board.all(PlayerMat, { mine: false }), {
-      area: { left: 60, top: 0, width: 40, height: 20 },
+      area: { left: 62.5, top: 0, width: 37.5, height: 20 },
       gap: 1,
     });
     board.layout(powerplants, {
-      area: { left: 60, top: 20, width: 30, height: 20 },
+      area: { left: 62.5, top: 20, width: 30, height: 20 },
     });
     board.layout(resources, {
-      area: { left: 60, top: 40, width: 40, height: 40 },
+      area: { left: 62.5, top: 40, width: 37.5, height: 40 },
     });
     board.layout(deck, {
-      area: { left: 90, top: 20, width: 10, height: 20 },
+      area: { left: 92.5, top: 20, width: 7.5, height: 20 },
     });
     board.layout(board.all(PlayerMat, { mine: true }), {
-      area: { left: 60, top: 80, width: 40, height: 20 },
+      area: { left: 62.5, top: 80, width: 37.5, height: 20 },
     });
 
     map.layout(City, {
@@ -820,7 +847,16 @@ export default setup({
         <img className="background" src={powerplant}/>
         <div className="inner">
         {card.cost && <>
-          <div className={"cost" + (card.discount ? ' discount' : '')}>{String((card.discount ? 1 : card.cost) + 100).slice(-2)}</div>
+          <div className="cost">
+            {card.discount ? 
+              <span>
+                <span className="old-cost">{String(card.cost + 100).slice(-2)}</span>
+                <span className="new-cost"> 01</span>
+              </span>
+              :
+              String(card.cost + 100).slice(-2)
+            }
+          </div>
           <div className={"production " + card.resourceType}>
           {card.resourceType === 'hybrid' && <div className='hybrid2'/>}
           {times(card.resources!, i => <img key={i} src={resourceSvgs[card.resourceType!]}/>)}

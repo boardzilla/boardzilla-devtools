@@ -2,9 +2,13 @@
   font-size: 8%;
   font-family: 'DIN Condensed';
 
-  img#germany {
-    width: 166.67%;
-    height: 100%;
+  .Space#germany {
+    img#germany {
+      width: 166.67%;
+      height: 100%;
+      position: absolute;
+      left: -5%;
+    }
   }
 
   #deck, #powerplants, #resources, .PlayerMat {
@@ -12,6 +16,9 @@
   }
 
   .City {
+    &.hilite svg {
+      filter: drop-shadow(0em 0em 1em yellow)
+    }
     .name {
       color: black;
       background: black;
@@ -43,6 +50,9 @@
     &[data-zone="purple"] {
       color: purple;
     }
+    .Building svg {
+      filter: drop-shadow(1em 1em 1em black);
+    }
   }
 
   .ResourceSpace .cost {
@@ -71,11 +81,6 @@
 
   .Card {
     background: none;
-    &.hilite div.outer {
-      background: #fe6;
-      transform: scale(1.2);
-      outline: .1em solid black;
-    }
     > div.outer {
       border-radius: 7%;
       border: .1em solid white;
@@ -115,9 +120,14 @@
           position: absolute;
           left: -3%;
           top: -5%;
-          &.discount {
-            font-size: 360%;
+          .old-cost {
+            text-decoration: line-through;
+            vertical-align: text-top;
+          }
+          .new-cost {
+            font-size: 140%;
             color: yellow;
+            vertical-align: text-top;
           }
         }
         .production {
@@ -163,6 +173,16 @@
           height: 50%;
           width: 100%;
         }
+      }
+    }
+    .Resource {
+      &.hilite {
+        img {
+          filter: drop-shadow(1em 1em 1em yellow)
+        }
+      }
+      img {
+        filter: drop-shadow(1em 1em .5em #222)
       }
     }
   }
