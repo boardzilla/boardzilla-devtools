@@ -195,7 +195,7 @@ func (s *Server) Serve() error {
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		assetPath := chi.URLParam(r, "*")
 		ext := filepath.Ext(assetPath)
-		f, err := s.getFile(assetPath)
+		f, err := s.getFile("/" + assetPath)
 		if err != nil {
 			f, err = os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, assetPath))
 		}
