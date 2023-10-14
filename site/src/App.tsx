@@ -25,7 +25,13 @@ const possibleUsers = [
   {id: "7", name: "Liubika"},
   {id: "8", name: "Zvezdelina"},
   {id: "9", name: "Guadalupe"},
-]
+];
+
+type BuildError = {
+  type: "ui" | "game"
+  out: string
+  err: string
+}
 
 function App() {
   const savedInitialState: InitialStateHistoryItem | undefined = JSON.parse(localStorage.getItem('initialState') || 'null') || undefined;
@@ -48,6 +54,7 @@ function App() {
   const [phase, setPhase] = useState(initialPhase);
   const [currentPlayer, setCurrentPlayer] = useState(initialCurrentPlayer);
   const [players, setPlayers] = useState(savedPlayers);
+  const [buildError, setBuildError] = useState<BuildError | undefined>();
   const [settings, setSettings] = useState<Game.GameSettings>(savedSettings);
   const [history, setHistory] = useState(savedHistory || []);
   const [open, setOpen] = useState(false);
@@ -137,6 +144,18 @@ function App() {
             case "game":
               console.debug("Game reloading due to changes");
               (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
+              break
+          }
+          break
+        case "buildError":
+          switch(e.target) {
+            case "ui":
+              console.debug("UI build error");
+              setBuildError({type:"ui", out: e.out, err: e.err})
+              break
+            case "game":
+              console.debug("Game build error");
+              setBuildError({type:"game", out: e.out, err: e.err})
               break
           }
           break
@@ -323,6 +342,15 @@ function App() {
 
   return (
     <div style={{display:'flex', flexDirection:'row'}}>
+      <Modal open={!!buildError} onClose={() => setBuildError(undefined)} center>
+        <h2>BUILD ERROR!</h2>
+        <h3>{buildError?.type}</h3>
+        <h4>OUT</h4>
+        <pre>{buildError?.out}</pre>
+        <h4>ERR</h4>
+        <pre>{buildError?.err}</pre>
+      </Modal>
+
       <Modal open={open} onClose={onCloseModal} center>
         <h2>Help</h2>
         <p>

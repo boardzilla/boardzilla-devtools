@@ -14,6 +14,12 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+type buildError struct {
+	Type int
+	Out  string
+	Err  string
+}
+
 func main() {
 	port := flag.Int("port", 8080, "port for server")
 
@@ -40,6 +46,7 @@ func main() {
 	}
 	defer watcher.Close()
 	rebuilt := make(chan int)
+	errors := make(chan *buildError)
 
 	go func() {
 		if err := devBuilder.Build(); err != nil {
@@ -61,11 +68,13 @@ func main() {
 						log.Fatal(err)
 					}
 					if !strings.HasPrefix(r, "..") {
-						if err := devBuilder.BuildUI(); err != nil {
+						if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
 							log.Println("error during rebuild:", err)
+							errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
+							continue
 						}
 						log.Printf("UI reloaded due to change in %s\n", e.Name)
-						rebuilt <- devtools.ReloadUI
+						rebuilt <- devtools.UI
 						break
 					}
 				}
@@ -76,11 +85,13 @@ func main() {
 						log.Fatal(err)
 					}
 					if !strings.HasPrefix(r, "..") {
-						if err := devBuilder.BuildGame(); err != nil {
+						if outbuf, errbuf, err := devBuilder.BuildGame(); err != nil {
 							log.Println("error during rebuild:", err)
+							errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
+							continue
 						}
 						log.Printf("Game reloaded due to change in %s\n", e.Name)
-						rebuilt <- devtools.ReloadGame
+						rebuilt <- devtools.Game
 						break
 					}
 				}
@@ -118,8 +129,13 @@ func main() {
 	fmt.Printf("Running dev builder on port %d at game root %s\n", *port, gameRoot)
 	// Block main goroutine forever.
 	go func() {
-		for i := range rebuilt {
-			server.Reload(i)
+		for {
+			select {
+			case i := <-rebuilt:
+				server.Reload(i)
+			case e := <-errors:
+				server.BuildError(e.Type, e.Out, e.Err)
+			}
 		}
 	}()
 	if err := server.Serve(); err != nil {

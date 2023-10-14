@@ -46,6 +46,13 @@ type reloadEvent struct {
 	Target string `json:"target"`
 }
 
+type buildErrorEvent struct {
+	Type   string `json:"type"`
+	Target string `json:"target"`
+	Out    string `json:"out"`
+	Err    string `json:"err"`
+}
+
 type pingEvent struct {
 	Type string `json:"type"`
 }
@@ -75,7 +82,7 @@ func (s *Server) Serve() error {
 
 		s.lock.Lock()
 		currentID := i
-		c := make(chan interface{})
+		c := make(chan interface{}, 10)
 		s.senders[i] = c
 		s.lock.Unlock()
 		i++
@@ -214,14 +221,35 @@ func (s *Server) Reload(t int) {
 	for _, sender := range s.senders {
 		var reloadTarget string
 		switch t {
-		case ReloadGame:
+		case Game:
 			reloadTarget = "game"
-		case ReloadUI:
+		case UI:
 			reloadTarget = "ui"
 		}
 		sender <- &reloadEvent{
 			Type:   "reload",
 			Target: reloadTarget,
+		}
+	}
+}
+
+func (s *Server) BuildError(t int, o, e string) {
+	fmt.Printf("sending build error!")
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	for _, sender := range s.senders {
+		var reloadTarget string
+		switch t {
+		case Game:
+			reloadTarget = "game"
+		case UI:
+			reloadTarget = "ui"
+		}
+		sender <- &buildErrorEvent{
+			Type:   "buildError",
+			Target: reloadTarget,
+			Out:    o,
+			Err:    e,
 		}
 	}
 }

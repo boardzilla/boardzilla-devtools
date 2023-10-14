@@ -1,8 +1,10 @@
 package devtools
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -10,8 +12,8 @@ import (
 )
 
 const (
-	ReloadUI = iota
-	ReloadGame
+	UI = iota
+	Game
 )
 
 type Builder struct {
@@ -32,10 +34,10 @@ func (b *Builder) Build() error {
 	}
 
 	// run game/ui build
-	if err := b.buildUI(manifest, false); err != nil {
+	if _, _, err := b.buildUI(manifest, false); err != nil {
 		return err
 	}
-	if err := b.buildGame(manifest, false); err != nil {
+	if _, _, err := b.buildGame(manifest, false); err != nil {
 		return err
 	}
 	return nil
@@ -57,53 +59,38 @@ func (b *Builder) WatchedFiles() ([]string, error) {
 	return paths, nil
 }
 
-func (b *Builder) BuildUI() error {
+func (b *Builder) BuildUI() ([]byte, []byte, error) {
 	manifest, err := b.Manifest()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	return b.buildUI(manifest, false)
 }
 
-func (b *Builder) buildUI(m *ManifestV1, prod bool) error {
+func (b *Builder) buildUI(m *ManifestV1, prod bool) ([]byte, []byte, error) {
 	fmt.Printf("Buidling UI %s\n", m.UI.BuildCommand)
 	buildCmd := m.UI.BuildCommand.Dev
 	if prod {
 		buildCmd = m.UI.BuildCommand.Production
 	}
-	args := strings.Fields(buildCmd)
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Dir = path.Join(b.root, m.UI.Root)
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
+	return b.run(path.Join(b.root, m.UI.Root), buildCmd)
 }
-func (b *Builder) BuildGame() error {
+
+func (b *Builder) BuildGame() ([]byte, []byte, error) {
 	manifest, err := b.Manifest()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	return b.buildGame(manifest, false)
 }
 
-func (b *Builder) buildGame(m *ManifestV1, prod bool) error {
+func (b *Builder) buildGame(m *ManifestV1, prod bool) ([]byte, []byte, error) {
 	fmt.Printf("Buidling Game %s\n", m.Game.BuildCommand)
 	buildCmd := m.Game.BuildCommand.Dev
 	if prod {
 		buildCmd = m.Game.BuildCommand.Production
 	}
-	args := strings.Fields(buildCmd)
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Dir = path.Join(b.root, m.Game.Root)
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-	return nil
+	return b.run(path.Join(b.root, m.Game.Root), buildCmd)
 }
 
 func (b *Builder) Manifest() (*ManifestV1, error) {
@@ -175,13 +162,29 @@ func (b *Builder) BuildProd() error {
 	if err != nil {
 		return err
 	}
-	if err := b.buildUI(manifest, true); err != nil {
+	if _, _, err := b.buildUI(manifest, true); err != nil {
 		return err
 	}
-	if err := b.buildGame(manifest, true); err != nil {
+	if _, _, err := b.buildGame(manifest, true); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (b *Builder) run(dir, cmdStr string) ([]byte, []byte, error) {
+	args := strings.Fields(cmdStr)
+	cmd := exec.Command(args[0], args[1:]...)
+
+	outbuf := bytes.NewBuffer(make([]byte, 1024*1024*5))
+	errbuf := bytes.NewBuffer(make([]byte, 1024*1024*5))
+
+	cmd.Stdout = io.MultiWriter(os.Stdout, outbuf)
+	cmd.Stderr = io.MultiWriter(os.Stderr, errbuf)
+	cmd.Dir = dir
+	err := cmd.Run()
+	fmt.Printf("%s done with err %#v\n", cmdStr, err)
+
+	return outbuf.Bytes(), errbuf.Bytes(), err
 }
 
 // clean
