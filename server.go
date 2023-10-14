@@ -192,12 +192,12 @@ func (s *Server) Serve() error {
 		w.Header().Add("Cache-control", "no-store")
 		t.Execute(w, data)
 	})
-	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		url := r.URL.Path
-		ext := filepath.Ext(url)
-		f, err := s.getFile(url)
+	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
+		assetPath := chi.URLParam(r, "*")
+		ext := filepath.Ext(assetPath)
+		f, err := s.getFile(assetPath)
 		if err != nil {
-			f, err = os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, url))
+			f, err = os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, assetPath))
 		}
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
