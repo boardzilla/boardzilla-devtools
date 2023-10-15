@@ -16,7 +16,7 @@
   }
 
   .City {
-    &.hilite svg {
+    &.clickable svg {
       filter: drop-shadow(0em 0em 1em yellow)
     }
     .name {
@@ -176,7 +176,7 @@
       }
     }
     .Resource {
-      &.hilite {
+      &.clickable {
         img {
           filter: drop-shadow(1em 1em 1em yellow)
         }
@@ -200,4 +200,8 @@
       display: none;
     }
   }
+}
+
+#player-controls {
+  font-family: 'DIN Condensed';
 }

@@ -7,7 +7,8 @@ await esbuild.build({
   loader: {
     '.png': 'file',
     '.svg': 'file',
-    '.scss': 'css'
+    '.scss': 'css',
+    '.ogg': 'dataurl',
   },
   keepNames: true,
   outdir: 'ui/build',

@@ -441,12 +441,11 @@ export default setup({
 
     return {
       auction: () => action({
-        prompt: 'Put up for auction',
+        prompt: 'Choose a factory for auction',
         condition: !board.first(Card, {auction: true}),
         message: '$player put $1 up for auction'
       }).chooseOnBoard({
         choices: powerplants.firstN(board.step === 3 ? 8 : 4, Card),
-        prompt: 'Choose a factory for auction'
       }).do(
         card => card.auction = true
       ),
@@ -497,7 +496,6 @@ export default setup({
       }).move({
         piece: board.first(PlayerMat, {mine: true})!.first(Building),
         chooseInto: map.all(City, city => city.canBuildFor(player.elektro)),
-        prompt: 'Which city?'
       }).do(city => {
         player.elektro -= city.costToBuild();
         city.owners.push(player);
@@ -517,11 +515,12 @@ export default setup({
       }),
 
       power: player => action({
-        prompt: 'Power this plant',
+        prompt: 'Power plants',
         condition: !!map.first(Building, {player})
       }).chooseOnBoard({
         choices: board.all(Card, {mine: true, powered: false}, c => !!c.resourcesAvailableToPower()),
       }).chooseOnBoard({
+        maySkip: true,
         choices: (card: Card) => card.resourcesAvailableToPower()!,
         min: (card: Card) => card.resources!,
         max: (card: Card) => card.resources!,
@@ -535,12 +534,13 @@ export default setup({
       buyResource: player => action({
         prompt: 'Buy resources'
       }).chooseFrom({
-        prompt: 'Which type',
+        maySkip: true,
         choices: resourceTypes.filter(type => (
           costOf(type, 1) <= player.elektro && !!board.first(Card, {mine: true}, card => card.spaceFor(type) > 0)
         ))
       }).chooseNumber({
-        prompt: 'Amount',
+        prompt: resource => `Buy ${resource}`,
+        maySkip: true,
         min: 1,
         max: type => {
           let max = 0;
@@ -670,14 +670,15 @@ export default setup({
               for (const building of map.all(Building, { mine: true, powered: true })) building.powered = false;
 
               // count power from plants and number of cities that can be powered
-              const rev = income[
-                Math.min(
-                  board.all(Card, { mine: true, powered: true }).sum('power'),
-                  map.all(Building, { mine: true }).length,
-                  income.length - 1,
-                )
-              ];
+              const cities = Math.min(
+                board.all(Card, { mine: true, powered: true }).sum('power'),
+                map.all(Building, { mine: true }).length,
+                income.length - 1,
+              )
+
+              const rev = income[cities];
               powerPlayer.elektro += rev;
+              game.message(`${powerPlayer.name} earned ${rev} elektro for ${cities} ${cities === 1 ? 'city' : 'cities'}`);
 
               // unpower plants
               for (const card of board.all(Card, { mine: true, powered: true })) {
@@ -707,13 +708,17 @@ export default setup({
     const resources = board.first(Space, 'resources')!;
     const powerplants = board.first(Space, 'powerplants')!;
 
-    Card.aspectRatio = 1;
-    Building.aspectRatio = 1;
-    City.aspectRatio = 1;
+    const resourceSvgs = {
+      coal: coalOutline,
+      oil: oilOutline,
+      garbage: garbageOutline,
+      uranium: uraniumOutline,
+      hybrid: hybridOutline,
+      clean: null
+    }
 
-    Board.aspectRatio = 6/5;
+    board.appearance({ aspectRatio: 6/5 });
 
-    board.all(PlayerMat).layout(Building, null);
     board.layout(map, {
       area: { left: 3, top: -10, width: 60, height: 120 }
     });
@@ -820,73 +825,81 @@ export default setup({
       limit: 3
     });
 
-    board.all(PlayerMat).appearance(mat => (
-      <div style={{color: mat.player.color}}>
-        {mat.player.name}<br/>
-        Score: {mat.player.score} | Elektro: {mat.player.elektro}
-      </div>
-    ));
-
-    map.appearance(() => <img id="germany" src={germany}/>);
-
-    board.all(City).appearance(city);
-
-    board.all(Building).appearance(building);
-
-    const resourceSvgs = {
-      coal: coalOutline,
-      oil: oilOutline,
-      garbage: garbageOutline,
-      uranium: uraniumOutline,
-      hybrid: hybridOutline,
-      clean: null
-    }
-
-    board.all(Card).appearance(card => <div className="outer">
-      {card.isVisible() && <>
-        <img className="background" src={powerplant}/>
-        <div className="inner">
-        {card.cost && <>
-          <div className="cost">
-            {card.discount ? 
-              <span>
-                <span className="old-cost">{String(card.cost + 100).slice(-2)}</span>
-                <span className="new-cost"> 01</span>
-              </span>
-              :
-              String(card.cost + 100).slice(-2)
-            }
-          </div>
-          <div className={"production " + card.resourceType}>
-          {card.resourceType === 'hybrid' && <div className='hybrid2'/>}
-          {times(card.resources!, i => <img key={i} src={resourceSvgs[card.resourceType!]}/>)}
-          <img src={arrow}/>
-          <BuildingOutline number={card.resources!}/>
-          </div>
-        </>}
-        {card.auction && <img src={gavel}/>}
-        </div>
-      </>}
-    </div>);
-
     board.all(Card).layout(Resource, {
       area: { left: 10, top: 25, width: 80, height: 50 },
       gap: 1,
     });
 
-    board.all(ResourceSpace).appearance(s => <div className={'cost' + (s.isEmpty() ? ' empty' : '')}>{s.cost}</div>);
-    board.all(Resource, {type: 'coal'}).appearance(() => <img src={coal}/>);
-    board.all(Resource, {type: 'oil'}).appearance(() => <img src={oil}/>);
-    board.all(Resource, {type: 'garbage'}).appearance(() => <img src={garbage}/>);
-    board.all(Resource, {type: 'uranium'}).appearance(() => <img src={uranium}/>);
+    board.all(PlayerMat).appearance({
+      render: mat => (
+        <div style={{color: mat.player.color}}>
+          {mat.player.name}<br/>
+          Score: {mat.player.score} | Elektro: {mat.player.elektro}
+        </div>
+      )
+    });
 
-    map.showConnections({
-      thickness: .2,
-      color: 'black',
-      style: 'double',
-      fill: 'white',
-      label: powerLabel,
-      labelScale: 0.045,
+    map.appearance({
+      render: () => <img id="germany" src={germany}/>,
+      connections: {
+        thickness: .2,
+        color: 'black',
+        style: 'double',
+        fill: 'white',
+        label: powerLabel,
+        labelScale: 0.045,
+      }
+    });
+
+    board.all(ResourceSpace).appearance({
+      render: s => <div className={'cost' + (s.isEmpty() ? ' empty' : '')}>{s.cost}</div>
+    });
+
+    board.all(Resource, {type: 'coal'}).appearance({ render: () => <img src={coal}/> });
+    board.all(Resource, {type: 'oil'}).appearance({ render: () => <img src={oil}/> });
+    board.all(Resource, {type: 'garbage'}).appearance({ render: () => <img src={garbage}/> });
+    board.all(Resource, {type: 'uranium'}).appearance({ render: () => <img src={uranium}/> });
+
+    board.all(City).appearance({ aspectRatio: 1, zoomable: true, render: city });
+
+    board.all(Building).appearance({ aspectRatio: 1, render: building });
+    board.all(PlayerMat).all(Building).appearance({ render: false });
+
+    board.all(Card).appearance({
+      aspectRatio: 1,
+      zoomable: true,
+      render: card => (
+        <div className="outer">
+          {card.isVisible() && (
+            <>
+              <img className="background" src={powerplant}/>
+              <div className="inner">
+                {card.cost && (
+                  <>
+                    <div className="cost">
+                      {card.discount ? 
+                        <span>
+                          <span className="old-cost">{String(card.cost + 100).slice(-2)}</span>
+                          <span className="new-cost"> 01</span>
+                        </span>
+                        :
+                        String(card.cost + 100).slice(-2)
+                      }
+                    </div>
+                    <div className={"production " + card.resourceType}>
+                      {card.resourceType === 'hybrid' && <div className='hybrid2'/>}
+                      {times(card.resources!, i => <img key={i} src={resourceSvgs[card.resourceType!]}/>)}
+                      <img src={arrow}/>
+                      <BuildingOutline number={card.resources!}/>
+                    </div>
+                  </>
+                )}
+                {card.auction && <img src={gavel}/>}
+              </div>
+            </>
+          )}
+        </div>
+      )
     });
   }
 });
