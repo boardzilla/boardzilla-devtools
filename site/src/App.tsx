@@ -403,22 +403,21 @@ function App() {
 
       <Modal open={helpOpen} onClose={() => setHelpOpen(false)} center>
         <h2>Help</h2>
-        <p>
-          To switch between players use shift-1, shift-2 etc
-        </p>
-        <p>
-          To open the save state panel, use shift-s
-        </p>
-        <p>
-          To manually reload the game/ui, use shift-r
-        </p>
+        <dl>
+          <dt><kbd>Shift</kbd> + <kbd>1</kbd>, <kbd>Shift</kbd> + <kbd>2</kbd></dt>
+          <dd>Switch between users</dd>
+          <dt><kbd>Shift</kbd> + <kbd>R</kbd></dt>
+          <dd>Manually reload UI/Game iframes</dd>
+          <dt><kbd>Shift</kbd> + <kbd>S</kbd></dt>
+          <dd>Toggle save state model open</dd>
+        </dl>
       </Modal>
 
       <Modal open={saveStatesOpen} onClose={() => setSaveStatesOpen(false)} center>
         <div>
           <h2>Save states</h2>
-          <div style={{overflowY: 'auto', height: "80vh"}}>
-            {saveStates.map(s => <div key={s.name}>{s.name} {new Date(s.ctime).toString()} <button onClick={() => loadState(s.name)}>Open</button><button onClick={() => deleteState(s.name)}>Delete</button></div>)}
+          <div style={{overflowY: 'auto', height: "80vh", width: "50vw"}}>
+            {saveStates.map(s => <div key={s.name}>{s.name}<br/>{new Date(s.ctime).toString()} <button onClick={() => loadState(s.name)}>Open</button><button onClick={() => deleteState(s.name)}>Delete</button></div>)}
           </div>
           <form onSubmit={(e) => saveCurrentState(e)}>
             Name <input type="text" name="name"/><br/>
