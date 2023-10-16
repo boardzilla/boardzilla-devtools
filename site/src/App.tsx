@@ -355,6 +355,13 @@ function App() {
         return
       }
 
+      if (e.code === 'KeyR' && e.shiftKey) {
+        e.stopPropagation();
+        (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
+        (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
+        return
+      }
+
       const idx = validKeys.indexOf(e.code)
       if (!e.shiftKey || idx === -1) return
       e.stopPropagation();
@@ -398,6 +405,12 @@ function App() {
         <h2>Help</h2>
         <p>
           To switch between players use shift-1, shift-2 etc
+        </p>
+        <p>
+          To open the save state panel, use shift-s
+        </p>
+        <p>
+          To manually reload the game/ui, use shift-r
         </p>
       </Modal>
 
