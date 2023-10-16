@@ -104,15 +104,16 @@ function App() {
   }, [])
 
   const updateUI = useCallback((update: Game.GameUpdate) => {
+    let position = currentPlayer;
     if (update.game.currentPlayerPosition) {
-      console.log('setCurrentPlayer from', currentPlayer, update.game.currentPlayerPosition);
       setCurrentPlayer(update.game.currentPlayerPosition);
+      position = update.game.currentPlayerPosition;
     }
     sendToUI({
       type: "gameUpdate",
       state: {
         position: currentPlayer,
-        state: update.players.find(p => p.position === currentPlayer)!.state
+        state: update.players.find(p => p.position === position)!.state
       }
     });
   }, [sendToUI, currentPlayer]);
@@ -261,6 +262,7 @@ function App() {
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
             updateUI(moveUpdate);
           } catch(err) {
+            console.error('error during move', err);
             sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
           }
           break
@@ -278,13 +280,13 @@ function App() {
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined});
             updateUI(initialUpdate);
           } catch(err) {
+            console.error('error during start', err);
             sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
           }
           // this is a bit of a lie, it doesn't actually know how it was processed by game
           break
         case 'ready':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
-          console.log('ready', initialState);
           if (!initialState) {
             if (settings) {
               sendToUI({type: "settingsUpdate", settings});

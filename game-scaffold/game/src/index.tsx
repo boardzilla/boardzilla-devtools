@@ -492,7 +492,7 @@ export default setup({
       pass: () => action({ prompt: 'Pass' }),
 
       build: player => action({
-        prompt: 'Build'
+        prompt: 'Select cities for building'
       }).move({
         piece: board.first(PlayerMat, {mine: true})!.first(Building),
         chooseInto: map.all(City, city => city.canBuildFor(player.elektro)),
@@ -515,12 +515,13 @@ export default setup({
       }),
 
       power: player => action({
-        prompt: 'Power plants',
+        prompt: 'Power your plants',
         condition: !!map.first(Building, {player})
       }).chooseOnBoard({
+        prompt: 'Select plant to power',
         choices: board.all(Card, {mine: true, powered: false}, c => !!c.resourcesAvailableToPower()),
       }).chooseOnBoard({
-        maySkip: true,
+        prompt: 'Select resources to use',
         choices: (card: Card) => card.resourcesAvailableToPower()!,
         min: (card: Card) => card.resources!,
         max: (card: Card) => card.resources!,
@@ -534,13 +535,11 @@ export default setup({
       buyResource: player => action({
         prompt: 'Buy resources'
       }).chooseFrom({
-        maySkip: true,
         choices: resourceTypes.filter(type => (
           costOf(type, 1) <= player.elektro && !!board.first(Card, {mine: true}, card => card.spaceFor(type) > 0)
         ))
       }).chooseNumber({
         prompt: resource => `Buy ${resource}`,
-        maySkip: true,
         min: 1,
         max: type => {
           let max = 0;

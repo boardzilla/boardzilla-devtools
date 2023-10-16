@@ -4,10 +4,12 @@
   "license": "MIT",
   "dependencies": {
     "boardzilla": "link:../../boardzilla-core",
-    "react": "^18.2.0"
+    "react": "^18.2",
+    "react-dom": "^18.2"
   },
   "devDependencies": {
-    "@types/react": "^18.2.23",
+    "@types/react": "^18.2.25",
+    "@types/react-dom": "^18.2.25",
     "esbuild": "^0.19.2",
     "esbuild-sass-plugin": "^2.15.0",
     "typescript": "^5.2.2"
