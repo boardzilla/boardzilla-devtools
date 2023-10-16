@@ -33,43 +33,71 @@ type BuildError = {
   err: string
 }
 
-function App() {
-  const savedInitialState: InitialStateHistoryItem | undefined = JSON.parse(localStorage.getItem('initialState') || 'null') || undefined;
-  const savedHistory = JSON.parse(localStorage.getItem('history') || '[]') as HistoryItem[];
-  const savedPlayers = savedInitialState?.players || [];
-  const savedSettings = savedInitialState?.settings || {};
+type SaveState = {
+  name: string
+  ctime: number
+}
 
-  const [initialState, setInitialState] = useState(savedInitialState);
+type SaveStateData = {
+  settings: Game.GameSettings
+  players: UI.UserPlayer[]
+  history: HistoryItem[]
+  initialState: InitialStateHistoryItem
+}
+
+function App() {
+  const [initialState, setInitialState] = useState<InitialStateHistoryItem | undefined>();
+  const [numberOfUsers, setNumberOfUsers] = useState(minPlayers);
+  const [phase, setPhase] = useState<"new" | "started">("new");
+  const [currentPlayer, setCurrentPlayer] = useState(0);
+  const [players, setPlayers] = useState<UI.UserPlayer[]>([]);
+  const [buildError, setBuildError] = useState<BuildError | undefined>();
+  const [settings, setSettings] = useState<Game.GameSettings>({});
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [saveStatesOpen, setSaveStatesOpen] = useState(false);
+  const [saveStates, setSaveStates] = useState<SaveState[]>([])
+
+  const loadSaveStates = useCallback(async () => {
+    const response = await fetch('/states')
+    const states = await response.json();
+    setSaveStates((states as {entries: SaveState[]}).entries)
+  }, []);
 
   const getCurrentState = useCallback((history?: HistoryItem[]): Game.GameState => (
     history?.length ? history[history.length - 1].state! : initialState?.state!
   ), [initialState]);
 
-  const currentState: Game.GameState = getCurrentState(savedHistory);
-  const initialCurrentPlayer = currentState?.currentPlayerPosition || 1;
-  const initialPhase: "new" | "started" = savedHistory?.length ? 'started' : 'new'
-  const initialMinPlayers = savedPlayers.length || 1;
+  useEffect(() => {
+    loadSaveStates()
+  }, [loadSaveStates])
 
-  const [numberOfUsers, setNumberOfUsers] = useState(initialMinPlayers);
-  const [phase, setPhase] = useState(initialPhase);
-  const [currentPlayer, setCurrentPlayer] = useState(initialCurrentPlayer);
-  const [players, setPlayers] = useState(savedPlayers);
-  const [buildError, setBuildError] = useState<BuildError | undefined>();
-  const [settings, setSettings] = useState<Game.GameSettings>(savedSettings);
-  const [history, setHistory] = useState(savedHistory || []);
-  const [open, setOpen] = useState(false);
-
-  const onOpenModal = () => setOpen(true);
-  const onCloseModal = () => setOpen(false);
+  const saveCurrentState = useCallback((e: React.SyntheticEvent) => {
+    e.preventDefault();
+    const target = e.target as typeof e.target & {
+      name: { value: string };
+    };
+    fetch(`/states/${encodeURIComponent(target.name.value)}`, {
+      headers: {
+        'Content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        initialState, history, players, settings
+      }),
+      method: "POST"
+    }).then(response => {
+      console.log(response)
+    }).then(() => loadSaveStates())
+  }, [initialState, history, loadSaveStates, players, settings]);
 
   const bootstrap = useCallback((): string => {
     return JSON.stringify({
-      host: currentPlayer === players[0]?.position,
-      userID: players.find(p => p.position === currentPlayer)?.userID || possibleUsers[0].id,
+      host: true,
+      userID: possibleUsers[currentPlayer].id,
       minPlayers,
       maxPlayers
     })
-  }, [currentPlayer, players])
+  }, [currentPlayer]);
 
   const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
@@ -90,14 +118,12 @@ function App() {
   }, [sendToUI, currentPlayer]);
 
   const resetGame = useCallback(() => {
-    setPhase("new")
-    setSettings({})
-    setInitialState(undefined)
-    setHistory([])
-    setPlayers([])
-    setCurrentPlayer(1)
-    localStorage.removeItem('initialState');
-    localStorage.removeItem('history');
+    setPhase("new");
+    setSettings({});
+    setInitialState(undefined);
+    setHistory([]);
+    setPlayers([]);
+    setCurrentPlayer(0);
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
     (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
   }, [])
@@ -130,7 +156,6 @@ function App() {
   }, [history, initialState, players, settings, updateUI]);
 
   useEffect(() => {
-    console.log("events!")
     const evtSource = new ReconnectingEventSource("/events");
     evtSource!.onmessage = (m => {
       const e = JSON.parse(m.data)
@@ -232,7 +257,6 @@ function App() {
               messages: moveUpdate.messages,
               move: e.data,
             }];
-            localStorage.setItem('history', JSON.stringify(newHistory));
             setHistory(newHistory);
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
             updateUI(moveUpdate);
@@ -249,7 +273,6 @@ function App() {
               players,
               settings,
             };
-            localStorage.setItem('initialState', JSON.stringify(newInitialState));
             setInitialState(newInitialState);
             setPhase("started");
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined});
@@ -303,7 +326,6 @@ function App() {
                 }
                 break
             }
-            localStorage.setItem('players', JSON.stringify(newPlayers));
             setPlayers(newPlayers)
           }
           sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
@@ -327,10 +349,16 @@ function App() {
     const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
     const validKeys = keys.slice(0, players.length)
     const l = (e: globalThis.KeyboardEvent):any => {
+      if (e.code === 'KeyS' && e.shiftKey) {
+        e.stopPropagation();
+        setSaveStatesOpen((s) => !s)
+        return
+      }
+
       const idx = validKeys.indexOf(e.code)
       if (!e.shiftKey || idx === -1) return
-      setCurrentPlayer(players[idx].position);
       e.stopPropagation();
+      setCurrentPlayer(players[idx].position);
     }
     window.addEventListener('keydown', l);
     return () => window.removeEventListener('keydown', l);
@@ -339,6 +367,21 @@ function App() {
   useEffect(() => {
     sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});
   }, [numberOfUsers, players, sendToUI])
+
+  const loadState = useCallback(async (name: string) => {
+    const response = await fetch(`/states/${encodeURIComponent(name)}`);
+    const state = await response.json() as SaveStateData;
+    setSettings(state.settings);
+    setPlayers(state.players);
+    setInitialState(state.initialState);
+    setHistory(state.history);
+    (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
+  }, []);
+
+  const deleteState = useCallback(async (name: string) => {
+    await fetch(`/states/${encodeURIComponent(name)}`, {method: "DELETE"});
+    await loadSaveStates();
+  }, [loadSaveStates]);
 
   return (
     <div style={{display:'flex', flexDirection:'row'}}>
@@ -351,12 +394,26 @@ function App() {
         <pre>{buildError?.err}</pre>
       </Modal>
 
-      <Modal open={open} onClose={onCloseModal} center>
+      <Modal open={helpOpen} onClose={() => setHelpOpen(false)} center>
         <h2>Help</h2>
         <p>
           To switch between players use shift-1, shift-2 etc
         </p>
       </Modal>
+
+      <Modal open={saveStatesOpen} onClose={() => setSaveStatesOpen(false)} center>
+        <div>
+          <h2>Save states</h2>
+          <div style={{overflowY: 'auto', height: "80vh"}}>
+            {saveStates.map(s => <div key={s.name}>{s.name} {new Date(s.ctime).toString()} <button onClick={() => loadState(s.name)}>Open</button><button onClick={() => deleteState(s.name)}>Delete</button></div>)}
+          </div>
+          <form onSubmit={(e) => saveCurrentState(e)}>
+            Name <input type="text" name="name"/><br/>
+            <input type="submit" disabled={!initialState} value="Save new state" />
+          </form>
+        </div>
+      </Modal>
+
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
           <input style={{width: '3em'}} disabled={phase === 'started'} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>
@@ -364,7 +421,7 @@ function App() {
             <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>
           )}
           </span>
-          <button  style={{fontSize: '20pt'}} className="button-link" onClick={onOpenModal}>ⓘ</button>
+          <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
         </div>
         <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
         <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"mime"
 	"net/http"
 	"os"
@@ -69,9 +70,15 @@ func (s *Server) Serve() error {
 		}
 	}()
 
+	saveStatesPath := path.Join(s.gameRoot, ".save-states")
+	if err := os.MkdirAll(saveStatesPath, 0700); err != nil {
+		return err
+	}
+
 	i := 0
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+
 	r.Get("/events", func(w http.ResponseWriter, r *http.Request) {
 		flusher, ok := w.(http.Flusher)
 
@@ -115,6 +122,87 @@ func (s *Server) Serve() error {
 			flusher.Flush()
 		}
 	})
+
+	r.Get("/states", func(w http.ResponseWriter, r *http.Request) {
+		entries, err := os.ReadDir(saveStatesPath)
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		type entry struct {
+			Name  string `json:"name"`
+			Ctime int64  `json:"ctime"`
+		}
+
+		var entriesResponse struct {
+			Entries []*entry `json:"entries"`
+		}
+		entriesResponse.Entries = []*entry{}
+
+		for _, e := range entries {
+			i, err := e.Info()
+			if err != nil {
+				fmt.Printf("error: %#v\n", err)
+				w.WriteHeader(500)
+				return
+			}
+			entriesResponse.Entries = append(entriesResponse.Entries, &entry{
+				Name:  e.Name(),
+				Ctime: i.ModTime().UnixMilli(),
+			})
+		}
+		w.Header().Add("Content-type", "application/json")
+		w.Header().Add("Cache-control", "no-store")
+		w.WriteHeader(200)
+		json.NewEncoder(w).Encode(entriesResponse)
+	})
+
+	r.Get("/states/{name}", func(w http.ResponseWriter, r *http.Request) {
+		target := path.Join(saveStatesPath, chi.URLParam(r, "name"))
+		data, err := os.ReadFile(target)
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		w.Header().Add("Content-type", "application/json")
+		w.Header().Add("Cache-control", "no-store")
+		w.WriteHeader(200)
+		if _, err := w.Write(data); err != nil {
+			fmt.Printf("error: %#v\n", err)
+		}
+	})
+
+	r.Post("/states/{name}", func(w http.ResponseWriter, r *http.Request) {
+		target := path.Join(saveStatesPath, chi.URLParam(r, "name"))
+		f, err := os.OpenFile(target, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0644)
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		if _, err := io.Copy(f, r.Body); err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.WriteHeader(201)
+	})
+
+	r.Delete("/states/{name}", func(w http.ResponseWriter, r *http.Request) {
+		target := path.Join(saveStatesPath, chi.URLParam(r, "name"))
+		if err := os.Remove(target); err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		w.WriteHeader(204)
+	})
+
 	r.Get("/ui.js", func(w http.ResponseWriter, r *http.Request) {
 		f, err := os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, "index.js"))
 		if err != nil {
@@ -126,6 +214,7 @@ func (s *Server) Serve() error {
 		w.Header().Add("Cache-control", "no-store")
 		w.Write(f)
 	})
+
 	r.Get("/game.js", func(w http.ResponseWriter, r *http.Request) {
 		f, err := os.ReadFile(path.Join(s.gameRoot, s.manifest.Game.Root, s.manifest.Game.OutputFile))
 		if err != nil {
@@ -137,6 +226,7 @@ func (s *Server) Serve() error {
 		w.Header().Add("Cache-control", "no-store")
 		w.Write(f)
 	})
+
 	r.Get("/ui.css", func(w http.ResponseWriter, r *http.Request) {
 		f, err := os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, "index.css"))
 		if err != nil {
@@ -148,6 +238,7 @@ func (s *Server) Serve() error {
 		w.Header().Add("Cache-control", "no-store")
 		w.Write(f)
 	})
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		f, err := s.getFile("/index.html")
 		if err != nil {
@@ -171,6 +262,7 @@ func (s *Server) Serve() error {
 		w.Header().Add("Cache-control", "no-store")
 		t.Execute(w, data)
 	})
+
 	r.Get("/ui.html", func(w http.ResponseWriter, r *http.Request) {
 		f, err := s.getFile("/ui.html")
 		if err != nil {
@@ -192,6 +284,7 @@ func (s *Server) Serve() error {
 		w.Header().Add("Cache-control", "no-store")
 		t.Execute(w, data)
 	})
+
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		assetPath := chi.URLParam(r, "*")
 		ext := filepath.Ext(assetPath)
