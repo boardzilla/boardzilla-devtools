@@ -104,7 +104,7 @@ export type MoveMessage = {
   data: any
 }
 
-export type SwitchPlayerMessage = {
-  type: "switchPlayer"
-  index: number
+export type KeyMessage = {
+  type: "key"
+  code: string
 }

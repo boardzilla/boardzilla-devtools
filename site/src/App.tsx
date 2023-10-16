@@ -208,6 +208,35 @@ function App() {
     });
   }, [sendToUI, currentPlayer]);
 
+  const processKey = useCallback((code: string): boolean => {
+    const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
+    const validKeys = keys.slice(0, players.length)
+    switch (code) {
+      case 'KeyS':
+        setSaveStatesOpen((s) => !s)
+        return true
+      case 'KeyR':
+        (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
+        (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
+        return true
+      case 'Digit1':
+      case 'Digit2':
+      case 'Digit3':
+      case 'Digit4':
+      case 'Digit5':
+      case 'Digit6':
+      case 'Digit7':
+      case 'Digit8':
+      case 'Digit9':
+      case 'Digit0':
+        const idx = validKeys.indexOf(code)
+        setCurrentPlayer(players[idx].position);
+        return true
+      default:
+        return false
+    }
+  }, [players])
+
   useEffect(() => {
     const listener = async (e: MessageEvent<
       Game.InitialStateResultMessage |
@@ -219,7 +248,7 @@ function App() {
       UI.UpdateSelfPlayerMessage |
       UI.ReadyMessage |
       UI.MoveMessage |
-      UI.SwitchPlayerMessage
+      UI.KeyMessage
     >) => {
       const path = (e.source! as WindowProxy).location.pathname
       console.log("got event", path, e.data.type)
@@ -335,43 +364,28 @@ function App() {
         case 'updateSelfPlayer':
           break
         // special event for player switching
-        case 'switchPlayer':
+        case 'key':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
-          if (e.data.index >= players.length) break
-          setCurrentPlayer(e.data.index)
+          processKey(e.data.code)
           break
       }
     }
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, updateUIFromState, settings, getCurrentState]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, updateUIFromState, settings, getCurrentState, processKey]);
 
   useEffect(() => {
-    const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
-    const validKeys = keys.slice(0, players.length)
     const l = (e: globalThis.KeyboardEvent):any => {
-      if (e.code === 'KeyS' && e.shiftKey) {
-        e.stopPropagation();
-        setSaveStatesOpen((s) => !s)
-        return
-      }
 
-      if (e.code === 'KeyR' && e.shiftKey) {
+      if (!e.shiftKey) return
+      if (processKey(e.code)) {
         e.stopPropagation();
-        (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
-        (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
-        return
       }
-
-      const idx = validKeys.indexOf(e.code)
-      if (!e.shiftKey || idx === -1) return
-      e.stopPropagation();
-      setCurrentPlayer(players[idx].position);
     }
-    window.addEventListener('keydown', l);
-    return () => window.removeEventListener('keydown', l);
-  }, [players])
+    window.addEventListener('keyup', l);
+    return () => window.removeEventListener('keyup', l);
+  }, [players, processKey])
 
   useEffect(() => {
     sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});

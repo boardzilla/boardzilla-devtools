@@ -5,11 +5,9 @@
   <link rel="stylesheet" href="ui.css"/>
   <script src="ui.js"></script>
   <script>
-    const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
     window.addEventListener('keydown', (e) => {
-      const idx = keys.indexOf(e.code)
-      if (!e.shiftKey || idx === -1) return
-      window.top.postMessage({type: "switchPlayer", index: idx}, "*")
+      if (!e.shiftKey) return
+      window.top.postMessage({type: "key", code: e.code}, "*")
     })
   </script>
 </html>
