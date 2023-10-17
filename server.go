@@ -156,12 +156,14 @@ func (s *Server) Serve() error {
 		w.Header().Add("Content-type", "application/json")
 		w.Header().Add("Cache-control", "no-store")
 		w.WriteHeader(200)
-		json.NewEncoder(w).Encode(entriesResponse)
+		if err := json.NewEncoder(w).Encode(entriesResponse); err != nil {
+			fmt.Printf("error: %#v\n", err)
+		}
 	})
 
 	r.Get("/states/{name}", func(w http.ResponseWriter, r *http.Request) {
 		target := path.Join(saveStatesPath, chi.URLParam(r, "name"))
-		data, err := os.ReadFile(target)
+		data, err := os.ReadFile(filepath.Clean(target))
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
@@ -177,7 +179,7 @@ func (s *Server) Serve() error {
 
 	r.Post("/states/{name}", func(w http.ResponseWriter, r *http.Request) {
 		target := path.Join(saveStatesPath, chi.URLParam(r, "name"))
-		f, err := os.OpenFile(target, os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0644)
+		f, err := os.OpenFile(filepath.Clean(target), os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0600)
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
@@ -212,7 +214,9 @@ func (s *Server) Serve() error {
 		}
 		w.Header().Add("Content-type", "application/javascript")
 		w.Header().Add("Cache-control", "no-store")
-		w.Write(f)
+		if _, err := w.Write(f); err != nil {
+			fmt.Printf("error: %#v\n", err)
+		}
 	})
 
 	r.Get("/game.js", func(w http.ResponseWriter, r *http.Request) {
@@ -224,7 +228,9 @@ func (s *Server) Serve() error {
 		}
 		w.Header().Add("Content-type", "application/javascript")
 		w.Header().Add("Cache-control", "no-store")
-		w.Write(f)
+		if _, err := w.Write(f); err != nil {
+			fmt.Printf("error: %#v\n", err)
+		}
 	})
 
 	r.Get("/ui.css", func(w http.ResponseWriter, r *http.Request) {
@@ -236,7 +242,9 @@ func (s *Server) Serve() error {
 		}
 		w.Header().Add("Content-type", "text/css")
 		w.Header().Add("Cache-control", "no-store")
-		w.Write(f)
+		if _, err := w.Write(f); err != nil {
+			fmt.Printf("error: %#v\n", err)
+		}
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -260,7 +268,9 @@ func (s *Server) Serve() error {
 		data.MaximumPlayers = s.manifest.MaximumPlayers
 		w.Header().Add("Content-type", "text/html")
 		w.Header().Add("Cache-control", "no-store")
-		t.Execute(w, data)
+		if err := t.Execute(w, data); err != nil {
+			fmt.Printf("error: %#v\n", err)
+		}
 	})
 
 	r.Get("/ui.html", func(w http.ResponseWriter, r *http.Request) {
@@ -282,7 +292,9 @@ func (s *Server) Serve() error {
 		data.Bootstrap = r.URL.Query().Get("bootstrap")
 		w.Header().Add("Content-type", "text/html")
 		w.Header().Add("Cache-control", "no-store")
-		t.Execute(w, data)
+		if err := t.Execute(w, data); err != nil {
+			fmt.Printf("error: %#v\n", err)
+		}
 	})
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
@@ -290,7 +302,7 @@ func (s *Server) Serve() error {
 		ext := filepath.Ext(assetPath)
 		f, err := s.getFile("/" + assetPath)
 		if err != nil {
-			f, err = os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, assetPath))
+			f, err = os.ReadFile(filepath.Clean(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, assetPath)))
 		}
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
@@ -299,11 +311,14 @@ func (s *Server) Serve() error {
 		}
 		w.Header().Add("Content-type", mime.TypeByExtension(ext))
 		w.Header().Add("Cache-control", "no-store")
-		w.Write(f)
+		if _, err := w.Write(f); err != nil {
+			fmt.Printf("error: %#v\n", err)
+		}
 	})
 	srv := &http.Server{
-		Handler: r,
-		Addr:    fmt.Sprintf(":%d", s.port),
+		Handler:           r,
+		ReadHeaderTimeout: 200 * time.Millisecond,
+		Addr:              fmt.Sprintf(":%d", s.port),
 	}
 	return srv.ListenAndServe()
 }
@@ -355,7 +370,7 @@ func (s *Server) getFile(n string) ([]byte, error) {
 		n = path.Join("site", "build", n)
 	}
 	if liveDev {
-		return os.ReadFile(n)
+		return os.ReadFile(filepath.Clean(n))
 	}
 	return site.ReadFile(n)
 }

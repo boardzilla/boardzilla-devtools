@@ -173,7 +173,7 @@ func (b *Builder) BuildProd() error {
 
 func (b *Builder) run(dir, cmdStr string) ([]byte, []byte, error) {
 	args := strings.Fields(cmdStr)
-	cmd := exec.Command(args[0], args[1:]...)
+	cmd := exec.Command(args[0], args[1:]...) // #nosec G204
 
 	outbuf := bytes.NewBuffer(make([]byte, 1024*1024*5))
 	errbuf := bytes.NewBuffer(make([]byte, 1024*1024*5))

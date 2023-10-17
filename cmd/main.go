@@ -9,15 +9,19 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"syscall"
 
 	devtools "github.com/boardzilla/boardzilla-devtools"
+	"github.com/fsnotify/fsnotify"
 	"golang.org/x/term"
 )
 
@@ -25,6 +29,12 @@ func main() {
 	if err := runBZ(); err != nil {
 		panic(err)
 	}
+}
+
+type buildError struct {
+	Type int
+	Out  string
+	Err  string
 }
 
 func runBZ() error {
@@ -36,6 +46,7 @@ func runBZ() error {
 	if len(os.Args) == 1 {
 		fmt.Println("usage: bz [command]")
 		fmt.Println("")
+		fmt.Println("run -root <game root>                          Run the devtools for a game")
 		fmt.Println("info -root <game root>                         Get info about the game at root")
 		fmt.Println("register                                       Register a user for publishing a game")
 		fmt.Println("publish -root <game root> -version <version>   Publish a game")
@@ -46,6 +57,135 @@ func runBZ() error {
 	command := os.Args[1]
 
 	switch command {
+	case "run":
+		runCmd := flag.NewFlagSet("run", flag.ExitOnError)
+		root := runCmd.String("root", "", "game root")
+		port := runCmd.Int("port", 8080, "port for server")
+		if err := runCmd.Parse(os.Args[2:]); err != nil {
+			return err
+		}
+
+		gameRoot := *root
+		if gameRoot == "" {
+			fmt.Println("Requires -root <game root>")
+			os.Exit(1)
+		}
+
+		devBuilder, err := devtools.NewBuilder(gameRoot)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// Add a path.
+		manifest, err := devBuilder.Manifest()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		watcher, err := fsnotify.NewWatcher()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer watcher.Close()
+		rebuilt := make(chan int)
+		errors := make(chan *buildError)
+
+		go func() {
+			if err := devBuilder.Build(); err != nil {
+				log.Println("error during build:", err)
+			}
+
+			for {
+				select {
+				case e, ok := <-watcher.Events:
+					if !ok {
+						return
+					}
+					if e.Op != fsnotify.Write {
+						continue
+					}
+					for _, p := range manifest.UI.WatchPaths {
+						r, err := filepath.Rel(path.Join(gameRoot, p), e.Name)
+						if err != nil {
+							log.Fatal(err)
+						}
+						if !strings.HasPrefix(r, "..") {
+							if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
+								log.Println("error during rebuild:", err)
+								errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
+								continue
+							}
+							log.Printf("UI reloaded due to change in %s\n", e.Name)
+							rebuilt <- devtools.UI
+							break
+						}
+					}
+
+					for _, p := range manifest.Game.WatchPaths {
+						r, err := filepath.Rel(path.Join(gameRoot, p), e.Name)
+						if err != nil {
+							log.Fatal(err)
+						}
+						if !strings.HasPrefix(r, "..") {
+							if outbuf, errbuf, err := devBuilder.BuildGame(); err != nil {
+								log.Println("error during rebuild:", err)
+								errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
+								continue
+							}
+							log.Printf("Game reloaded due to change in %s\n", e.Name)
+							rebuilt <- devtools.Game
+							break
+						}
+					}
+				case err, ok := <-watcher.Errors:
+					if !ok {
+						return
+					}
+					log.Println("error:", err)
+				}
+			}
+		}()
+
+		roots, err := devBuilder.WatchedFiles()
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, root := range roots {
+			if err := watcher.Add(root); err != nil {
+				log.Fatal(err)
+			}
+			if err := filepath.Walk(root, func(p string, info fs.FileInfo, err error) error {
+				if p == root {
+					return nil
+				}
+				if !info.IsDir() {
+					return nil
+				}
+				return watcher.Add(p)
+			}); err != nil {
+				log.Fatal(err)
+			}
+		}
+
+		server, err := devtools.NewServer(gameRoot, manifest, *port)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Running dev builder on port %d at game root %s\n", *port, gameRoot)
+		// Block main goroutine forever.
+		go func() {
+			for {
+				select {
+				case i := <-rebuilt:
+					server.Reload(i)
+				case e := <-errors:
+					server.BuildError(e.Type, e.Out, e.Err)
+				}
+			}
+		}()
+		fmt.Printf("Ready on :%d ✏️✏️✏️\n", *port)
+		if err := server.Serve(); err != nil {
+			log.Fatal(err)
+		}
 	case "info":
 		infoCmd := flag.NewFlagSet("info", flag.ExitOnError)
 		root := infoCmd.String("root", "", "game root")
@@ -172,6 +312,9 @@ func runBZ() error {
 			}
 
 			res, err := http.Post(fmt.Sprintf("%s/login", serverURL), "application/json", bytes.NewReader(reqData))
+			if err != nil {
+				return err
+			}
 			switch res.StatusCode {
 			case 204:
 				if res.Header.Get("set-cookie") == "" {
@@ -186,7 +329,7 @@ func runBZ() error {
 				panic("didn't expect this!")
 			}
 		} else {
-			auth, err = os.ReadFile(authPath)
+			auth, err = os.ReadFile(filepath.Clean(authPath))
 			if err != nil {
 				return err
 			}
@@ -227,8 +370,7 @@ func runBZ() error {
 				errs <- err
 				return
 			}
-			pipeWriter.Close()
-			errs <- nil
+			errs <- pipeWriter.Close()
 		}()
 		fmt.Printf("POSTIGN!\n")
 		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/games/%s/%s", serverURL, url.PathEscape(manifest.Name), *version), pipeReader)
@@ -279,7 +421,7 @@ func newGameWriter(serverURL, name string, mpw *multipart.Writer, root string) *
 func (gw *gameWriter) addFile(target string, src ...string) error {
 	assetPath := path.Join(src...)
 	fmt.Printf("adding file %s from %s\n", target, assetPath)
-	f, err := os.ReadFile(assetPath)
+	f, err := os.ReadFile(filepath.Clean(assetPath))
 	if err != nil {
 		return err
 	}
@@ -289,13 +431,16 @@ func (gw *gameWriter) addFile(target string, src ...string) error {
 		return err
 	}
 	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
 	if res.StatusCode == 204 {
 		parts := strings.SplitN(req.Header.Get("Digest"), "=", 2)
 		serverDigest, err := base64.RawURLEncoding.DecodeString(parts[1])
 		if err != nil {
 			return err
 		}
-		if [32]byte(serverDigest) == digest {
+		if bytes.Equal(serverDigest, digest[:]) {
 			return nil
 		}
 	}
