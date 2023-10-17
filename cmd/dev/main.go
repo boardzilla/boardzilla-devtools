@@ -138,6 +138,7 @@ func main() {
 			}
 		}
 	}()
+	fmt.Printf("Ready on :%d ✏️✏️✏️\n", *port)
 	if err := server.Serve(); err != nil {
 		log.Fatal(err)
 	}

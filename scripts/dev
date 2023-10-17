@@ -2,12 +2,18 @@
 
 set -Eeuo pipefail
 
+trap "pkill -P $$" EXIT
+
+if [ -z ${1+x} ]; then
+  echo "Usage: scripts/dev <game-path>"
+  echo
+  echo "<game-path> is missing!"
+  echo
+  exit 1
+fi
+
 cd site
 npm run build
 cd -
 $(cd site && npm run build:watch) &
-LIVE_DEV=1 go run cmd/dev/main.go "$1" &
-
-wait
-
-trap "pkill -P $$" EXIT
+LIVE_DEV=1 go run cmd/dev/main.go "$1"
