@@ -57,6 +57,7 @@ function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [saveStatesOpen, setSaveStatesOpen] = useState(false);
   const [saveStates, setSaveStates] = useState<SaveState[]>([])
+  const [historyCollapsed, setHistoryCollapsed] = useState(false);
 
   const loadSaveStates = useCallback(async () => {
     const response = await fetch('/states')
@@ -454,14 +455,22 @@ function App() {
         <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
         <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
-      <div style={{width: '30vw', paddingLeft: '1em', height:'100vh', display: 'flex', flexDirection:'column'}}>
-        <h2>History <button onClick={() => resetGame()}>Reset game</button></h2>
-      <History
-        players={players}
-        view={n => updateUIFromState(n === -1 ? initialState!.state : history[n].state, currentPlayer)}
-        revertTo={n => { setHistory(history.slice(0, n+1)); updateUIFromState(history[n].state, currentPlayer) }}
-        initialState={initialState}
-        items={history}/>
+      <div id="history" className={historyCollapsed ? "collapsed" : ""}>
+        <h2>
+          <svg onClick={() => setHistoryCollapsed(!historyCollapsed)} className="arrow" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <path d="M721.833102 597.433606l-60.943176 60.943176-211.189226-211.189225L510.643877 386.244381z" fill="#444444" />
+            <path d="M299.323503 597.30514l60.943176 60.943176 211.189226-211.189225L510.512728 386.115915z" fill="#444444" />
+          </svg>
+          {historyCollapsed || <span>History <button onClick={() => resetGame()}>Reset game</button></span>}
+        </h2>
+        <History
+          players={players}
+          view={n => updateUIFromState(n === -1 ? initialState!.state : history[n].state, currentPlayer)}
+          revertTo={n => { setHistory(history.slice(0, n+1)); updateUIFromState(history[n].state, currentPlayer) }}
+          initialState={initialState}
+          items={history}
+          collapsed={historyCollapsed}
+        />
       </div>
     </div>
   );

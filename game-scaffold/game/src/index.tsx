@@ -19,10 +19,12 @@ import setup, {
   times
 } from 'boardzilla/game';
 
+import ElektroSVG from './elektro-svg';
+import LightningSVG from './lightning-svg';
 import gavel from '../../ui/src/assets/gavel.svg';
 import germany from '../../ui/src/assets/germany2.svg';
-import city from './city-svg';
-import building from './building-svg';
+import CitySVG from './city-svg';
+import BuildingSVG from './building-svg';
 import coal from '../../ui/src/assets/coal.svg';
 import oil from '../../ui/src/assets/oil.svg';
 import garbage from '../../ui/src/assets/garbage.svg';
@@ -35,7 +37,7 @@ import uraniumOutline from '../../ui/src/assets/uranium-outline.svg';
 import hybridOutline from '../../ui/src/assets/hybrid-outline.svg';
 import arrow from '../../ui/src/assets/arrow.svg';
 import powerplant from '../../ui/src/assets/powerplant.svg';
-import powerLabel from './power-label-svg';
+import PowerLabelSVG from './power-label-svg';
 
 import { cards } from './cards';
 
@@ -712,26 +714,26 @@ export default setup({
       clean: null
     }
 
-    board.appearance({ aspectRatio: 6/5 });
+    board.appearance({ aspectRatio: 8 / 5 });
 
     board.layout(map, {
-      area: { left: 3, top: -10, width: 60, height: 120 }
+      area: { left: 3, top: -10, width: 45, height: 120 }
     });
     board.layout(board.all(PlayerMat, { mine: false }), {
-      area: { left: 62.5, top: 0, width: 37.5, height: 20 },
+      area: { left: 50, top: 0, width: 50, height: 20 },
       gap: 1,
     });
     board.layout(powerplants, {
-      area: { left: 62.5, top: 20, width: 30, height: 20 },
+      area: { left: 50, top: 20, width: 50, height: 20 },
     });
     board.layout(resources, {
-      area: { left: 62.5, top: 40, width: 37.5, height: 40 },
+      area: { left: 50, top: 40, width: 40, height: 40 },
     });
     board.layout(deck, {
-      area: { left: 92.5, top: 20, width: 7.5, height: 20 },
+      area: { left: 90, top: 40, width: 10, height: 40 },
     });
     board.layout(board.all(PlayerMat, { mine: true }), {
-      area: { left: 62.5, top: 80, width: 37.5, height: 20 },
+      area: { left: 50, top: 80, width: 50, height: 20 },
     });
 
     map.layout(City, {
@@ -798,18 +800,21 @@ export default setup({
       rows: 2,
       columns: 4,
       gap: 1,
-      margin: 1
+      margin: { left: 25, right: 1, top: 1, bottom: 1 }
     });
 
     resources.layout(ResourceSpace, {
       gap: 1,
-      margin: 1,
+      margin: { left: 25, right: 1, top: 1, bottom: 1 },
       rows: 10,
       direction: 'ttb'
     });
 
     board.all(PlayerMat).layout(Card, {
-      area: { top: 30, left: 0, width: 100, height: 70 }
+      area: { top: 18, left: 20, width: 85, height: 64 },
+      gap: 1,
+      columns: 4,
+      direction: 'ltr'
     });
 
     deck.layout(Card, {
@@ -827,10 +832,13 @@ export default setup({
 
     board.all(PlayerMat).appearance({
       render: mat => (
-        <div style={{color: mat.player.color}}>
-          {mat.player.name}<br/>
-          Score: {mat.player.score} | Elektro: {mat.player.elektro}
-        </div>
+        <>
+          <ElektroSVG amount={mat.player.elektro}/>
+          <LightningSVG amount={mat.player.score}/>
+          <div className="name" style={{background: mat.player.color}}>
+            {mat.player.name}<br/>
+          </div>
+        </>
       )
     });
 
@@ -841,7 +849,7 @@ export default setup({
         color: 'black',
         style: 'double',
         fill: 'white',
-        label: powerLabel,
+        label: PowerLabelSVG,
         labelScale: 0.045,
       }
     });
@@ -855,14 +863,14 @@ export default setup({
     board.all(Resource, {type: 'garbage'}).appearance({ render: () => <img src={garbage}/> });
     board.all(Resource, {type: 'uranium'}).appearance({ render: () => <img src={uranium}/> });
 
-    board.all(City).appearance({ aspectRatio: 1, zoomable: true, render: city });
+    board.all(City).appearance({ aspectRatio: 1, zoomable: true, render: CitySVG });
 
-    board.all(Building).appearance({ aspectRatio: 1, render: building });
+    board.all(Building).appearance({ aspectRatio: 1, render: BuildingSVG });
     board.all(PlayerMat).all(Building).appearance({ render: false });
 
     board.all(Card).appearance({
       aspectRatio: 1,
-      zoomable: true,
+      zoomable: card => card.isVisible(),
       render: card => (
         <div className="outer">
           {card.isVisible() && (

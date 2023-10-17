@@ -1,10 +1,16 @@
+@import url(https://db.onlinewebfonts.com/c/69dbc1186412d7831b88d8a78a360360?family=DIN+Condensed+Web);
+
+.clickable:not(:hover), #player-controls button:not(:hover) {
+  animation: none;
+}
+
 #play-area {
   font-size: 8%;
-  font-family: 'DIN Condensed';
+  font-family: 'Din Condensed Web';
 
   #germany {
     img#germany {
-      width: 166.67%;
+      width: 222.2222%;
       height: 100%;
       position: absolute;
       left: -5%;
@@ -58,12 +64,12 @@
   .ResourceSpace .cost {
     position: absolute;
     left: 0;
-    top: 25%;
+    top: 12%;
     width: 100%;
     height: 100%;
     z-index: 10;
     color: white;
-    font-size: 600%;
+    font-size: 750%;
     text-align: center;
     font-weight: bold;
     &.empty {
@@ -81,6 +87,9 @@
 
   .Card {
     background: none;
+    &.clickable {
+      box-shadow: 0em 0em 1em yellow;
+    }
     > div.outer {
       border-radius: 7%;
       border: .1em solid white;
@@ -187,6 +196,37 @@
     }
   }
 
+  .PlayerMat {
+    .elektro {
+      height: 40%;
+      width: 15%;
+      top: 20%;
+      position: absolute;
+      left: 1%;
+    }
+    .lightning {
+      top: 20%;
+      position: absolute;
+      left: 12%;
+      width: 15%;
+      height: 40%;
+    }
+    .name {
+      color: white;
+      font-size: 150%;
+      width: 30%;
+      height: 17%;
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      padding: 0.2em 0.2em 0 0.2em;
+      border-radius: 0.2em 0 0 0.2em;
+    }
+    &[mine] .name {
+      top: 0;
+    }
+  }
+
   &.fluid {
     .ResourceSpace {
       display: inline-block;
@@ -203,5 +243,5 @@
 }
 
 #player-controls {
-  font-family: 'DIN Condensed';
+  font-family: 'Din Condensed Web';
 }

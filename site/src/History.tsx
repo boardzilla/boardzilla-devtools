@@ -10,9 +10,10 @@ type HistoryProps = {
   revertTo: (n: number) => void
   view: (n: number) => void
   players: Game.Player[]
+  collapsed: boolean
 }
 
-export default function History({items, initialState, revertTo, view, players}: HistoryProps) {
+export default function History({items, initialState, revertTo, view, players, collapsed}: HistoryProps) {
   const historyEndRef = useRef<HTMLDivElement>(null)
 
   const player = useCallback((pos: number): Game.Player => {
@@ -28,23 +29,27 @@ export default function History({items, initialState, revertTo, view, players}: 
   }, [items]);
 
   return <div style={{overflowY: "scroll"}}>
-    {initialState && <>
+    {initialState && !collapsed && <>
       Initial state
-      <button className="history" onClick={() => view(-1)}>View</button>
-      <button className="history" onClick={() => revertTo(-1)}>Revert</button>
+      <button onClick={() => view(-1)}>View</button>
+      <button onClick={() => revertTo(-1)}>Revert</button>
       <JsonView value={initialState} collapsed={1} />
     </>}
-    {items.map(i => (
+    {items.map(i => collapsed ? (
+      <button onClick={() => view(i.seq)} style={{background: player(i.position).color}}>{player(i.position).name.slice(0,1)}</button>
+    ) : (
       <div style={{backgroundColor: i.seq % 2 === 0 ? "#ccc" : "#fff"}} key={i.seq}>
-        {i.seq}
-        <span style={{marginLeft: '3px', padding: '1px', border: `2px ${player(i.position).color} solid`}}>{player(i.position).name}</span>
-        <button className="history" onClick={() => view(i.seq)}>View</button>
-        <button className="history" onClick={() => revertTo(i.seq)}>Revert</button>
-        <div><code>{i.move.data?.action}({i.move.data?.args && i.move.data?.args.join(', ')})</code></div>
-        {Object.entries(i.messages || []).map(([key, m]) => (
-          <div key={key} dangerouslySetInnerHTML={{ __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>') }}/>
-        ))}
-        {i.state?.board && <JsonView value={i.state?.board} collapsed={0} />}
+        <>
+          {i.seq}
+          <span style={{marginLeft: '3px', padding: '1px', border: `2px ${player(i.position).color} solid`}}>{player(i.position).name}</span>
+          <button onClick={() => view(i.seq)}>View</button>
+          <button onClick={() => revertTo(i.seq)}>Revert</button>
+          <div><code>{i.move.data?.action}({i.move.data?.args && i.move.data?.args.join(', ')})</code></div>
+          {Object.entries(i.messages || []).map(([key, m]) => (
+            <div key={key} dangerouslySetInnerHTML={{ __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>') }}/>
+          ))}
+          {i.state?.board && <JsonView value={i.state?.board} collapsed={0} />}
+        </>
       </div>
     ))}
     <div ref={historyEndRef} />
