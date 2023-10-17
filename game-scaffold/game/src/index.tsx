@@ -129,13 +129,7 @@ export class Card extends Piece {
 
   resourcesAvailableToPower() {
     const availableResources = this.all(Resource);
-    if (availableResources.length >= this.resources!) {
-      if (availableResources.min('type') !== availableResources.max('type')) {
-        return availableResources
-      } else {
-        return availableResources.slice(0, this.resources);
-      }
-    }
+    if (availableResources.length >= this.resources!) return availableResources;
   }
 }
 Card.hiddenAttributes = ['name', 'image', 'cost', 'resourceType', 'resources', 'power'];
@@ -225,6 +219,7 @@ export default setup({
   ],
   setupBoard: (game, board) => {
     const map = board.create(Space, 'germany');
+
     const cuxhaven = map.create(City, 'Cuxhaven', {zone: 'green'})
     const bremen = map.create(City, 'Bremen', {zone: 'green'})
       .connectTo(cuxhaven, 8)
@@ -522,12 +517,13 @@ export default setup({
         choices: board.all(Card, {mine: true, powered: false}, c => !!c.resourcesAvailableToPower()),
       }).chooseOnBoard({
         prompt: 'Select resources to use',
+        skipIf: (card: Card) => card.resourcesAvailableToPower()!.areAllEqual('type'),
         choices: (card: Card) => card.resourcesAvailableToPower()!,
-        min: (card: Card) => card.resources!,
-        max: (card: Card) => card.resources!,
+        number: (card: Card) => card.resources!,
       }).do(
         (card, resources) => {
           card.powered = true;
+          if (!resources) resources = card.firstN(card.resources!, Resource);
           for (const resource of resources) resource.remove();
         }
       ),
@@ -749,11 +745,11 @@ export default setup({
         { top: 24, left: 18, width: 8, height: 8 },
 
         { top: 32, left: 24, width: 8, height: 8 },
-        { top: 37.5, left: 22, width: 8, height: 8 },
+        { top: 39.5, left: 22, width: 8, height: 8 },
         { top: 41, left: 11, width: 8, height: 8 },
         { top: 40, left: 4, width: 8, height: 8 },
         { top: 47, left: 6, width: 8, height: 8 },
-        { top: 44, left: 25, width: 8, height: 8 },
+        { top: 47, left: 24, width: 8, height: 8 },
         { top: 44.5, left: 36, width: 8, height: 8 },
 
         { top: 17, left: 51, width: 8, height: 8 },
