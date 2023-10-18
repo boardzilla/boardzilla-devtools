@@ -444,7 +444,7 @@ function App() {
       </Modal>
 
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
-        <div style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
+        <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
           <input style={{width: '3em'}} disabled={phase === 'started'} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>
           <span style={{flexGrow: 1}}>{players.map(p =>
             <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>

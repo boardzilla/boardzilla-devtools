@@ -36,7 +36,7 @@ export default function History({items, initialState, revertTo, view, players, c
       <JsonView value={initialState} collapsed={1} />
     </>}
     {items.map(i => collapsed ? (
-      <button onClick={() => view(i.seq)} style={{background: player(i.position).color}}>{player(i.position).name.slice(0,1)}</button>
+      <button key={i.seq} onClick={() => view(i.seq)} style={{background: player(i.position).color}}>{player(i.position).name.slice(0,1)}</button>
     ) : (
       <div style={{backgroundColor: i.seq % 2 === 0 ? "#ccc" : "#fff"}} key={i.seq}>
         <>

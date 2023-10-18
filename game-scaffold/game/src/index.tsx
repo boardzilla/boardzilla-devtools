@@ -475,7 +475,7 @@ export default setup({
       scrap: player => action({
         prompt: 'You must scrap one of your powerplants',
       }).chooseOnBoard({
-        choices: board.all(Card, { player })
+        choices: board.first(PlayerMat, { player })!.all(Card)
       }).do(
         card => {
           for (const resource of card.all(Resource)) {
@@ -533,11 +533,13 @@ export default setup({
       buyResource: player => action({
         prompt: 'Buy resources'
       }).chooseFrom({
+        expand: true,
         choices: resourceTypes.filter(type => (
           costOf(type, 1) <= player.elektro && !!board.first(Card, {mine: true}, card => card.spaceFor(type) > 0)
         ))
       }).chooseNumber({
         prompt: resource => `Buy ${resource}`,
+        skipIfOnlyOne: false,
         min: 1,
         max: type => {
           let max = 0;
@@ -580,6 +582,7 @@ export default setup({
             name: 'mayAuction',
             if: ({ auctionPlayer }) => !auctionPlayer.havePassedAuctionPhase,
             do: playerActions({
+              name: 'auction',
               actions: {
                 auction: [
                   ({ auctionPlayer }) => {
@@ -594,13 +597,17 @@ export default setup({
                     do: ifElse({
                       name: 'mayBid',
                       if: ({ biddingPlayer }) => !biddingPlayer.passedThisAuction,
-                      do: playerActions({ actions: { bid: null, passBid: null } })
+                      do: playerActions({ name: 'bid', actions: { bid: null, passBid: null } })
                     }),
                   }),
 
                   ifElse({
-                    if: () => board.all(Card, { player: board.playerWithHighestBid }).length >= 3,
-                    do: playerActions({ actions: { scrap: null } }),
+                    if: () => board.first(PlayerMat, { player: board.playerWithHighestBid! })!.all(Card).length >= 3,
+                    do: playerActions({
+                      player: () => board.playerWithHighestBid!,
+                      name: 'scrap',
+                      actions: { scrap: null }
+                    }),
                   }),
 
                   ({ auctionPlayer }) => {
@@ -644,6 +651,7 @@ export default setup({
           name: 'buildPlayer',
           do: playerActions({
             name: 'build',
+            skipIfOnlyOne: true,
             actions: {
               build: repeat,
               pass: null
@@ -656,6 +664,8 @@ export default setup({
           do: [
             playerActions({
               name: 'power',
+              prompt: 'Arrange resources and power your plants',
+              skipIfOnlyOne: true,
               actions: {
                 power: repeat,
                 arrangeResources: repeat,
@@ -721,16 +731,16 @@ export default setup({
     });
     board.layout(board.all(PlayerMat, { mine: false }), {
       area: { left: 50, top: 0, width: 50, height: 20 },
-      gap: 1,
+      gap: 0.5,
     });
     board.layout(powerplants, {
-      area: { left: 50, top: 20, width: 50, height: 20 },
-    });
-    board.layout(resources, {
-      area: { left: 50, top: 40, width: 40, height: 40 },
+      area: { left: 50, top: 20, width: 40, height: 20 },
     });
     board.layout(deck, {
-      area: { left: 90, top: 40, width: 10, height: 40 },
+      area: { left: 90, top: 20, width: 10, height: 20 },
+    });
+    board.layout(resources, {
+      area: { left: 50, top: 40, width: 50, height: 40 },
     });
     board.layout(board.all(PlayerMat, { mine: true }), {
       area: { left: 50, top: 80, width: 50, height: 20 },
@@ -799,20 +809,22 @@ export default setup({
       direction: 'ltr',
       rows: 2,
       columns: 4,
-      gap: 1,
-      margin: { left: 25, right: 1, top: 1, bottom: 1 }
+      gap: 0.5,
+      margin: { left: 18, right: 1, top: 1, bottom: 1 },
+      alignment: 'left',
     });
 
     resources.layout(ResourceSpace, {
-      gap: 1,
-      margin: { left: 25, right: 1, top: 1, bottom: 1 },
+      gap: 0.5,
+      margin: { left: 18, right: 1, top: 1, bottom: 1 },
+      alignment: 'left',
       rows: 10,
       direction: 'ttb'
     });
 
     board.all(PlayerMat).layout(Card, {
       area: { top: 18, left: 20, width: 85, height: 64 },
-      gap: 1,
+      gap: 0.5,
       columns: 4,
       direction: 'ltr'
     });
@@ -820,6 +832,7 @@ export default setup({
     deck.layout(Card, {
       direction: 'ltr',
       offsetColumn: { x: 10, y: 10 },
+      alignment: 'bottom',
       margin: 1,
       rows: 1,
       limit: 3
@@ -827,7 +840,7 @@ export default setup({
 
     board.all(Card).layout(Resource, {
       area: { left: 10, top: 25, width: 80, height: 50 },
-      gap: 1,
+      gap: 0.5,
     });
 
     board.all(PlayerMat).appearance({
@@ -868,6 +881,10 @@ export default setup({
     board.all(Building).appearance({ aspectRatio: 1, render: BuildingSVG });
     board.all(PlayerMat).all(Building).appearance({ render: false });
 
+    deck.appearance({
+      render: deck => <div className="count">{deck.all(Card).length}</div>
+    })
+
     board.all(Card).appearance({
       aspectRatio: 1,
       zoomable: card => card.isVisible(),
@@ -903,6 +920,53 @@ export default setup({
           )}
         </div>
       )
+    });
+
+    board.layoutStep('auction', {
+      element: powerplants,
+      right: 60,
+      top: 10,
+      width: 35
+    });
+
+    board.layoutStep('bid', {
+      element: powerplants,
+      right: 60,
+      top: 10,
+      width: 35
+    });
+
+    board.layoutStep('purchaseResources', {
+      element: resources,
+      right: 66.6,
+      top: 6,
+      width: 30
+    });
+
+    board.layoutStep('build', {
+      element: board,
+      top: 2,
+      left: 1.25,
+    });
+
+    board.layoutStep('power', {
+      element: board.first(PlayerMat, { mine: true })!,
+      bottom: 100,
+      left: 2,
+      width: 32,
+    });
+
+    board.layoutStep('scrap', {
+      element: board.first(PlayerMat, { mine: true })!,
+      bottom: 100,
+      left: 2,
+      width: 32,
+    });
+
+    board.layoutStep('out-of-turn', {
+      element: board,
+      top: 2,
+      left: 1.25,
     });
   }
 });

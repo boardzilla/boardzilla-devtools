@@ -1,13 +1,15 @@
 @import url(https://db.onlinewebfonts.com/c/69dbc1186412d7831b88d8a78a360360?family=DIN+Condensed+Web);
 
-.clickable:not(:hover), #player-controls button:not(:hover) {
-  animation: none;
+#game {
+  font-family: 'Din Condensed Web';
+  font-size: 8%;
+}
+
+.clickable {
+  outline: none;
 }
 
 #play-area {
-  font-size: 8%;
-  font-family: 'Din Condensed Web';
-
   #germany {
     img#germany {
       width: 222.2222%;
@@ -85,14 +87,27 @@
     background: none;
   }
 
+  #deck > div.count {
+    text-align: right;
+    position: relative;
+    z-index: 1;
+    color: #fff5;
+    top: 66%;
+    font-size: 200%;
+    margin-right: 18%;
+  }
+
   .Card {
     background: none;
     &.clickable {
-      box-shadow: 0em 0em 1em yellow;
+      box-shadow: 0em 0em 3em yellow;
+      > div.outer {
+        background: #cc0;
+      }
     }
     > div.outer {
       border-radius: 7%;
-      border: .1em solid white;
+      border: .1em solid black;
       width: 100%;
       height: 100%;
       box-sizing: border-box;
@@ -186,8 +201,11 @@
     }
     .Resource {
       &.clickable {
-        img {
+        img:not(:hover) {
           filter: drop-shadow(1em 1em 1em yellow)
+        }
+        &:hover {
+          filter: drop-shadow(1em 1em 1em red)
         }
       }
       img {
@@ -219,7 +237,7 @@
       position: absolute;
       right: 0;
       bottom: 0;
-      padding: 0.2em 0.2em 0 0.2em;
+      padding: 0.1em 0.4em;
       border-radius: 0.2em 0 0 0.2em;
     }
     &[mine] .name {
@@ -243,5 +261,19 @@
 }
 
 #player-controls {
-  font-family: 'Din Condensed Web';
+  background: #99fc;
+  box-shadow: .3em .3em .3em #0008;
+  border: .1em solid #0008;
+  &.purchaseResources {
+    font-size: .5rem;
+    button, input {
+      padding: .1rem .2rem;
+    }
+  }
+  &.auction, &.bid, &.purchaseResources {
+    text-align: right;
+  }
+  button {
+    border: .1em solid #0008;
+  }
 }
