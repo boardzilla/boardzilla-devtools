@@ -731,7 +731,6 @@ export default setup({
     });
     board.layout(board.all(PlayerMat, { mine: false }), {
       area: { left: 50, top: 0, width: 50, height: 20 },
-      gap: 0.5,
     });
     board.layout(powerplants, {
       area: { left: 50, top: 20, width: 40, height: 20 },
@@ -823,7 +822,7 @@ export default setup({
     });
 
     board.all(PlayerMat).layout(Card, {
-      area: { top: 18, left: 20, width: 85, height: 64 },
+      area: { top: 18, left: 22, width: 85, height: 64 },
       gap: 0.5,
       columns: 4,
       direction: 'ltr'
@@ -851,6 +850,7 @@ export default setup({
           <div className="name" style={{background: mat.player.color}}>
             {mat.player.name}<br/>
           </div>
+          {mat.mine || <div className="divider" style={{background: mat.player.color}}/>}
         </>
       )
     });

@@ -1,10 +1,10 @@
 {
   "name": "your-game",
-  "friendlyName": "Your game",
-  "description": "Your description",
+  "friendlyName": "Power Grid",
+  "description": "The objective of Power Grid is to supply the most cities with power when someone's network gains a predetermined size. In this new edition, players mark pre-existing routes between cities for connection, and then bid against each other to purchase the power plants that they use to power their cities.",
   "minPlayers": 1,
   "maxPlayers": 4,
-  "image": "image.jpg",
+  "image": "plug-and-socket.jpg",
   "ui": {
     "root": ".",
     "build": {

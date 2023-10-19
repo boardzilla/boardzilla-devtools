@@ -151,6 +151,7 @@ function App() {
         i++;
       }
       setHistory(newHistory);
+      setPhase('started');
       updateUI(previousUpdate);
     } catch(e) {
       console.error("reprocess", e)
@@ -399,7 +400,7 @@ function App() {
     setPlayers(state.players);
     setInitialState(state.initialState);
     setHistory(state.history);
-    (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
+    (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
   }, []);
 
   const deleteState = useCallback(async (name: string) => {
@@ -445,9 +446,9 @@ function App() {
 
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
-          <input style={{width: '3em'}} disabled={phase === 'started'} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>
+          {phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, border: p.position === currentPlayer ? "5px black dotted" : ""}}>{p.name}</button>
+            <button className="player" onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, opacity: currentPlayer && p.position !== currentPlayer ? ".3" : "1"}}>{p.name}</button>
           )}
           </span>
           <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>

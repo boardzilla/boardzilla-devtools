@@ -22,3 +22,12 @@ body {
   cursor: pointer;
   outline: inherit;
 }
+
+.player {
+  color: white;
+  font-weight: bold;
+  border: none;
+  margin: 0 2px;
+  height: 20px;
+  border-radius: 3px;
+}

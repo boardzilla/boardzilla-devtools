@@ -35,6 +35,9 @@ export default function History({items, initialState, revertTo, view, players, c
       <button onClick={() => revertTo(-1)}>Revert</button>
       <JsonView value={initialState} collapsed={1} />
     </>}
+    {initialState && collapsed && 
+      <button key="-1" onClick={() => view(-1)} style={{background: '#999'}}>-</button>
+    }
     {items.map(i => collapsed ? (
       <button key={i.seq} onClick={() => view(i.seq)} style={{background: player(i.position).color}}>{player(i.position).name.slice(0,1)}</button>
     ) : (

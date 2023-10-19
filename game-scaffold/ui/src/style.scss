@@ -217,16 +217,16 @@
   .PlayerMat {
     .elektro {
       height: 40%;
-      width: 15%;
-      top: 20%;
+      width: 16%;
+      top: 55%;
       position: absolute;
-      left: 1%;
+      left: 2%;
     }
     .lightning {
-      top: 20%;
+      top: 10%;
       position: absolute;
-      left: 12%;
-      width: 15%;
+      left: 0%;
+      width: 20%;
       height: 40%;
     }
     .name {
@@ -239,6 +239,12 @@
       bottom: 0;
       padding: 0.1em 0.4em;
       border-radius: 0.2em 0 0 0.2em;
+    }
+    .divider {
+      width: 70%;
+      position: absolute;
+      bottom: 0;
+      height: 3%;
     }
     &[mine] .name {
       top: 0;
