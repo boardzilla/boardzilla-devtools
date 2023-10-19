@@ -60,6 +60,9 @@
     }
     .Building svg {
       filter: drop-shadow(1em 1em 1em black);
+      &.powered {
+        filter: drop-shadow(0px 0px 2em #fc0) drop-shadow(0px 0px 2em #fc0) brightness(4);
+      }
     }
   }
 
@@ -218,12 +221,12 @@
     .elektro {
       height: 40%;
       width: 16%;
-      top: 55%;
+      top: 50%;
       position: absolute;
       left: 2%;
     }
     .lightning {
-      top: 10%;
+      top: 5%;
       position: absolute;
       left: 0%;
       width: 20%;

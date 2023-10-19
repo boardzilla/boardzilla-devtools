@@ -64,6 +64,9 @@ type PlayerState = {
 type GameUpdate = {
   game: GameState
   players: PlayerState[]
+  currentPlayer: number[]
+  winner: number[]
+  phase: 'new" | 'started' | 'finished'
   messages: Message[]
 }
 

@@ -44,6 +44,7 @@ import { cards } from './cards';
 export class PowergridPlayer extends Player {
   score: number = 0;
   elektro: number = 50;
+  cities: number = 0;
   passedThisAuction: boolean = false;
   havePassedAuctionPhase: boolean = false;
 };
@@ -207,6 +208,7 @@ const refill = {
 };
 
 const income = [10, 22, 33, 44, 54, 64, 73, 82, 90, 98, 105, 112, 118, 124, 129, 134, 138, 142, 145, 148, 150];
+const victory = [1, 17, 17, 15, 14];
 
 export default setup({
   playerClass: PowergridPlayer,
@@ -659,6 +661,12 @@ export default setup({
           }),
         }),
 
+        () => {
+          if (game.players.max('score') >= victory[game.players.length - 2]) {
+            game.message("Final power phase!");
+          }
+        },
+
         eachPlayer({
           name: 'powerPlayer',
           do: [
@@ -677,33 +685,42 @@ export default setup({
               for (const building of map.all(Building, { mine: true, powered: true })) building.powered = false;
 
               // count power from plants and number of cities that can be powered
-              const cities = Math.min(
+              powerPlayer.cities = Math.min(
                 board.all(Card, { mine: true, powered: true }).sum('power'),
                 map.all(Building, { mine: true }).length,
                 income.length - 1,
               )
 
-              const rev = income[cities];
-              powerPlayer.elektro += rev;
-              game.message(`${powerPlayer.name} earned ${rev} elektro for ${cities} ${cities === 1 ? 'city' : 'cities'}`);
+              if (game.players.max('score') < victory[game.players.length - 2]) {
+                const rev = income[powerPlayer.cities];
+                powerPlayer.elektro += rev;
+                game.message(`${powerPlayer.name} earned ${rev} elektro for ${powerPlayer.cities} ${powerPlayer.cities === 1 ? 'city' : 'cities'}`);
 
-              // unpower plants
-              for (const card of board.all(Card, { mine: true, powered: true })) {
-                card.powered = false;
+                // unpower plants
+                powerPlayer.cities = 0;
+                for (const card of board.all(Card, { mine: true, powered: true })) {
+                  card.powered = false;
+                }
               }
             },
           ]
         }),
         () => {
-          for (const r of resourceTypes) {
-            board.refillResources(r, refill[r][game.players.length - 1][board.step - 1]);
-          }
-          if (board.step === 3) {
-            powerplants.first(Card)?.remove();
+          if (game.players.max('score') >= victory[game.players.length - 2]) {
+            const winner = game.players.withHighest('cities', 'elektro');
+            game.message("$1 wins with $2 cities!", winner, winner.cities);
+            game.finish(winner);
           } else {
-            powerplants.last(Card)?.putInto(deck, {fromBottom: 0});
+            for (const r of resourceTypes) {
+              board.refillResources(r, refill[r][game.players.length - 1][board.step - 1]);
+            }
+            if (board.step === 3) {
+              powerplants.first(Card)?.remove();
+            } else {
+              powerplants.last(Card)?.putInto(deck, {fromBottom: 0});
+            }
+            deck.top(Card)?.putInto(powerplants);
           }
-          deck.top(Card)?.putInto(powerplants);
         }
       ]
     });
@@ -821,8 +838,15 @@ export default setup({
       direction: 'ttb'
     });
 
-    board.all(PlayerMat).layout(Card, {
-      area: { top: 18, left: 22, width: 85, height: 64 },
+    board.all(PlayerMat, {mine: false}).layout(Card, {
+      area: { top: 10, left: 22, width: 85, height: 64 },
+      gap: 0.5,
+      columns: 4,
+      direction: 'ltr'
+    });
+
+    board.all(PlayerMat, {mine: true}).layout(Card, {
+      area: { top: 22, left: 22, width: 85, height: 64 },
       gap: 0.5,
       columns: 4,
       direction: 'ltr'

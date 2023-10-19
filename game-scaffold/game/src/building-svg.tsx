@@ -8,6 +8,7 @@ export default (building: Building) => (
     height="100%"
     version="1.1"
     viewBox="0 0 431.37 326.937"
+    className={building.board.firstN(building.player?.cities || 0, Building, {player: building.player}).includes(building) ? 'powered' : ''}
   >
     <path
       fill="#fff"
