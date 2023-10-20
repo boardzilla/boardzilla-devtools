@@ -29,8 +29,8 @@
 Must export an object `game` with two functions, `initialState` and `processMove`.
 
 ```ts
-initialState(setup: SetupState): GameUpdate
-processMove(previousState: GameState, move: Move): GameUpdate
+initialState(setup: SetupState): GameStartedUpdate
+processMove(previousState: GameState, move: Move): GameStartedUpdate | GameFinishedUpdate
 getPlayerState(state: GameState, position: number): PlayerGameState
 
 type Player = {
@@ -61,12 +61,19 @@ type PlayerState = {
   state: PlayerGameState
 }
 
-type GameUpdate = {
+type GameStartedUpdate = {
   game: GameState
   players: PlayerState[]
   currentPlayer: number[]
+  phase: 'started'
+  messages: Message[]
+}
+
+type GameFinishedUpdate = {
+  game: GameState
+  players: PlayerState[]
   winner: number[]
-  phase: 'new" | 'started' | 'finished'
+  phase: 'finished'
   messages: Message[]
 }
 
