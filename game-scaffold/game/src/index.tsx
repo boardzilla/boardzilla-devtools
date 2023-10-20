@@ -413,10 +413,10 @@ export default setup({
     if (game.players.length === 4) removals = 3;
     if (game.players.length === 3) removals = 6;
     if (game.players.length === 2) removals = 5;
-    deck.topN(removals, Card, card => card.cost > 15).remove();
+    deck.topN(removals, Card, card => !!card.resourceType && card.cost > 15).remove();
 
     deck.top(Card, card => card.cost <= 15)!.putInto(deck);
-    deck.top(Card, 'step-3')!.putInto(deck, {fromBottom: 0});
+    deck.first(Card, 'step-3')?.putInto(deck, {fromBottom: 0});
 
     // initial resources
     board.refillResources('coal', 24);
