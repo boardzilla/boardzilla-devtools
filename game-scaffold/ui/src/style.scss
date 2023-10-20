@@ -90,12 +90,13 @@
     background: none;
   }
 
-  #deck > div.count {
+  #deck div.count {
     text-align: right;
-    position: relative;
+    position: absolute;
     z-index: 1;
     color: #fff5;
     top: 66%;
+    right: 0;
     font-size: 200%;
     margin-right: 18%;
   }
@@ -103,8 +104,8 @@
   .Card {
     background: none;
     &.clickable {
-      box-shadow: 0em 0em 3em yellow;
       > div.outer {
+        box-shadow: 0em 0em 3em #ff08;
         background: #cc0;
       }
     }
@@ -114,6 +115,7 @@
       width: 100%;
       height: 100%;
       box-sizing: border-box;
+      box-shadow: .2em .2em .2em #0006;
       background: #999;
       img.background {
         left: 7%;
@@ -201,6 +203,15 @@
           width: 100%;
         }
       }
+      .step-3 {
+        position: absolute;
+        font-size: 260%;
+        text-align: center;
+        width: 100%;
+        background: #aaa;
+        bottom: 0;
+        border-top: 0.1em solid black;
+      }
     }
     .Resource {
       &.clickable {
@@ -270,9 +281,8 @@
 }
 
 #player-controls {
-  background: #99fc;
-  box-shadow: .3em .3em .3em #0008;
-  border: .1em solid #0008;
+  box-shadow: .2em .2em .4em #000c;
+  background: -webkit-gradient(linear, left top, left bottom, from(#99cc),color-stop(0.85, #aafc),to(#99cc));
   &.purchaseResources {
     font-size: .5rem;
     button, input {
@@ -283,6 +293,9 @@
     text-align: right;
   }
   button {
-    border: .1em solid #0008;
+    border-radius: .2em;
+    text-shadow: .1em .1em 0 #fff5;
+    box-shadow: .1em .1em .2em #0008, inset .1em .1em 0 #fff9;
+    background: -webkit-gradient(linear, left top, left bottom, from(#dcd),color-stop(0.85, #aab),to(#cce));
   }
 }

@@ -112,7 +112,6 @@ class PowergridBoard extends Board {
 }
 
 export class Card extends Piece {
-  image: string;
   cost: number;
   resourceType?: ResourceType | 'hybrid' | 'clean';
   resources?: number;
@@ -208,7 +207,7 @@ const refill = {
 };
 
 const income = [10, 22, 33, 44, 54, 64, 73, 82, 90, 98, 105, 112, 118, 124, 129, 134, 138, 142, 145, 148, 150];
-const victory = [1, 17, 17, 15, 14];
+const victory = [18, 17, 17, 15, 14];
 
 export default setup({
   playerClass: PowergridPlayer,
@@ -381,6 +380,7 @@ export default setup({
     })
 
     const deck = board.create(Space, 'deck');
+    deck.setOrder('stacking');
     deck.onEnter(Card, c => c.hideFromAll());
 
     for (const [name, attrs] of Object.entries(cards)) deck.create(Card, name, attrs);
@@ -520,7 +520,7 @@ export default setup({
         prompt: 'Select plant to power',
         choices: board.all(Card, {mine: true, powered: false}, c => !!c.resourcesAvailableToPower()),
       }).chooseOnBoard({
-        prompt: 'Select resources to use',
+        prompt: 'Select resources for power',
         skipIf: (card: Card) => card.resourcesAvailableToPower()!.areAllEqual('type'),
         choices: (card: Card) => card.resourcesAvailableToPower()!,
         number: (card: Card) => card.resources!,
@@ -895,6 +895,7 @@ export default setup({
       render: s => <div className={'cost' + (s.isEmpty() ? ' empty' : '')}>{s.cost}</div>
     });
 
+    board.all(Resource).appearance({ aspectRatio: 1 });
     board.all(Resource, {type: 'coal'}).appearance({ render: () => <img src={coal}/> });
     board.all(Resource, {type: 'oil'}).appearance({ render: () => <img src={oil}/> });
     board.all(Resource, {type: 'garbage'}).appearance({ render: () => <img src={garbage}/> });
@@ -918,7 +919,8 @@ export default setup({
             <>
               <img className="background" src={powerplant}/>
               <div className="inner">
-                {card.cost && (
+                {card.name === 'step-3' && <div className="step-3">PHASE 3</div>}
+                {card.cost && card.name !== 'step-3' && (
                   <>
                     <div className="cost">
                       {card.discount ? 
