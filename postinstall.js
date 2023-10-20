@@ -1,0 +1,1 @@
+require('any-prebuilt').install(require('./package.json').prebuilt)

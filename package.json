@@ -1,0 +1,32 @@
+{
+  "name": "boardzilla-devtools",
+  "version": "1.0.0",
+  "description": "A cli for everyone",
+  "scripts": {
+    "postinstall": "node postinstall.js install",
+    "preuninstall": "node postinstall.js uninstall"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/example/example-cli.git"
+  },
+  "author": "Your-Name",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/example/example-cli/issues"
+  },
+  "prebuilt": {
+    "targetBin": "boardzilla",
+    "user": "boardzilla",
+    "repo": "boardzilla-devtools",
+    "token": "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"
+  },
+  "homepage": "https://github.com/xendit/xendit-cli#readme",
+  "files": [
+    "dist",
+    "postinstall.js"
+  ],
+  "dependencies": {
+    "any-prebuilt": "^1.0.186"
+  }
+}
