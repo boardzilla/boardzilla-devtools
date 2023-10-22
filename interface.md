@@ -93,6 +93,7 @@ window.addEventListener('message', (evt: MessageEvent<
   PlayersEvent |
   SettingsUpdateEvent |
   GameUpdateEvent |
+  GameFinishedEvent |
   MessageProcessedEvent
 >))
 window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
@@ -105,6 +106,7 @@ During "started", it will recv the following events.
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
   GameUpdateEvent |
+  GameFinishedEvent |
   MessageProcessed
 >))
 window.top.postMessage(m: MoveMessage | ReadyMessage)
@@ -140,6 +142,13 @@ type SettingsUpdateEvent = {
 type GameUpdateEvent = {
   type: "gameUpdate"
   state: PlayerState
+  currentPlayers: number[]
+}
+
+type GameFinishedEvent = {
+  type: "gameFinished"
+  state: PlayerState
+  winners: number[]
 }
 
 // indicates the disposition of a message that was processed
