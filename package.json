@@ -23,7 +23,8 @@
   },
   "homepage": "https://github.com/xendit/xendit-cli#readme",
   "files": [
-    "dist",
+    "LICENSE",
+    "index.js",
     "postinstall.js"
   ],
   "dependencies": {
