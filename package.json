@@ -1,25 +1,27 @@
 {
   "name": "boardzilla-devtools",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A cli for everyone",
   "scripts": {
-    "postinstall": "node postinstall.js install",
-    "preuninstall": "node postinstall.js uninstall"
+    "postinstall": "go-npm install",
+    "preuninstall": "go-npm uninstall"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/example/example-cli.git"
   },
-  "contributors": ["Joshua Hull <josh@fireflop.com>", "Andrew Hull <aghull@gmail.com>"],
+  "contributors": [
+    "Joshua Hull <josh@fireflop.com>",
+    "Andrew Hull <aghull@gmail.com>"
+  ],
   "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/example/example-cli/issues"
   },
-  "prebuilt": {
-    "targetBin": "boardzilla",
-    "user": "boardzilla",
-    "repo": "boardzilla-devtools",
-    "token": "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"
+  "goBinary": {
+    "name": "bz",
+    "path": "./bin",
+    "url": "https://github.com/boardzilla/boardzilla-devtools/releases/download/v{{version}}/boardzilla-devtools_{{platform}}_{{arch}}.tar.gz"
   },
   "homepage": "https://github.com/xendit/xendit-cli#readme",
   "files": [
@@ -28,6 +30,6 @@
     "postinstall.js"
   ],
   "dependencies": {
-    "any-prebuilt": "^1.0.186"
+    "@endorlabs/go-npm": "^0.1.14"
   }
 }
