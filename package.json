@@ -1,6 +1,6 @@
 {
   "name": "boardzilla-devtools",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A cli for everyone",
   "scripts": {
     "postinstall": "go-npm install",
