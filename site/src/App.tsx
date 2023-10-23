@@ -49,7 +49,7 @@ function App() {
   const [initialState, setInitialState] = useState<InitialStateHistoryItem | undefined>();
   const [numberOfUsers, setNumberOfUsers] = useState(minPlayers);
   const [phase, setPhase] = useState<"new" | "started">("new");
-  const [currentPlayer, setCurrentPlayer] = useState(0);
+  const [currentPlayer, setCurrentPlayer] = useState(1);
   const [players, setPlayers] = useState<UI.UserPlayer[]>([]);
   const [buildError, setBuildError] = useState<BuildError | undefined>();
   const [settings, setSettings] = useState<Game.GameSettings>({});
@@ -95,7 +95,7 @@ function App() {
   const bootstrap = useCallback((): string => {
     return JSON.stringify({
       host: true,
-      userID: possibleUsers[currentPlayer].id,
+      userID: players.find(p => p.position === currentPlayer)?.userID,
       minPlayers,
       maxPlayers
     })
@@ -137,7 +137,7 @@ function App() {
     setInitialState(undefined);
     setHistory([]);
     setPlayers([]);
-    setCurrentPlayer(0);
+    setCurrentPlayer(1);
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
     (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
   }, [])
@@ -453,7 +453,7 @@ function App() {
         <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
           <input type="checkbox" checked={autoSwitch} onChange={e => setAutoSwitch(!autoSwitch)} />{phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, opacity: p.position !== currentPlayer ? ".3" : "1", border: p.position === currentPlayer ? "solid black 2px" : "transparent solid 2px", padding: "2px"}}>{p.name}</button>
+            <button className="player" onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && p.position !== currentPlayer ? ".4" : "1"}}>{p.name}</button>
           )}
           </span>
           <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
