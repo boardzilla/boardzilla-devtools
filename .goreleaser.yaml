@@ -25,20 +25,13 @@ builds:
       - darwin
     ldflags: "-s -w"
 
-    format_overrides:
-      - goos: windows
-        name_template: "bz_{{ .Version }}_windows_{{ .Arch }}"
-      - goos: linux
-        name_template: "bz_{{ .Version }}_linux_{{ .Arch }}"
-      - goos: darwin
-        name_template: "bz_{{ .Version }}_macos_{{ .Arch }}"
-
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
-      {{- title .Os }}_
+      {{- if eq .Os "darwin" }}macos
+      {{- else }}{{ .Os }}{{ end }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
