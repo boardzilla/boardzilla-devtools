@@ -6,4 +6,4 @@ tag=$(jq '.version' package.json -r)
 curl -I -f -S -s -o /dev/null "https://github.com/boardzilla/boardzilla-devtools/releases/tag/v${tag}"
 git update-index --really-refresh
 git diff-index --quiet HEAD
-npm publish
+npm publish --access public
