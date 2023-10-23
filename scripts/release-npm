@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+tag=$(jq '.version' package.json -r)
+curl -X HEAD -f "https://github.com/boardzilla/boardzilla-devtools/releases/tag/v${tag}"
+git update-index --really-refresh
+git diff-index --quiet HEAD
+npm release
