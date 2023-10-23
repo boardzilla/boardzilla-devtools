@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+git update-index --really-refresh
+git diff-index --quiet HEAD
+tag=$(jq '.version' package.json -r)
+echo $tag
+git tag "${tag}"
+git push --tags
+goreleaser release --clean
