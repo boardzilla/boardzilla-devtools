@@ -11,7 +11,6 @@ export type Message = {
 }
 
 export type GameSettings = Record<string, any>
-export type GameState = Record<string, any>
 export type PlayerGameState = Record<string, any>
 
 export type PlayerState = {
@@ -23,6 +22,18 @@ export type SetupState = {
   players: Player[]
   settings: GameSettings
 }
+
+export type GameStartedState = {
+  currentPlayers: number[]
+  phase: 'started'
+} & Record<string, any>
+
+export type GameFinishedState = {
+  winners: number[]
+  phase: 'finished'
+} & Record<string, any>
+
+export type GameState = GameStartedState | GameFinishedState
 
 export type GameUpdate = {
   game: GameState

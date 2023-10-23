@@ -58,6 +58,7 @@ function App() {
   const [saveStatesOpen, setSaveStatesOpen] = useState(false);
   const [saveStates, setSaveStates] = useState<SaveState[]>([])
   const [historyCollapsed, setHistoryCollapsed] = useState(false);
+  const [autoSwitch, setAutoSwitch] = useState(true);
 
   const loadSaveStates = useCallback(async () => {
     const response = await fetch('/states')
@@ -100,23 +101,34 @@ function App() {
     })
   }, [currentPlayer]);
 
-  const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
+  const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
 
-  const updateUI = useCallback((update: Game.GameUpdate) => {
-    let position = currentPlayer;
-    if (update.game.currentPlayerPosition) {
-      setCurrentPlayer(update.game.currentPlayerPosition);
-      position = update.game.currentPlayerPosition;
+  const updateUI = useCallback(async (game: Game.GameState) => {
+    console.log("updateUI game.phase!", game.phase)
+    switch(game.phase) {
+      case 'finished':
+        sendToUI({
+          type: "gameFinished",
+          state: {
+            position: currentPlayer,
+            state: await getPlayerState(game, currentPlayer)
+          },
+          winners: game.winners,
+        });
+        break
+      case 'started':
+        sendToUI({
+          type: "gameUpdate",
+          state: {
+            position: currentPlayer,
+            state: await getPlayerState(game, currentPlayer)
+          },
+          currentPlayers: game.currentPlayers,
+        });
+        break
     }
-    sendToUI({
-      type: "gameUpdate",
-      state: {
-        position: currentPlayer,
-        state: update.players.find(p => p.position === position)!.state
-      }
-    });
   }, [sendToUI, currentPlayer]);
 
   const resetGame = useCallback(() => {
@@ -152,7 +164,7 @@ function App() {
       }
       setHistory(newHistory);
       setPhase('started');
-      updateUI(previousUpdate);
+      await updateUI(previousUpdate.game);
     } catch(e) {
       console.error("reprocess", e)
     }
@@ -198,17 +210,6 @@ function App() {
 
     return () => evtSource.close()
   }, [])
-
-  const updateUIFromState = useCallback(async (state: Game.GameState, position: number) => {
-    setCurrentPlayer(position);
-    sendToUI({
-      type: "gameUpdate",
-      state: {
-        position: currentPlayer,
-        state: await getPlayerState(state, position)
-      }
-    });
-  }, [sendToUI, currentPlayer]);
 
   const processKey = useCallback((code: string): boolean => {
     const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
@@ -291,7 +292,11 @@ function App() {
             }];
             setHistory(newHistory);
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
-            updateUI(moveUpdate);
+            if (moveUpdate.game.phase === 'started' && autoSwitch && moveUpdate.game.currentPlayers[0] !== currentPlayer) {
+              setCurrentPlayer(moveUpdate.game.currentPlayers[0]);
+              return
+            }
+            await updateUI(moveUpdate.game);
           } catch(err) {
             console.error('error during move', err);
             sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
@@ -309,7 +314,7 @@ function App() {
             setInitialState(newInitialState);
             setPhase("started");
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined});
-            updateUI(initialUpdate);
+            await updateUI(initialUpdate.game);
           } catch(err) {
             console.error('error during start', err);
             sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
@@ -324,7 +329,7 @@ function App() {
             }
             sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});
           } else {
-            updateUIFromState(getCurrentState(history), currentPlayer);
+            await updateUI(getCurrentState(history));
           }
           break
         case 'updatePlayers':
@@ -375,7 +380,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, updateUIFromState, settings, getCurrentState, processKey]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch]);
 
   useEffect(() => {
     const l = (e: globalThis.KeyboardEvent):any => {
@@ -446,9 +451,9 @@ function App() {
 
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
-          {phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
+          <input type="checkbox" checked={autoSwitch} onChange={e => setAutoSwitch(!autoSwitch)} />{phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, opacity: currentPlayer && p.position !== currentPlayer ? ".3" : "1"}}>{p.name}</button>
+            <button className="player" onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, opacity: p.position !== currentPlayer ? ".3" : "1", border: p.position === currentPlayer ? "solid black 2px" : "transparent solid 2px", padding: "2px"}}>{p.name}</button>
           )}
           </span>
           <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
@@ -466,8 +471,8 @@ function App() {
         </h2>
         <History
           players={players}
-          view={n => updateUIFromState(n === -1 ? initialState!.state : history[n].state, currentPlayer)}
-          revertTo={n => { setHistory(history.slice(0, n+1)); updateUIFromState(history[n].state, currentPlayer) }}
+          view={n => updateUI(n === -1 ? initialState!.state : history[n].state)}
+          revertTo={n => { setHistory(history.slice(0, n+1)); updateUI(history[n].state) }}
           initialState={initialState}
           items={history}
           collapsed={historyCollapsed}

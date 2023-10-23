@@ -20,6 +20,13 @@ export type SettingsUpdateEvent = {
 export type GameUpdateEvent = {
   type: "gameUpdate"
   state: Game.PlayerState
+  currentPlayers: number[]
+}
+
+export type GameFinishedEvent = {
+  type: "gameFinished"
+  state: Game.PlayerState
+  winners: number[]
 }
 
 // indicates the disposition of a message that was processed

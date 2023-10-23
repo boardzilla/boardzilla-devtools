@@ -29,7 +29,13 @@ type SettingsUpdateEvent = {
 type GameUpdateEvent = {
   type: "gameUpdate"
   state: PlayerState<NumberGuesserPlayerState>
-  messages: Message[]
+  currentPlayers: number[]
+}
+
+type GameFinishedEvent = {
+  type: "gameFinished"
+  state: PlayerState<NumberGuesserPlayerState>
+  winners: number[]
 }
 
 // indicates the disposition of a message that was processed
@@ -137,10 +143,11 @@ const Game = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [players, setPlayers] = useState<NumberGuesserPlayer[]>([]);
   const [readySent, setReadySent] = useState<boolean>(false);
-  const [phase, setPhase] = useState<"new" | "started">("new");
+  const [phase, setPhase] = useState<"new" | "started" | "finished">("new");
   const [setupState, setSetupState] = useState<NumberGuesserSettings>({evenOnly: false});
   const [gameState, setGameState] = useState<PlayerState<NumberGuesserPlayerState>>();
   const [error, setError] = useState<string>("");
+  const [winner, setWinner] = useState<number | undefined>();
 
   const sendToTop = useCallback(async (m:
     Omit<UpdateSettingsMessage, "id"> |
@@ -185,6 +192,7 @@ const Game = () => {
     const listener = (event: MessageEvent<
       PlayersEvent |
       GameUpdateEvent |
+      GameFinishedEvent |
       SettingsUpdateEvent |
       MessageProcessedEvent
     >) => {
@@ -192,7 +200,6 @@ const Game = () => {
       console.log("got a", e.type, "message", e)
       switch(e.type) {
         case 'settingsUpdate':
-          console.log("!!!! got settings", e)
           setSetupState(e.settings);
           break
         case 'players':
@@ -201,8 +208,12 @@ const Game = () => {
           break
         case 'gameUpdate':
           setPhase('started');
-          console.log("e", e)
           setGameState(e.state);
+          break
+        case 'gameFinished':
+          setPhase('finished');
+          setGameState(e.state);
+          setWinner(e.winners[0])
           break
         case 'messageProcessed':
           console.log("about to resolve", e.id, e.error, pendingPromises)
@@ -232,17 +243,16 @@ const Game = () => {
   return <div>
     {JSON.stringify(bootstrap)}
     {error !== "" && <div style={{backgroundColor: "#faa", margin: '4px'}}>{error}</div>}
-    {gameState ? <>
-      {gameState.state.winner !== undefined ? <span>Game is done! {gameState.state.winner === gameState.position ? "YOU WIN": "YOU LOSE"}</span> : gameState.state.possibleGuesses.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}
-      <pre>{JSON.stringify(gameState, null, 2)}</pre>
-    </> : <>
+    {phase === 'finished' && <span>Game is done! {winner === gameState?.position ? "YOU WIN": "YOU LOSE"}</span>}
+    {phase === 'started' && gameState?.state.possibleGuesses.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}
+    {phase === 'new' && <>
       {bootstrap.host && <p><input type="checkbox" checked={setupState ? setupState.evenOnly : false} onChange={e => setSetupState({evenOnly: e.currentTarget.checked})} />Even numbers only</p>}
       <h2>Users</h2>
       <ul>
-      {users.map(p => <li key={p.id}>{p.name}</li>)}
+        {users.map(p => <li key={p.id}>{p.name}</li>)}
       </ul>
-      {bootstrap.host && <button onClick={() => startGame()}>Start game</button>}
-    </>}
+      {bootstrap.host && <button onClick={() => startGame()}>Start game</button>}</>}
+
   </div>
 }
 

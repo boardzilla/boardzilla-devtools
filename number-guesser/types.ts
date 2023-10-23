@@ -15,15 +15,43 @@ export type PlayerState<T> = {
   state: T
 }
 
-export type GameSettings = Record<string, any>
-
-export type SetupState<P, G extends GameSettings> = {
-  players: Player<P>[]
-  settings: G
+export type StartedPlayerState<T> = {
+  phase: "started"
+  currentPlayers: number[]
+  position: number
+  state: T
 }
 
+export type FinishedPlayerState<T> = {
+  phase: "finished"
+  winners: number[]
+  position: number
+  state: T
+}
+
+export type AnyPlayerState<T> = StartedPlayerState<T> | FinishedPlayerState<T>
+
+export type GameSettings = Record<string, any>
+
+export type SetupState<P, S extends GameSettings> = {
+  players: Player<P>[]
+  settings: S
+}
+
+export type GameStartedState<G> = {
+  phase : 'started'
+  currentPlayers: number[]
+} & G
+
+export type GameFinishedState<G> = {
+  phase: 'finished'
+  winners: number[]
+} & G
+
+export type GameAnyState<G> = GameStartedState<G> | GameFinishedState<G>
+
 export type GameUpdate<G, P> = {
-  game: G
+  game: GameAnyState<G>
   players: PlayerState<P>[]
   messages: Message[]
 }
@@ -36,20 +64,20 @@ export type GameMove<T> = {
 // number guesser specific types...
 type _NumberGuesserPlayerSetup = void
 
+export type NumberGuesserGamePlayerState = {
+  possibleGuesses: number[]
+  move: number
+}
+
 export type NumberGuesserPlayerState = {
-  winner: number | undefined
-  currentPlayer: number
   possibleGuesses: number[]
   move: number
 }
 
 export type NumberGuesserGameState = {
-	currentPlayer: number
 	players: Player<_NumberGuesserPlayerSetup>[]
   number: number
-  finished: boolean
   move: number
-	winner: number | undefined
 	possibleGuesses: number[]
 }
 
