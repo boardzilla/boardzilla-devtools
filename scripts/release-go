@@ -6,6 +6,6 @@ git update-index --really-refresh
 git diff-index --quiet HEAD
 tag=$(jq '.version' package.json -r)
 echo $tag
-git tag -a "${tag}"
+git tag -a "v${tag}"
 goreleaser release --clean
 git push --tags
