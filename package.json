@@ -10,8 +10,8 @@
     "type": "git",
     "url": "git+https://github.com/example/example-cli.git"
   },
-  "author": "Your-Name",
-  "license": "UNLICENSED",
+  "contributors": ["Joshua Hull <josh@fireflop.com>", "Andrew Hull <aghull@gmail.com>"],
+  "license": "GPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/example/example-cli/issues"
   },
