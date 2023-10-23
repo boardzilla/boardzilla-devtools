@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "nodenext",
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "jsx": "react",
+    "resolveJsonModule": true
+  },
+  "include": ["game", "ui"],
+  "exclude": ["**/node_modules", "**/.*/"]
+}

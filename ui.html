@@ -1,0 +1,13 @@
+<html>
+  <body data-bootstrap-json="{{.Bootstrap}}">
+    <div id="root"></div>
+  </body>
+  <link rel="stylesheet" href="ui.css"/>
+  <script src="ui.js"></script>
+  <script>
+    window.addEventListener('keydown', (e) => {
+      if (!e.shiftKey) return
+      window.top.postMessage({type: "key", code: e.code}, "*")
+    })
+  </script>
+</html>

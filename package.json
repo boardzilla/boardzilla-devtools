@@ -1,0 +1,36 @@
+{
+  "name": "@boardzilla/devtools",
+  "version": "0.0.7",
+  "description": "Devtools for developing games on boardzilla.io",
+  "scripts": {
+    "postinstall": "go-npm install",
+    "preuninstall": "go-npm uninstall"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/boardzilla/boardzilla-devtools.git"
+  },
+  "contributors": [
+    "Joshua Hull <josh@fireflop.com>",
+    "Andrew Hull <aghull@gmail.com>"
+  ],
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/boardzilla/boardzilla-devtools/issues"
+  },
+  "goBinary": {
+    "name": "bz",
+    "path": "./bin",
+    "url": "https://github.com/boardzilla/boardzilla-devtools/releases/download/v{{version}}/boardzilla-devtools_{{platform}}_{{arch}}.tar.gz"
+  },
+  "homepage": "https://github.com/boardzilla/boardzilla-devtools#readme",
+  "files": [
+    "README.md",
+    "LICENSE",
+    "index.js",
+    "postinstall.js"
+  ],
+  "dependencies": {
+    "@endorlabs/go-npm": "^0.1.14"
+  }
+}

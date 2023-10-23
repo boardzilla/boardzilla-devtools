@@ -1,0 +1,26 @@
+{
+  "name": "number-guesser",
+  "friendlyName": "Number guesser",
+  "description": "Play stupid games, win stupid prizes",
+  "minPlayers": 1,
+  "maxPlayers": 5,
+  "image": "guess.jpg",
+  "ui": {
+    "root": ".",
+    "build": {
+      "dev": "npm run build:ui",
+      "prod": "npm run build:ui"
+    },
+    "watchPaths": ["ui/src"],
+    "outDir": "ui/build"
+  },
+  "game": {
+    "root": ".",
+    "build": {
+      "dev": "npm run build:game",
+      "prod": "npm run build:game"
+    },
+    "watchPaths": ["game/src"],
+    "out": "game/build/index.js"
+  }
+}

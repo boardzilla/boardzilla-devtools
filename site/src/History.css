@@ -1,0 +1,47 @@
+#history {
+  background: #eee;
+  width: min(300px, 30vw);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #666;
+  padding-left: 1vw;
+  position: relative;
+  left: -1px;
+}
+
+#history button {
+  cursor: pointer;
+  margin-left: 1em;
+}
+
+#history.collapsed button {
+  color: white;
+  border: 1px solid #666;
+  border-radius: 15%;
+  margin: 0 0 10% 0;
+  width: 26px;
+  height: 26px;
+  text-align: center;
+  font-size: 140%;
+  font-weight: bold;
+  padding: 0.5px 0;
+}
+
+#history.collapsed {
+  width: 35px;
+}
+
+#history .arrow {
+  height: 1lh;
+  cursor: pointer;
+  transform: rotate(90deg) scale(1.35) translate(.15lh,0);
+}
+
+#history.collapsed h2 {
+  margin-bottom: 0;
+}
+
+#history.collapsed .arrow {
+  transform: rotate(-90deg) scale(1.35) translate(.15lh,-.05lh);
+}
