@@ -521,7 +521,7 @@ export default setup({
         choices: board.all(Card, {mine: true, powered: false}, c => !!c.resourcesAvailableToPower()),
       }).chooseOnBoard({
         prompt: 'Select resources for power',
-        skipIf: (card: Card) => card.resourcesAvailableToPower()!.areAllEqual('type'),
+        skipIf: (card: Card) => card.resourcesAvailableToPower()!.areAllEqual('type') || card.resourcesAvailableToPower()!.length === card.resources,
         choices: (card: Card) => card.resourcesAvailableToPower()!,
         number: (card: Card) => card.resources!,
       }).do(
@@ -741,26 +741,51 @@ export default setup({
       clean: null
     }
 
-    board.appearance({ aspectRatio: 8 / 5 });
+    if (aspectRatio > 3 / 4) {
+      board.appearance({ aspectRatio: 8 / 5 });
 
-    board.layout(map, {
-      area: { left: 3, top: -10, width: 45, height: 120 }
-    });
-    board.layout(board.all(PlayerMat, { mine: false }), {
-      area: { left: 50, top: 0, width: 50, height: 20 },
-    });
-    board.layout(powerplants, {
-      area: { left: 50, top: 20, width: 40, height: 20 },
-    });
-    board.layout(deck, {
-      area: { left: 90, top: 20, width: 10, height: 20 },
-    });
-    board.layout(resources, {
-      area: { left: 50, top: 40, width: 50, height: 40 },
-    });
-    board.layout(board.all(PlayerMat, { mine: true }), {
-      area: { left: 50, top: 80, width: 50, height: 20 },
-    });
+      board.layout(map, {
+        area: { left: 3, top: -10, width: 45, height: 120 }
+      });
+      board.layout(board.all(PlayerMat, { mine: false }), {
+        area: { left: 50, top: 0, width: 50, height: 20 },
+      });
+      board.layout(powerplants, {
+        area: { left: 50, top: 20, width: 40, height: 20 },
+      });
+      board.layout(deck, {
+        area: { left: 90, top: 20, width: 10, height: 20 },
+      });
+      board.layout(resources, {
+        area: { left: 50, top: 40, width: 50, height: 40 },
+      });
+      board.layout(board.all(PlayerMat, { mine: true }), {
+        area: { left: 50, top: 80, width: 50, height: 20 },
+      });
+
+    } else {
+
+      board.appearance({ aspectRatio: 1 / 2, className: 'portrait' });
+
+      board.layout(map, {
+        area: { left: 0, top: 9, width: 100, height: 76 }
+      });
+      board.layout(board.all(PlayerMat, { mine: false }), {
+        area: { left: 0, top: 0, width: 100, height: 15 },
+      });
+      board.layout(powerplants, {
+        area: { left: 0, top: 15, width: 30, height: 8 },
+      });
+      board.layout(deck, {
+        area: { left: 90, top: 15, width: 10, height: 5 },
+      });
+      board.layout(resources, {
+        area: { left: 0, top: 78, width: 100, height: 7 },
+      });
+      board.layout(board.all(PlayerMat, { mine: true }), {
+        area: { left: 0, top: 85, width: 100, height: 15 },
+      });
+    }
 
     map.layout(City, {
       slots: [
@@ -821,22 +846,65 @@ export default setup({
       ]
     });
 
-    powerplants.layout(Card, {
-      direction: 'ltr',
-      rows: 2,
-      columns: 4,
-      gap: 0.5,
-      margin: { left: 18, right: 1, top: 1, bottom: 1 },
-      alignment: 'left',
-    });
+    if (aspectRatio > 3 / 4) {
+      powerplants.layout(Card, {
+        direction: 'ltr',
+        rows: 2,
+        columns: 4,
+        gap: 0.5,
+        margin: { left: 18, right: 1, top: 1, bottom: 1 },
+        alignment: 'left',
+      });
 
-    resources.layout(ResourceSpace, {
-      gap: 0.5,
-      margin: { left: 18, right: 1, top: 1, bottom: 1 },
-      alignment: 'left',
-      rows: 10,
-      direction: 'ttb'
-    });
+      resources.layout(ResourceSpace, {
+        gap: 0.5,
+        margin: { left: 18, right: 1, top: 1, bottom: 1 },
+        alignment: 'left',
+        rows: 10,
+        direction: 'ttb'
+      });
+
+    } else {
+
+      powerplants.layout(Card, {
+        direction: 'ltr',
+        rows: 2,
+        columns: 4,
+        alignment: 'top right'
+      });
+
+      resources.layout(resources.all(ResourceSpace, {resource: 'oil'}), {
+        area: { left: 0, top: 0, width: 100, height: 25 },
+        alignment: 'left',
+        columns: 24,
+        direction: 'ltr',
+        gap: 0.5
+      });
+
+      resources.layout(resources.all(ResourceSpace, {resource: 'coal'}), {
+        area: { left: 0, top: 25, width: 100, height: 25 },
+        alignment: 'left',
+        columns: 24,
+        direction: 'ltr',
+        gap: 0.5
+      });
+
+      resources.layout(resources.all(ResourceSpace, {resource: 'garbage'}), {
+        area: { left: 0, top: 50, width: 100, height: 25 },
+        alignment: 'left',
+        columns: 24,
+        direction: 'ltr',
+        gap: 0.5
+      });
+
+      resources.layout(resources.all(ResourceSpace, {resource: 'uranium'}), {
+        area: { left: 0, top: 75, width: 100, height: 25 },
+        alignment: 'left',
+        columns: 24,
+        direction: 'ltr',
+        gap: 0.5
+      });
+    }
 
     board.all(PlayerMat, {mine: false}).layout(Card, {
       area: { top: 10, left: 22, width: 85, height: 64 },
@@ -865,6 +933,8 @@ export default setup({
       area: { left: 10, top: 25, width: 80, height: 50 },
       gap: 0.5,
     });
+
+    board.disableDefaultAppearance();
 
     board.all(PlayerMat).appearance({
       render: mat => (
@@ -948,51 +1018,62 @@ export default setup({
       )
     });
 
-    board.layoutStep('auction', {
-      element: powerplants,
-      right: 60,
-      top: 10,
-      width: 35
-    });
+    if (aspectRatio > 3 / 4) {
+      board.layoutStep('auction', {
+        element: powerplants,
+        right: 60,
+        top: 10,
+        width: 35
+      });
 
-    board.layoutStep('bid', {
-      element: powerplants,
-      right: 60,
-      top: 10,
-      width: 35
-    });
+      board.layoutStep('bid', {
+        element: powerplants,
+        right: 60,
+        top: 10,
+        width: 35
+      });
 
-    board.layoutStep('purchaseResources', {
-      element: resources,
-      right: 66.6,
-      top: 6,
-      width: 30
-    });
+      board.layoutStep('purchaseResources', {
+        element: resources,
+        right: 66.6,
+        top: 6,
+        width: 30
+      });
 
-    board.layoutStep('build', {
-      element: board,
-      top: 2,
-      left: 1.25,
-    });
+      board.layoutStep('build', {
+        element: board,
+        top: 2,
+        left: 1.25,
+      });
 
-    board.layoutStep('power', {
-      element: board.first(PlayerMat, { mine: true })!,
-      bottom: 100,
-      left: 2,
-      width: 32,
-    });
+      board.layoutStep('power', {
+        element: board.first(PlayerMat, { mine: true })!,
+        bottom: 100,
+        left: 2,
+        width: 32,
+      });
 
-    board.layoutStep('scrap', {
-      element: board.first(PlayerMat, { mine: true })!,
-      bottom: 100,
-      left: 2,
-      width: 32,
-    });
+      board.layoutStep('scrap', {
+        element: board.first(PlayerMat, { mine: true })!,
+        bottom: 100,
+        left: 2,
+        width: 32,
+      });
 
-    board.layoutStep('out-of-turn', {
-      element: board,
-      top: 2,
-      left: 1.25,
-    });
+      board.layoutStep('out-of-turn', {
+        element: board,
+        top: 2,
+        left: 1.25,
+      });
+
+    } else {
+      
+      board.layoutStep('auction', {
+        element: powerplants,
+        left: 0,
+        top: 100,
+        width: 100
+      });
+    }
   }
 });

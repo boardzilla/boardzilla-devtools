@@ -264,25 +264,11 @@
       top: 0;
     }
   }
-
-  &.fluid {
-    .ResourceSpace {
-      display: inline-block;
-    }
-
-    .City {
-      display: inline-block;
-    }
-
-    .PlayerMat .Building {
-      display: none;
-    }
-  }
 }
 
 #player-controls {
   box-shadow: .2em .2em .4em #000c;
-  background: -webkit-gradient(linear, left top, left bottom, from(#99cc),color-stop(0.85, #aafc),to(#99cc));
+  background: linear-gradient(to bottom, #99cc, #aafc 85%, #99cc);
   &.purchaseResources {
     font-size: .5rem;
     button, input {
@@ -296,6 +282,31 @@
     border-radius: .2em;
     text-shadow: .1em .1em 0 #fff5;
     box-shadow: .1em .1em .2em #0008, inset .1em .1em 0 #fff9;
-    background: -webkit-gradient(linear, left top, left bottom, from(#dcd),color-stop(0.85, #aab),to(#cce));
+    background: linear-gradient(to bottom, #dcd,  #aab 85%, #cce);
+  }
+}
+
+#game.portrait {
+  .PlayerMat {
+    background: white;
+    .name {
+      font-size: 75%;
+    }
+  }
+
+  .Card {
+    transform-origin: top left;
+  }
+
+  .ResourceSpace .cost {
+    font-size: 450%;
+  }
+
+  #player-controls {
+    font-size: .3rem;
+    padding: .1rem;
+    &.auction, &.bid, &.purchaseResources {
+      text-align: right;
+    }
   }
 }

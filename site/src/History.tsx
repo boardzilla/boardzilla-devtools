@@ -25,8 +25,8 @@ export default function History({items, initialState, revertTo, view, players, c
   }, [players])
 
   useEffect(() => {
-    historyEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [items]);
+    if (!collapsed) historyEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [items, collapsed]);
 
   return <div style={{overflowY: "scroll"}}>
     {initialState && !collapsed && <>
