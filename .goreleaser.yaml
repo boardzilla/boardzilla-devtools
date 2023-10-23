@@ -45,3 +45,12 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+release:
+  github:
+    owner: boardzilla
+    name: boardzilla-devtools
+  draft: true
+  replace_existing_draft: true
+  prerelease: auto
+  mode: replace
