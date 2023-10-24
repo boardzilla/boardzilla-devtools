@@ -123,21 +123,22 @@ func runBZ() error {
 					if !ok {
 						return
 					}
+					if e.Event() != notify.Write {
+						continue;
+					}
 					for _, p := range manifest.UI.WatchPaths {
 						r, err := filepath.Rel(path.Join(gameRoot, p), e.Path())
 						if err != nil {
 							log.Fatal(err)
 						}
-						if !strings.HasPrefix(r, "..") {
-							if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
-								log.Println("error during rebuild:", err)
-								errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
-								continue
-							}
-							log.Printf("UI reloaded due to change in %s\n", e.Path())
-							rebuilt <- devtools.UI
-							break
+						if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
+							log.Println("error during rebuild:", err)
+							errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
+							continue
 						}
+						log.Printf("UI reloaded due to change in %s\n", e.Path())
+						rebuilt <- devtools.UI
+						break
 					}
 
 					for _, p := range manifest.Game.WatchPaths {
