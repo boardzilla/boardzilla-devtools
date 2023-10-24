@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -372,8 +373,7 @@ func runBZ() error {
 			}
 			errs <- pipeWriter.Close()
 		}()
-		fmt.Printf("POSTIGN!\n")
-		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/games/%s/%s", serverURL, url.PathEscape(manifest.Name), *version), pipeReader)
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/games/%s/%s", serverURL, url.PathEscape(manifest.Name), *version), pipeReader)
 		if err != nil {
 			return err
 		}
@@ -391,7 +391,17 @@ func runBZ() error {
 		}
 		switch res.StatusCode {
 		case 200:
-			fmt.Printf("Game %s published as version %s!\n\n", manifest.Name, *version)
+			fmt.Printf("Game %s submitted as version %s!\n\n", manifest.Name, *version)
+			defer res.Body.Close()
+			var publishResponse struct {
+				Token string `json:"token"`
+			}
+			if err := json.NewDecoder(res.Body).Decode(&publishResponse); err != nil {
+				fmt.Printf("Error %#v\n", err)
+			}
+			url := fmt.Sprintf("%s/g/%s/%s/t/%s", serverURL, url.PathEscape(manifest.Name), url.PathEscape(*version), publishResponse.Token)
+			fmt.Printf("Opening %s...\n\n", url)
+			return exec.Command("open", url).Start()
 		default:
 			fmt.Printf("res was %#v\n", res)
 			panic("no!")
@@ -426,7 +436,7 @@ func (gw *gameWriter) addFile(target string, src ...string) error {
 		return err
 	}
 	digest := sha256.Sum256(f)
-	req, err := http.NewRequest(http.MethodHead, fmt.Sprintf("%s/assets/%s/%s", gw.serverURL, url.PathEscape(gw.name), assetPath), nil)
+	req, err := http.NewRequest(http.MethodHead, fmt.Sprintf("%s/api/assets/%s/%s", gw.serverURL, url.PathEscape(gw.name), assetPath), nil)
 	if err != nil {
 		return err
 	}
