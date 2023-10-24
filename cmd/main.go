@@ -36,12 +36,6 @@ func main() {
 	}
 }
 
-type buildError struct {
-	Type int
-	Out  string
-	Err  string
-}
-
 type notifier struct {
 	out      func()
 	notified bool
@@ -55,10 +49,10 @@ func (n *notifier) notify() {
 		n.notified = true
 		go func() {
 			time.Sleep(debounceDurationMS * time.Millisecond)
+			n.out()
 			n.lock.Lock()
 			n.notified = false
 			defer n.lock.Unlock()
-			n.out()
 		}()
 	}
 }
@@ -111,24 +105,11 @@ func runBZ() error {
 		}
 
 		rebuilt := make(chan int, 10)
-		errors := make(chan *buildError)
 
 		uiNotifier := &notifier{out: func() {
-			if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
-				log.Println("error during rebuild:", err)
-				errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
-				return
-			}
-			log.Printf("UI reloaded due to change\n")
 			rebuilt <- devtools.UI
 		}, notified: false}
 		gameNotifier := &notifier{out: func() {
-			if outbuf, errbuf, err := devBuilder.BuildGame(); err != nil {
-				log.Println("error during rebuild:", err)
-				errors <- &buildError{devtools.Game, string(outbuf), string(errbuf)}
-				return
-			}
-			log.Printf("Game reloaded due to change\n")
 			rebuilt <- devtools.Game
 		}, notified: false}
 
@@ -197,17 +178,29 @@ func runBZ() error {
 			log.Fatal(err)
 		}
 		fmt.Printf("Running dev builder on port %d at game root %s\n", *port, gameRoot)
-		// Block main goroutine forever.
 		go func() {
-			for {
-				select {
-				case i := <-rebuilt:
-					server.Reload(i)
-				case e := <-errors:
-					server.BuildError(e.Type, e.Out, e.Err)
+			for i := range rebuilt {
+				switch i {
+				case devtools.UI:
+					if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
+						log.Println("error during rebuild:", err)
+						server.BuildError(devtools.UI, string(outbuf), string(errbuf))
+						continue
+					}
+					log.Printf("UI reloaded due to change\n")
+				case devtools.Game:
+					if outbuf, errbuf, err := devBuilder.BuildGame(); err != nil {
+						log.Println("error during rebuild:", err)
+						server.BuildError(devtools.Game, string(outbuf), string(errbuf))
+						continue
+					}
+					log.Printf("Game reloaded due to change\n")
+
 				}
+				server.Reload(i)
 			}
 		}()
+		// Block main goroutine forever.
 		fmt.Printf("Ready on :%d ✏️✏️✏️\n", *port)
 		if err := server.Serve(); err != nil {
 			log.Fatal(err)
