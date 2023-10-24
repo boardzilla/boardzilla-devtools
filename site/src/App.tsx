@@ -459,7 +459,7 @@ function App() {
         <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
           <input type="checkbox" checked={autoSwitch} onChange={e => setAutoSwitch(!autoSwitch)} />{phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && p.position !== currentPlayer ? ".4" : "1"}}>{p.name}</button>
+            <button className="player" onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{padding: "3px", backgroundColor: p.color, border: `2px solid ${phase === 'started' && (p.position === currentPlayer) ? "black" : "rgba(0,0,0,0)"}`, opacity: phase === 'started' && (p.position === currentPlayer) ? 1 : .4}}>{p.name}</button>
           )}
           </span>
           <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
