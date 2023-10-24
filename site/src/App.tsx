@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import History from './History';
 import { HistoryItem, InitialStateHistoryItem } from './types';
 import { Modal } from 'react-responsive-modal';
+import toast, { Toaster } from 'react-hot-toast';
 
 import 'react-responsive-modal/styles.css';
 import './App.css';
@@ -99,7 +100,7 @@ function App() {
       minPlayers,
       maxPlayers
     })
-  }, [currentPlayer]);
+  }, [currentPlayer, players]);
 
   const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
@@ -180,10 +181,12 @@ function App() {
             case "ui":
               console.debug("UI reloading due to changes");
               (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
+              toast.success("UI Reloaded!")
               break
             case "game":
               console.debug("Game reloading due to changes");
               (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
+              toast.success("Game Reloaded!")
               break
           }
           break
@@ -414,7 +417,10 @@ function App() {
   }, [loadSaveStates]);
 
   return (
+    <>
+    <Toaster/>
     <div style={{display:'flex', flexDirection:'row'}}>
+
       <Modal open={!!buildError} onClose={() => setBuildError(undefined)} center>
         <h2>BUILD ERROR!</h2>
         <h3>{buildError?.type}</h3>
@@ -479,6 +485,7 @@ function App() {
         />
       </div>
     </div>
+    </>
   );
 }
 

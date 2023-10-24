@@ -18,13 +18,17 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
+	"time"
 
 	devtools "github.com/boardzilla/boardzilla-devtools"
 
 	"github.com/rjeczalik/notify"
 	"golang.org/x/term"
 )
+
+const debounceDurationMS = 500
 
 func main() {
 	if err := runBZ(); err != nil {
@@ -36,6 +40,27 @@ type buildError struct {
 	Type int
 	Out  string
 	Err  string
+}
+
+type notifier struct {
+	out      func()
+	notified bool
+	lock     sync.Mutex
+}
+
+func (n *notifier) notify() {
+	n.lock.Lock()
+	defer n.lock.Unlock()
+	if !n.notified {
+		n.notified = true
+		go func() {
+			time.Sleep(debounceDurationMS * time.Millisecond)
+			n.lock.Lock()
+			n.notified = false
+			defer n.lock.Unlock()
+			n.out()
+		}()
+	}
 }
 
 func runBZ() error {
@@ -85,8 +110,27 @@ func runBZ() error {
 			log.Fatal(err)
 		}
 
-		rebuilt := make(chan int)
+		rebuilt := make(chan int, 10)
 		errors := make(chan *buildError)
+
+		uiNotifier := &notifier{out: func() {
+			if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
+				log.Println("error during rebuild:", err)
+				errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
+				return
+			}
+			log.Printf("UI reloaded due to change\n")
+			rebuilt <- devtools.UI
+		}, notified: false}
+		gameNotifier := &notifier{out: func() {
+			if outbuf, errbuf, err := devBuilder.BuildGame(); err != nil {
+				log.Println("error during rebuild:", err)
+				errors <- &buildError{devtools.Game, string(outbuf), string(errbuf)}
+				return
+			}
+			log.Printf("Game reloaded due to change\n")
+			rebuilt <- devtools.Game
+		}, notified: false}
 
 		go func() {
 			if err := devBuilder.Build(); err != nil {
@@ -123,22 +167,15 @@ func runBZ() error {
 					if !ok {
 						return
 					}
-					if e.Event() != notify.Write {
-						continue;
-					}
 					for _, p := range manifest.UI.WatchPaths {
 						r, err := filepath.Rel(path.Join(gameRoot, p), e.Path())
 						if err != nil {
 							log.Fatal(err)
 						}
-						if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
-							log.Println("error during rebuild:", err)
-							errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
-							continue
+						if !strings.HasPrefix(r, "..") {
+							uiNotifier.notify()
+							break
 						}
-						log.Printf("UI reloaded due to change in %s\n", e.Path())
-						rebuilt <- devtools.UI
-						break
 					}
 
 					for _, p := range manifest.Game.WatchPaths {
@@ -147,13 +184,7 @@ func runBZ() error {
 							log.Fatal(err)
 						}
 						if !strings.HasPrefix(r, "..") {
-							if outbuf, errbuf, err := devBuilder.BuildGame(); err != nil {
-								log.Println("error during rebuild:", err)
-								errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
-								continue
-							}
-							log.Printf("Game reloaded due to change in %s\n", e.Path())
-							rebuilt <- devtools.Game
+							gameNotifier.notify()
 							break
 						}
 					}
