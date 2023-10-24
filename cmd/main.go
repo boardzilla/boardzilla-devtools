@@ -9,7 +9,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/fs"
 	"log"
 	"mime/multipart"
 	"net/http"
@@ -22,7 +21,8 @@ import (
 	"syscall"
 
 	devtools "github.com/boardzilla/boardzilla-devtools"
-	"github.com/fsnotify/fsnotify"
+
+	"github.com/rjeczalik/notify"
 	"golang.org/x/term"
 )
 
@@ -66,7 +66,10 @@ func runBZ() error {
 			return err
 		}
 
-		gameRoot := *root
+		gameRoot, err := filepath.Abs(*root)
+		if err != nil {
+			log.Fatalf("error: %#v", err)
+		}
 		if gameRoot == "" {
 			fmt.Println("Requires -root <game root>")
 			os.Exit(1)
@@ -82,11 +85,6 @@ func runBZ() error {
 			log.Fatal(err)
 		}
 
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer watcher.Close()
 		rebuilt := make(chan int)
 		errors := make(chan *buildError)
 
@@ -95,17 +93,38 @@ func runBZ() error {
 				log.Println("error during build:", err)
 			}
 
+			events := make(chan notify.EventInfo, 100)
+			roots, err := devBuilder.WatchedFiles()
+			if err != nil {
+				log.Fatal(err)
+			}
+			for _, root := range roots {
+				info, err := os.Stat(root)
+				if err != nil {
+					log.Fatal(err)
+				}
+				if info.IsDir() {
+					if err := notify.Watch(path.Join(root, "..."), events, notify.All); err != nil {
+						log.Fatal(err)
+					}
+				} else {
+					if err := notify.Watch(root, events, notify.All); err != nil {
+						log.Fatal(err)
+					}
+				}
+			}
+
+			defer notify.Stop(events)
+
+			// Block until an event is received.
 			for {
 				select {
-				case e, ok := <-watcher.Events:
+				case e, ok := <-events:
 					if !ok {
 						return
 					}
-					if e.Op != fsnotify.Write {
-						continue
-					}
 					for _, p := range manifest.UI.WatchPaths {
-						r, err := filepath.Rel(path.Join(gameRoot, p), e.Name)
+						r, err := filepath.Rel(path.Join(gameRoot, p), e.Path())
 						if err != nil {
 							log.Fatal(err)
 						}
@@ -115,14 +134,14 @@ func runBZ() error {
 								errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
 								continue
 							}
-							log.Printf("UI reloaded due to change in %s\n", e.Name)
+							log.Printf("UI reloaded due to change in %s\n", e.Path())
 							rebuilt <- devtools.UI
 							break
 						}
 					}
 
 					for _, p := range manifest.Game.WatchPaths {
-						r, err := filepath.Rel(path.Join(gameRoot, p), e.Name)
+						r, err := filepath.Rel(path.Join(gameRoot, p), e.Path())
 						if err != nil {
 							log.Fatal(err)
 						}
@@ -132,40 +151,14 @@ func runBZ() error {
 								errors <- &buildError{devtools.UI, string(outbuf), string(errbuf)}
 								continue
 							}
-							log.Printf("Game reloaded due to change in %s\n", e.Name)
+							log.Printf("Game reloaded due to change in %s\n", e.Path())
 							rebuilt <- devtools.Game
 							break
 						}
 					}
-				case err, ok := <-watcher.Errors:
-					if !ok {
-						return
-					}
-					log.Println("error:", err)
 				}
 			}
 		}()
-
-		roots, err := devBuilder.WatchedFiles()
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, root := range roots {
-			if err := watcher.Add(root); err != nil {
-				log.Fatal(err)
-			}
-			if err := filepath.Walk(root, func(p string, info fs.FileInfo, err error) error {
-				if p == root {
-					return nil
-				}
-				if !info.IsDir() {
-					return nil
-				}
-				return watcher.Add(p)
-			}); err != nil {
-				log.Fatal(err)
-			}
-		}
 
 		server, err := devtools.NewServer(gameRoot, manifest, *port)
 		if err != nil {
