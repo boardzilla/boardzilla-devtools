@@ -149,7 +149,7 @@ func (b *Builder) cleanGame(manifest *ManifestV1) error {
 	gameOutPath := path.Join(b.root, manifest.Game.Root, manifest.Game.OutputFile)
 	_, err := os.Stat(gameOutPath)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		if os.IsNotExist(err) {
 			return nil
 		}
 		return err
