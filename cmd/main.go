@@ -399,9 +399,9 @@ func runBZ() error {
 			if err := json.NewDecoder(res.Body).Decode(&publishResponse); err != nil {
 				fmt.Printf("Error %#v\n", err)
 			}
-			url := fmt.Sprintf("%s/g/%s/%s/t/%s", serverURL, url.PathEscape(manifest.Name), url.PathEscape(*version), publishResponse.Token)
+			url := fmt.Sprintf("%s/g/%s/%s/t/%s", serverURL, url.PathEscape(manifest.Name), url.PathEscape(*version), url.PathEscape(publishResponse.Token))
 			fmt.Printf("Opening %s...\n\n", url)
-			return exec.Command("open", url).Start()
+			return exec.Command("open", url).Start() // #nosec G204
 		default:
 			fmt.Printf("res was %#v\n", res)
 			panic("no!")
