@@ -77,12 +77,8 @@ function App() {
     loadSaveStates()
   }, [loadSaveStates])
 
-  const saveCurrentState = useCallback((e: React.SyntheticEvent) => {
-    e.preventDefault();
-    const target = e.target as typeof e.target & {
-      name: { value: string };
-    };
-    fetch(`/states/${encodeURIComponent(target.name.value)}`, {
+  const saveCurrentState = useCallback((name: string): Promise<void> => {
+    return fetch(`/states/${encodeURIComponent(name)}`, {
       headers: {
         'Content-type': 'application/json',
       },
@@ -92,6 +88,14 @@ function App() {
       method: "POST"
     }).then(() => loadSaveStates())
   }, [initialState, history, loadSaveStates, players, settings]);
+
+  const saveCurrentStateCallback = useCallback((e: React.SyntheticEvent) => {
+    e.preventDefault();
+    const target = e.target as typeof e.target & {
+      name: { value: string };
+    };
+    saveCurrentState(target.name.value)
+  }, [saveCurrentState])
 
   const bootstrap = useCallback((): string => {
     return JSON.stringify({
@@ -143,15 +147,15 @@ function App() {
     (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
   }, [])
 
-  const reprocessHistory = useCallback(async () => {
+  const reprocessHistory = useCallback(async (history: HistoryItem[], settings: Game.GameSettings, players: UI.UserPlayer[]): Promise<Game.GameState | undefined> => {
     console.log('reprocessing history items', history.length);
-    if (!initialState) return
-    if (!settings) return
-    let previousUpdate: Game.GameUpdate;
+    let newInitialState: Game.GameUpdate | undefined;
+    let previousUpdate: Game.GameUpdate | undefined;
+    const newHistory: HistoryItem[] = []
     try {
-      previousUpdate = await sendInitialState({players, settings})
+      newInitialState = await sendInitialState({players, settings});
+      previousUpdate = newInitialState;
       let i = 0;
-      const newHistory: HistoryItem[] = []
       while(i < history.length) {
         const { move, position } = history[i]
         try {
@@ -163,13 +167,28 @@ function App() {
         }
         i++;
       }
-      setHistory(newHistory);
-      setPhase('started');
-      await updateUI(previousUpdate.game);
     } catch(e) {
       console.error("reprocess", e)
+      throw e
+    } finally {
+      setPlayers(players);
+      setInitialState(newInitialState ? {state: newInitialState.game, players, settings} : undefined)
+      setHistory(newHistory);
+      setPhase(newInitialState ? 'started' : 'new');
     }
-  }, [history, initialState, players, settings, updateUI]);
+    return previousUpdate ? previousUpdate.game : undefined
+  }, []);
+
+  const reprocessHistoryCallback = useCallback(async () => {
+    if (!initialState) return
+    if (!settings) return
+    try {
+      const newState = await reprocessHistory(history, settings, players)
+      if (newState) await updateUI(newState);
+    } catch(e) {
+      console.log("error reprocessing history")
+    }
+  }, [history, initialState, players, reprocessHistory, settings, updateUI]);
 
   useEffect(() => {
     const evtSource = new ReconnectingEventSource("/events");
@@ -402,12 +421,15 @@ function App() {
   const loadState = useCallback(async (name: string) => {
     const response = await fetch(`/states/${encodeURIComponent(name)}`);
     const state = await response.json() as SaveStateData;
-    setSettings(state.settings);
-    setPlayers(state.players);
-    setInitialState(state.initialState);
-    setHistory(state.history);
+    try {
+      reprocessHistory(state.history, state.settings, state.players);
+      await saveCurrentState(name)
+    } catch(e) {
+      console.log("error reprocessing history", e)
+    }
+    setSaveStatesOpen(false);
     (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
-  }, []);
+  }, [reprocessHistory, saveCurrentState]);
 
   const deleteState = useCallback(async (name: string) => {
     await fetch(`/states/${encodeURIComponent(name)}`, {method: "DELETE"});
@@ -446,8 +468,8 @@ function App() {
           <div style={{overflowY: 'auto', height: "80vh", width: "50vw"}}>
             {saveStates.map(s => <div key={s.name}>{s.name}<br/>{new Date(s.ctime).toString()} <button onClick={() => loadState(s.name)}>Open</button><button onClick={() => deleteState(s.name)}>Delete</button></div>)}
           </div>
-          <form onSubmit={(e) => saveCurrentState(e)}>
-            Name <input type="text" name="name"/><br/>
+          <form onSubmit={(e) => saveCurrentStateCallback(e)}>
+            Name <input type="text" name="name" onKeyUp={e=>{ e.stopPropagation() }}/><br/>
             <input type="submit" disabled={!initialState} value="Save new state" />
           </form>
         </div>
@@ -463,7 +485,7 @@ function App() {
           <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
         </div>
         <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
-        <iframe onLoad={() => reprocessHistory()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
+        <iframe onLoad={() => reprocessHistoryCallback()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div id="history" className={historyCollapsed ? "collapsed" : ""}>
         <h2>
