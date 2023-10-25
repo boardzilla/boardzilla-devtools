@@ -148,8 +148,15 @@ func runBZ() error {
 					if !ok {
 						return
 					}
+					if e.Event() != notify.Write {
+						continue
+					}
 					for _, p := range manifest.UI.WatchPaths {
-						r, err := filepath.Rel(path.Join(gameRoot, p), e.Path())
+						p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
+						if err != nil {
+							log.Fatal(err)
+						}
+						r, err := filepath.Rel(p, e.Path())
 						if err != nil {
 							log.Fatal(err)
 						}
@@ -160,7 +167,11 @@ func runBZ() error {
 					}
 
 					for _, p := range manifest.Game.WatchPaths {
-						r, err := filepath.Rel(path.Join(gameRoot, p), e.Path())
+						p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
+						if err != nil {
+							log.Fatal(err)
+						}
+						r, err := filepath.Rel(p, e.Path())
 						if err != nil {
 							log.Fatal(err)
 						}

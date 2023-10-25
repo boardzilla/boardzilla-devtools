@@ -89,7 +89,7 @@ function App() {
       }),
       method: "POST"
     }).then(response => {
-      console.log(response)
+      //console.log(response)
     }).then(() => loadSaveStates())
   }, [initialState, history, loadSaveStates, players, settings]);
 
@@ -257,7 +257,7 @@ function App() {
       UI.KeyMessage
     >) => {
       const path = (e.source! as WindowProxy).location.pathname
-      console.log("got event", path, e.data.type)
+      //console.log("got event", path, e.data.type)
       switch(e.data.type) {
         case 'initialStateResult':
           if (path !== '/game.html') return console.error("expected event from game.html!")
@@ -283,7 +283,7 @@ function App() {
         case 'move':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
           const previousState = history.length === 0 ? initialState!.state : history[history.length - 1].state!;
-          console.log("move!", e.data)
+          //console.log("move!", e.data)
           try {
             const moveUpdate = await processMove(previousState, {position: currentPlayer, data: e.data.data});
             const newHistory = [...history, {
