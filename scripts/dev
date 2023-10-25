@@ -13,6 +13,7 @@ if [ -z ${1+x} ]; then
 fi
 
 cd site
+yarn
 npm run build
 cd -
 $(cd site && npm run build:watch) &
