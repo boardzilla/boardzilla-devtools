@@ -31,7 +31,6 @@
     "postinstall.js"
   ],
   "dependencies": {
-    "@endorlabs/go-npm": "^0.1.14",
-    "react-hot-toast": "^2.4.1"
+    "@endorlabs/go-npm": "^0.1.14"
   }
 }
