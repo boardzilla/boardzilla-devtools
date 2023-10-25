@@ -50,7 +50,7 @@ function App() {
   const [initialState, setInitialState] = useState<InitialStateHistoryItem | undefined>();
   const [numberOfUsers, setNumberOfUsers] = useState(minPlayers);
   const [phase, setPhase] = useState<"new" | "started">("new");
-  const [currentPlayer, setCurrentPlayer] = useState(1);
+  const [currentUserID, setCurrentUserID] = useState(possibleUsers[0].id);
   const [players, setPlayers] = useState<UI.UserPlayer[]>([]);
   const [buildError, setBuildError] = useState<BuildError | undefined>();
   const [settings, setSettings] = useState<Game.GameSettings>({});
@@ -60,6 +60,8 @@ function App() {
   const [saveStates, setSaveStates] = useState<SaveState[]>([])
   const [historyCollapsed, setHistoryCollapsed] = useState(false);
   const [autoSwitch, setAutoSwitch] = useState(true);
+
+  const currentPlayer = players.find(p => p.userID === currentUserID)!
 
   const loadSaveStates = useCallback(async () => {
     const response = await fetch('/states')
@@ -93,12 +95,12 @@ function App() {
 
   const bootstrap = useCallback((): string => {
     return JSON.stringify({
-      host: true,
-      userID: players.find(p => p.position === currentPlayer)?.userID,
+      host: currentUserID === possibleUsers[0].id,
+      userID: currentUserID,
       minPlayers,
       maxPlayers
     })
-  }, [currentPlayer, players]);
+  }, [currentUserID]);
 
   const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
@@ -111,8 +113,8 @@ function App() {
         sendToUI({
           type: "gameFinished",
           state: {
-            position: currentPlayer,
-            state: await getPlayerState(game, currentPlayer)
+            position: currentPlayer.position,
+            state: await getPlayerState(game, currentPlayer.position)
           },
           winners: game.winners,
         });
@@ -121,8 +123,8 @@ function App() {
         sendToUI({
           type: "gameUpdate",
           state: {
-            position: currentPlayer,
-            state: await getPlayerState(game, currentPlayer)
+            position: currentPlayer.position,
+            state: await getPlayerState(game, currentPlayer.position)
           },
           currentPlayers: game.currentPlayers,
         });
@@ -136,7 +138,7 @@ function App() {
     setInitialState(undefined);
     setHistory([]);
     setPlayers([]);
-    setCurrentPlayer(1);
+    setCurrentUserID(possibleUsers[0].id);
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
     (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
   }, [])
@@ -234,7 +236,7 @@ function App() {
       case 'Digit9':
       case 'Digit0':
         const idx = validKeys.indexOf(code)
-        setCurrentPlayer(players[idx].position);
+        setCurrentUserID(players[idx].userID!);
         return true
       default:
         return false
@@ -281,9 +283,9 @@ function App() {
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
           const previousState = history.length === 0 ? initialState!.state : history[history.length - 1].state!;
           try {
-            const moveUpdate = await processMove(previousState, {position: currentPlayer, data: e.data.data});
+            const moveUpdate = await processMove(previousState, {position: currentPlayer.position, data: e.data.data});
             const newHistory = [...history, {
-              position: currentPlayer,
+              position: currentPlayer.position,
               seq: history.length,
               state: moveUpdate.game,
               messages: moveUpdate.messages,
@@ -291,8 +293,8 @@ function App() {
             }];
             setHistory(newHistory);
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
-            if (moveUpdate.game.phase === 'started' && autoSwitch && moveUpdate.game.currentPlayers[0] !== currentPlayer) {
-              setCurrentPlayer(moveUpdate.game.currentPlayers[0]);
+            if (moveUpdate.game.phase === 'started' && autoSwitch && moveUpdate.game.currentPlayers[0] !== currentPlayer.position) {
+              setCurrentUserID(players.find(p => p.position === moveUpdate.game.currentPlayers[0])!.userID!);
               return
             }
             await updateUI(moveUpdate.game);
@@ -455,7 +457,7 @@ function App() {
         <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
           <input type="checkbox" checked={autoSwitch} onChange={e => setAutoSwitch(!autoSwitch)} />{phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => setCurrentPlayer(p.position)} key={p.position} style={{padding: "3px", backgroundColor: p.color, border: `2px solid ${phase === 'started' && (p.position === currentPlayer) ? "black" : "rgba(0,0,0,0)"}`, opacity: phase === 'started' && (p.position === currentPlayer) ? 1 : .4}}>{p.name}</button>
+            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{padding: "3px", backgroundColor: p.color, border: `2px solid ${phase === 'started' && (currentPlayer.userID === p.userID) ? "black" : "rgba(0,0,0,0)"}`, opacity: phase === 'started' && (p.userID === currentPlayer.userID) ? 1 : .4}}>{p.name}</button>
           )}
           </span>
           <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>

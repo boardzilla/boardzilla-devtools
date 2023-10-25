@@ -241,7 +241,7 @@ const Game = () => {
   }, [error])
 
   return <div>
-    {JSON.stringify(bootstrap)}
+    <pre>{JSON.stringify(bootstrap)}</pre>
     {error !== "" && <div style={{backgroundColor: "#faa", margin: '4px'}}>{error}</div>}
     {phase === 'finished' && <span>Game is done! {winner === gameState?.position ? "YOU WIN": "YOU LOSE"}</span>}
     {phase === 'started' && gameState?.state.possibleGuesses.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}
