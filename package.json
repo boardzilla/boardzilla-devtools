@@ -31,6 +31,6 @@
     "postinstall.js"
   ],
   "dependencies": {
-    "@endorlabs/go-npm": "^0.1.14"
+    "go-npm": "git+https://github.com/joshbuddy/go-npm.git#3f0ed6b80395063f83a5552ccf5f11be0b8e84fb"
   }
 }
