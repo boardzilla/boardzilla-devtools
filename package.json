@@ -1,6 +1,6 @@
 {
   "name": "@boardzilla/devtools",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "description": "Devtools for developing games on boardzilla.io",
   "scripts": {
     "postinstall": "go-npm install",
@@ -31,6 +31,6 @@
     "postinstall.js"
   ],
   "dependencies": {
-    "go-npm": "git+https://github.com/joshbuddy/go-npm.git#3f0ed6b80395063f83a5552ccf5f11be0b8e84fb"
+    "@joshbuddy/go-npm": "0.1.15"
   }
 }
