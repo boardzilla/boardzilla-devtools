@@ -142,43 +142,37 @@ func runBZ() error {
 			defer notify.Stop(events)
 
 			// Block until an event is received.
-			for {
-				select {
-				case e, ok := <-events:
-					if !ok {
-						return
+			for e := range events {
+				if e.Event() != notify.Write {
+					continue
+				}
+				for _, p := range manifest.UI.WatchPaths {
+					p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
+					if err != nil {
+						log.Fatal(err)
 					}
-					if e.Event() != notify.Write {
-						continue
+					r, err := filepath.Rel(p, e.Path())
+					if err != nil {
+						log.Fatal(err)
 					}
-					for _, p := range manifest.UI.WatchPaths {
-						p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
-						if err != nil {
-							log.Fatal(err)
-						}
-						r, err := filepath.Rel(p, e.Path())
-						if err != nil {
-							log.Fatal(err)
-						}
-						if !strings.HasPrefix(r, "..") {
-							uiNotifier.notify()
-							break
-						}
+					if !strings.HasPrefix(r, "..") {
+						uiNotifier.notify()
+						break
 					}
+				}
 
-					for _, p := range manifest.Game.WatchPaths {
-						p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
-						if err != nil {
-							log.Fatal(err)
-						}
-						r, err := filepath.Rel(p, e.Path())
-						if err != nil {
-							log.Fatal(err)
-						}
-						if !strings.HasPrefix(r, "..") {
-							gameNotifier.notify()
-							break
-						}
+				for _, p := range manifest.Game.WatchPaths {
+					p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
+					if err != nil {
+						log.Fatal(err)
+					}
+					r, err := filepath.Rel(p, e.Path())
+					if err != nil {
+						log.Fatal(err)
+					}
+					if !strings.HasPrefix(r, "..") {
+						gameNotifier.notify()
+						break
 					}
 				}
 			}
