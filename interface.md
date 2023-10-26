@@ -26,12 +26,11 @@
 
 ### Game
 
-Must export an object `game` with two functions, `initialState` and `processMove`.
+Must export an object `game` with two functions, `initialState` and `processMoves`.
 
 ```ts
 initialState(setup: SetupState): GameUpdate
-processMove(previousState: GameStartedState, move: Move): GameUpdate
-getPlayerState(state: GameStartedState | GameFinishedState, position: number): PlayerGameState
+processMoves(previousState: GameStartedState, moves: Move[]): MoveProcessedResult
 
 type Player = {
   color: string
@@ -73,6 +72,12 @@ type GameUpdate = {
   game: GameStartedState | GameFinishedState
   players: PlayerState[]
   messages: Message[]
+}
+
+type MoveProcessedResult = {
+  error?: string
+  movesProcessed: number
+  update: GameUpdate
 }
 
 type Move = {
