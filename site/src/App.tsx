@@ -60,6 +60,7 @@ function App() {
   const [saveStates, setSaveStates] = useState<SaveState[]>([])
   const [historyCollapsed, setHistoryCollapsed] = useState(false);
   const [autoSwitch, setAutoSwitch] = useState(true);
+  const [reprocessing, setReprocessing] = useState(false);
 
   const currentPlayer = players.find(p => p.userID === currentUserID)!
 
@@ -111,7 +112,6 @@ function App() {
   }, [])
 
   const updateUI = useCallback(async (game: Game.GameState) => {
-    console.log("updateUI game.phase!", game.phase)
     switch(game.phase) {
       case 'finished':
         sendToUI({
@@ -148,7 +148,6 @@ function App() {
   }, [])
 
   const reprocessHistory = useCallback(async (history: HistoryItem[], settings: Game.GameSettings, players: UI.UserPlayer[]): Promise<Game.GameState | undefined> => {
-    console.log('reprocessing history items', history.length);
     let newInitialState: Game.GameUpdate | undefined;
     let previousUpdate: Game.GameUpdate | undefined;
     const newHistory: HistoryItem[] = []
@@ -182,11 +181,14 @@ function App() {
   const reprocessHistoryCallback = useCallback(async () => {
     if (!initialState) return
     if (!settings) return
+    setReprocessing(true)
     try {
       const newState = await reprocessHistory(history, settings, players)
       if (newState) await updateUI(newState);
     } catch(e) {
       console.log("error reprocessing history")
+    } finally {
+      setReprocessing(false)
     }
   }, [history, initialState, players, reprocessHistory, settings, updateUI]);
 
@@ -227,6 +229,7 @@ function App() {
       }
     })
     evtSource!.onerror = e => {
+      toast.error(`Error from eventsource: ${(e as ErrorEvent).message}`)
       console.log("eventsource error", e)
     }
 
@@ -339,7 +342,6 @@ function App() {
             console.error('error during start', err);
             sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
           }
-          // this is a bit of a lie, it doesn't actually know how it was processed by game
           break
         case 'ready':
           if (path !== '/ui.html') return console.error("expected event from ui.html!")
@@ -419,22 +421,27 @@ function App() {
   }, [numberOfUsers, players, sendToUI])
 
   const loadState = useCallback(async (name: string) => {
+    setReprocessing(true)
     const response = await fetch(`/states/${encodeURIComponent(name)}`);
     const state = await response.json() as SaveStateData;
     try {
       reprocessHistory(state.history, state.settings, state.players);
       await saveCurrentState(name)
     } catch(e) {
-      console.log("error reprocessing history", e)
+      toast.error(`Error reprocessing history: ${String(e)}`)
+      console.log(e)
     }
     setSaveStatesOpen(false);
     (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
+    setReprocessing(false)
   }, [reprocessHistory, saveCurrentState]);
 
   const deleteState = useCallback(async (name: string) => {
     await fetch(`/states/${encodeURIComponent(name)}`, {method: "DELETE"});
     await loadSaveStates();
   }, [loadSaveStates]);
+
+  if (reprocessing) return <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>
 
   return (
     <>
