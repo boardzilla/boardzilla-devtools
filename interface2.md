@@ -52,6 +52,7 @@ type GameFinishedState = {
   winners: number[]
 } & Record<string, any>
 
+// the number of states returned would correspond with how many moves were successfully processed
 type ProcessMoveResult = {
   error?: string
   states[]: GameStartedState | GameFinishedState
@@ -62,11 +63,11 @@ type Move = {
   data: any
 }
 
+// q: is putting messages here too cumbersome?
 type PlayerGameState = {
   messages: string[]
   state: any
 }
-
 ```
 
 ### UI
