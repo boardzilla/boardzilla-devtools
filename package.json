@@ -1,6 +1,6 @@
 {
   "name": "@boardzilla/devtools",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "Devtools for developing games on boardzilla.io",
   "scripts": {
     "postinstall": "go-npm install",
