@@ -22,8 +22,8 @@ export const sendInitialState = (setup: Game.SetupState): Promise<Game.GameUpdat
   return sendToGame({ type: 'initialState', setup });
 };
 
-export const processMove = (previousState: Game.GameState, move: Game.Move): Promise<Game.GameUpdate> => {
-  return sendToGame({ type: 'processMove', previousState, move });
+export const processMove = (previousState: Game.GameState, move: Game.Move, trackMovement=true): Promise<Game.GameUpdate> => {
+  return sendToGame({ type: 'processMove', previousState, move, trackMovement });
 }
 
 export const getPlayerState = (state: Game.GameState, position: number): Promise<Game.PlayerState> => {

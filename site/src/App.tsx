@@ -111,16 +111,17 @@ function App() {
     (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
   }, [])
 
-  const updateUI = useCallback(async (game: Game.GameState) => {
-    switch(game.phase) {
+  const updateUI = useCallback(async (update: {game: Game.GameState, players?: Game.PlayerState[]}) => {
+    const playerState = update.players?.find(p => p.position === currentPlayer.position)?.state || await getPlayerState(update.game, currentPlayer.position);
+    switch(update.game.phase) {
       case 'finished':
         sendToUI({
           type: "gameFinished",
           state: {
             position: currentPlayer.position,
-            state: await getPlayerState(game, currentPlayer.position)
+            state: playerState
           },
-          winners: game.winners,
+          winners: update.game.winners,
         });
         break
       case 'started':
@@ -128,9 +129,9 @@ function App() {
           type: "gameUpdate",
           state: {
             position: currentPlayer.position,
-            state: await getPlayerState(game, currentPlayer.position)
+            state: playerState
           },
-          currentPlayers: game.currentPlayers,
+          currentPlayers: update.game.currentPlayers,
         });
         break
     }
@@ -154,11 +155,12 @@ function App() {
     try {
       newInitialState = await sendInitialState({players, settings});
       previousUpdate = newInitialState;
+      console.time('reprocessHistory');
       let i = 0;
       while(i < history.length) {
         const { move, position } = history[i]
         try {
-          previousUpdate = await processMove(previousUpdate.game, {...move, position});
+          previousUpdate = await processMove(previousUpdate.game, {...move, position}, false);
           newHistory.push({position, move, seq: i, state: previousUpdate.game, messages: previousUpdate.messages})
         } catch(e) {
           console.error("error while reprocessing history", e)
@@ -166,6 +168,7 @@ function App() {
         }
         i++;
       }
+      console.timeEnd('reprocessHistory');
     } catch(e) {
       console.error("reprocess", e)
       throw e
@@ -319,7 +322,7 @@ function App() {
               setCurrentUserID(players.find(p => p.position === moveUpdate.game.currentPlayers[0])!.userID!);
               return
             }
-            await updateUI(moveUpdate.game);
+            await updateUI(moveUpdate);
           } catch(err) {
             console.error('error during move', err);
             sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
@@ -337,7 +340,7 @@ function App() {
             setInitialState(newInitialState);
             setPhase("started");
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined});
-            await updateUI(initialUpdate.game);
+            await updateUI(initialUpdate);
           } catch(err) {
             console.error('error during start', err);
             sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
@@ -351,7 +354,7 @@ function App() {
             }
             sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});
           } else {
-            await updateUI(getCurrentState(history));
+            await updateUI({ game: getCurrentState(history) });
           }
           break
         case 'updatePlayers':
@@ -484,9 +487,9 @@ function App() {
 
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
-          <input type="checkbox" checked={autoSwitch} onChange={e => setAutoSwitch(!autoSwitch)} />{phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
+          <input type="checkbox" checked={autoSwitch} onChange={() => setAutoSwitch(!autoSwitch)} />{phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{padding: "3px", backgroundColor: p.color, border: `2px solid ${phase === 'started' && (currentPlayer.userID === p.userID) ? "black" : "rgba(0,0,0,0)"}`, opacity: phase === 'started' && (p.userID === currentPlayer.userID) ? 1 : .4}}>{p.name}</button>
+            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{padding: "3px", backgroundColor: p.color, border: `2px solid ${phase === 'started' && (currentPlayer.userID === p.userID) ? "black" : "rgba(0,0,0,0)"}`}}>{p.name}</button>
           )}
           </span>
           <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
@@ -504,8 +507,8 @@ function App() {
         </h2>
         <History
           players={players}
-          view={n => updateUI(n === -1 ? initialState!.state : history[n].state)}
-          revertTo={n => { setHistory(history.slice(0, n+1)); updateUI(history[n].state) }}
+          view={n => updateUI({game : n === -1 ? initialState!.state : history[n].state })}
+          revertTo={n => {setHistory(history.slice(0, n+1)); updateUI({ game: n === -1 ? initialState!.state : history[n].state })}}
           initialState={initialState}
           items={history}
           collapsed={historyCollapsed}

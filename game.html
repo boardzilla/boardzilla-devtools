@@ -16,7 +16,7 @@
       case 'processMove':
         console.debug("game processing move", event.data);
         try {
-          const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data});
+          const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data}, event.data.trackMovement);
           console.debug("game posting results", gameUpdate.game);
           window.top.postMessage({type: "processMoveResult", id: event.data.id, error: undefined, state: gameUpdate}, "*")
         } catch (e) {
