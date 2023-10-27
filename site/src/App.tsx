@@ -60,7 +60,7 @@ function App() {
   const [saveStates, setSaveStates] = useState<SaveState[]>([])
   const [historyCollapsed, setHistoryCollapsed] = useState(false);
   const [autoSwitch, setAutoSwitch] = useState(true);
-  const [reprocessing, setReprocessing] = useState(false);
+  const [reprocessing, setReprocessing] = useState(true);
 
   const currentPlayer = players.find(p => p.userID === currentUserID)!
 
@@ -108,8 +108,9 @@ function App() {
   }, [currentUserID]);
 
   const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
-    (document.getElementById("ui") as HTMLIFrameElement).contentWindow!.postMessage(data)
-  }, [])
+    if (reprocessing) return;
+    (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(data)
+  }, [reprocessing])
 
   const updateUI = useCallback(async (update: {game: Game.GameState, players?: Game.PlayerState[]}) => {
     const playerState = update.players?.find(p => p.position === currentPlayer.position)?.state || await getPlayerState(update.game, currentPlayer.position);
@@ -144,8 +145,9 @@ function App() {
     setHistory([]);
     setPlayers([]);
     setCurrentUserID(possibleUsers[0].id);
-    (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
-    (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
+    setReprocessing(true);
+    (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow?.location.reload();
+    (document.getElementById("game") as HTMLIFrameElement)?.contentWindow?.location.reload();
   }, [])
 
   const reprocessHistory = useCallback(async (history: HistoryItem[], settings: Game.GameSettings, players: UI.UserPlayer[]): Promise<Game.GameState | undefined> => {
@@ -182,12 +184,12 @@ function App() {
   }, []);
 
   const reprocessHistoryCallback = useCallback(async () => {
-    if (!initialState) return
-    if (!settings) return
     setReprocessing(true)
     try {
-      const newState = await reprocessHistory(history, settings, players)
-      if (newState) await updateUI(newState);
+      if (initialState && settings) {
+        const newState = await reprocessHistory(history, settings, players)
+        if (newState) await updateUI({ game: newState });
+      }
     } catch(e) {
       console.log("error reprocessing history")
     } finally {
@@ -204,12 +206,13 @@ function App() {
           switch(e.target) {
             case "ui":
               console.debug("UI reloading due to changes");
-              (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
+              (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow?.location.reload();
               toast.success("UI Reloaded!")
               break
             case "game":
+              setReprocessing(true);
               console.debug("Game reloading due to changes");
-              (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
+              (document.getElementById("game") as HTMLIFrameElement)?.contentWindow?.location.reload();
               toast.success("Game Reloaded!")
               break
           }
@@ -247,8 +250,9 @@ function App() {
         setSaveStatesOpen((s) => !s)
         return true
       case 'KeyR':
-        (document.getElementById("ui") as HTMLIFrameElement).contentWindow?.location.reload();
-        (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
+        setReprocessing(true);
+        (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow?.location.reload();
+        (document.getElementById("game") as HTMLIFrameElement)?.contentWindow?.location.reload();
         return true
       case 'Digit1':
       case 'Digit2':
@@ -435,7 +439,7 @@ function App() {
       console.log(e)
     }
     setSaveStatesOpen(false);
-    (document.getElementById("game") as HTMLIFrameElement).contentWindow?.location.reload();
+    (document.getElementById("game") as HTMLIFrameElement)?.contentWindow?.location.reload();
     setReprocessing(false)
   }, [reprocessHistory, saveCurrentState]);
 
@@ -443,8 +447,6 @@ function App() {
     await fetch(`/states/${encodeURIComponent(name)}`, {method: "DELETE"});
     await loadSaveStates();
   }, [loadSaveStates]);
-
-  if (reprocessing) return <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>
 
   return (
     <>
@@ -489,12 +491,15 @@ function App() {
         <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
           <input type="checkbox" checked={autoSwitch} onChange={() => setAutoSwitch(!autoSwitch)} />{phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{padding: "3px", backgroundColor: p.color, border: `2px solid ${phase === 'started' && (currentPlayer.userID === p.userID) ? "black" : "rgba(0,0,0,0)"}`}}>{p.name}</button>
+            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{padding: "3px", backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1}}>{p.name}</button>
           )}
           </span>
           <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
         </div>
-        <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
+        {reprocessing && <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>}
+        {!reprocessing && (
+          <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
+        )};
         <iframe onLoad={() => reprocessHistoryCallback()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div id="history" className={historyCollapsed ? "collapsed" : ""}>
