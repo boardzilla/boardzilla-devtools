@@ -278,7 +278,7 @@ func runBZ() error {
 		if err != nil {
 			return err
 		}
-		if res.StatusCode == 200 {
+		if res.StatusCode == 201 {
 			fmt.Printf("ok!")
 		} else {
 			fmt.Printf("nope! %d", res.StatusCode)
