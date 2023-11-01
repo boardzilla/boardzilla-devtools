@@ -33,9 +33,9 @@
 }
 
 #history .arrow {
-  height: 1lh;
+  height: 1em;
   cursor: pointer;
-  transform: rotate(90deg) scale(1.35) translate(.15lh,0);
+  transform: rotate(90deg) scale(1.35) translate(.1em,0);
 }
 
 #history.collapsed h2 {
@@ -43,5 +43,5 @@
 }
 
 #history.collapsed .arrow {
-  transform: rotate(-90deg) scale(1.35) translate(.15lh,-.05lh);
+  transform: rotate(-90deg) scale(1.35) translate(.1em,-.05em);
 }
