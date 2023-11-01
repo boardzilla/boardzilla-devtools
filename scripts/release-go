@@ -8,6 +8,10 @@ if [ -z ${GITHUB_TOKEN+x} ]; then
   exit 1
 fi
 
+cd site
+yarn
+yarn run build
+cd -
 git update-index --really-refresh
 git diff-index --quiet HEAD
 ./scripts/check

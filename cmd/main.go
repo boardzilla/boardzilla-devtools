@@ -68,8 +68,7 @@ func runBZ() error {
 		fmt.Println("")
 		fmt.Println("run -root <game root>                          Run the devtools for a game")
 		fmt.Println("info -root <game root>                         Get info about the game at root")
-		fmt.Println("register                                       Register a user for publishing a game")
-		fmt.Println("publish -root <game root> -version <version>   Publish a game")
+		fmt.Println("submit -root <game root> -version <version>   Submit a game")
 		fmt.Println("")
 		os.Exit(1)
 	}
@@ -237,7 +236,7 @@ func runBZ() error {
 
 		switch res.StatusCode {
 		case http.StatusNotFound:
-			fmt.Printf("No game exists for %s!\n\nBe the first to claim it by publishing a game here", manifest.Name)
+			fmt.Printf("No game exists for %s!\n\nBe the first to claim it by submitting a game here", manifest.Name)
 		case http.StatusOK:
 			var gameInfo struct {
 				LatestVersion string `json:"latest_version"`
@@ -248,42 +247,7 @@ func runBZ() error {
 
 			fmt.Printf("%s\n\nLatest version is %s\n", manifest.Name, gameInfo.LatestVersion)
 		}
-
-	case "register":
-		var registerReq struct {
-			Email    string `json:"email"`
-			Name     string `json:"name"`
-			Password string `json:"password"`
-		}
-		reader := bufio.NewReader(os.Stdin)
-
-		fmt.Print("Enter Email: ")
-		email, err := reader.ReadString('\n')
-		if err != nil {
-			return err
-		}
-
-		name, password, err := credentials()
-		if err != nil {
-			return err
-		}
-		registerReq.Name = name
-		registerReq.Password = password
-		registerReq.Email = email
-		reqData, err := json.Marshal(registerReq)
-		if err != nil {
-			return err
-		}
-		res, err := http.Post(fmt.Sprintf("%s/users", serverURL), "application/json", bytes.NewReader(reqData))
-		if err != nil {
-			return err
-		}
-		if res.StatusCode == 201 {
-			fmt.Printf("ok!")
-		} else {
-			fmt.Printf("nope! %d", res.StatusCode)
-		}
-	case "publish":
+	case "submit":
 		infoCmd := flag.NewFlagSet("info", flag.ExitOnError)
 		root := infoCmd.String("root", "", "game root")
 		version := infoCmd.String("version", "", "version")
@@ -349,6 +313,11 @@ func runBZ() error {
 				if err := os.WriteFile(authPath, []byte(auth), 0400); err != nil {
 					return err
 				}
+			case 401:
+				fmt.Printf(`Cannot login with this username/password.
+
+If you do not currently have an account, please create one by going to https://new.boardzilla.io/register\n`)
+				os.Exit(1)
 			default:
 				panic("didn't expect this!")
 			}
@@ -359,7 +328,7 @@ func runBZ() error {
 			}
 		}
 
-		fmt.Printf("Publishing game at %s\n", *root)
+		fmt.Printf("Submitting game at %s\n", *root)
 		fmt.Printf("Cleaning\n")
 		if err := builder.Clean(); err != nil {
 			return err
@@ -396,7 +365,7 @@ func runBZ() error {
 			}
 			errs <- pipeWriter.Close()
 		}()
-		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/games/%s/%s", serverURL, url.PathEscape(manifest.Name), *version), pipeReader)
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit", serverURL, url.PathEscape(manifest.Name), *version), pipeReader)
 		if err != nil {
 			return err
 		}
@@ -415,14 +384,7 @@ func runBZ() error {
 		switch res.StatusCode {
 		case 200:
 			fmt.Printf("Game %s submitted as version %s!\n\n", manifest.Name, *version)
-			defer res.Body.Close()
-			var publishResponse struct {
-				Token string `json:"token"`
-			}
-			if err := json.NewDecoder(res.Body).Decode(&publishResponse); err != nil {
-				fmt.Printf("Error %#v\n", err)
-			}
-			url := fmt.Sprintf("%s/g/%s/%s/t/%s", serverURL, url.PathEscape(manifest.Name), url.PathEscape(*version), url.PathEscape(publishResponse.Token))
+			url := fmt.Sprintf("%s/home/games/%s/%s", serverURL, url.PathEscape(manifest.Name), url.PathEscape(*version))
 			fmt.Printf("Opening %s...\n\n", url)
 			return exec.Command("open", url).Start() // #nosec G204
 		default:
