@@ -35,7 +35,7 @@ func printHelp() {
 	fmt.Println("")
 	fmt.Println("run -root <game root>                          Run the devtools for a game")
 	fmt.Println("info -root <game root>                         Get info about the game at root")
-	fmt.Println("submit -root <game root> -version <version>   Submit a game")
+	fmt.Println("submit -root <game root> -version <version>    Submit a game")
 	fmt.Println("")
 }
 
@@ -69,7 +69,7 @@ func (n *notifier) notify() {
 func runBZ() error {
 	serverURL := os.Getenv("SERVER_URL")
 	if serverURL == "" {
-		serverURL = "https://boardzilla.io/api"
+		serverURL = "https://boardzilla.io"
 	}
 
 	if len(os.Args) == 1 {
@@ -282,7 +282,11 @@ func runBZ() error {
 			return err
 		}
 		var auth []byte
-		authPath := path.Join(home, ".bzauth")
+		parsedServerURL, err := url.Parse(serverURL)
+		if err != nil {
+			return err
+		}
+		authPath := path.Join(home, fmt.Sprintf(".bzauth-%s", parsedServerURL.Host))
 		if _, err := os.Stat(authPath); err != nil {
 			if !os.IsNotExist(err) {
 				return err
@@ -303,7 +307,7 @@ func runBZ() error {
 				return err
 			}
 
-			res, err := http.Post(fmt.Sprintf("%s/login", serverURL), "application/json", bytes.NewReader(reqData))
+			res, err := http.Post(fmt.Sprintf("%s/api/login", serverURL), "application/json", bytes.NewReader(reqData))
 			if err != nil {
 				return err
 			}
