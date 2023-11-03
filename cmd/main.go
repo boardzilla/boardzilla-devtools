@@ -30,6 +30,15 @@ import (
 
 const debounceDurationMS = 500
 
+func printHelp() {
+	fmt.Println("usage: bz [command]")
+	fmt.Println("")
+	fmt.Println("run -root <game root>                          Run the devtools for a game")
+	fmt.Println("info -root <game root>                         Get info about the game at root")
+	fmt.Println("submit -root <game root> -version <version>   Submit a game")
+	fmt.Println("")
+}
+
 func main() {
 	if err := runBZ(); err != nil {
 		panic(err)
@@ -64,12 +73,7 @@ func runBZ() error {
 	}
 
 	if len(os.Args) == 1 {
-		fmt.Println("usage: bz [command]")
-		fmt.Println("")
-		fmt.Println("run -root <game root>                          Run the devtools for a game")
-		fmt.Println("info -root <game root>                         Get info about the game at root")
-		fmt.Println("submit -root <game root> -version <version>   Submit a game")
-		fmt.Println("")
+		printHelp()
 		os.Exit(1)
 	}
 
@@ -391,7 +395,10 @@ If you do not currently have an account, please create one by going to https://n
 			fmt.Printf("res was %#v\n", res)
 			panic("no!")
 		}
-
+	default:
+		fmt.Printf("Unrecognized command: %s\n\n", command)
+		printHelp()
+		os.Exit(1)
 	}
 
 	return nil
