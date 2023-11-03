@@ -12,6 +12,7 @@ cd site
 yarn
 yarn run build
 cd -
+touch site/build/.gitkeep
 git update-index --really-refresh
 git diff-index --quiet HEAD
 ./scripts/check
