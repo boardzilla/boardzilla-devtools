@@ -48,7 +48,7 @@ type MessageProcessedEvent = {
 type UpdateSettingsMessage = {
   type: "updateSettings"
   id: string
-  settings: NumberGuesserSettings
+  settings: NumberGuesserSettings | {}
 }
 
 // host only
@@ -144,7 +144,7 @@ const Game = () => {
   const [players, setPlayers] = useState<NumberGuesserPlayer[]>([]);
   const [readySent, setReadySent] = useState<boolean>(false);
   const [phase, setPhase] = useState<"new" | "started" | "finished">("new");
-  const [setupState, setSetupState] = useState<NumberGuesserSettings>({evenOnly: false});
+  const [setupState, setSetupState] = useState<NumberGuesserSettings | {}>({evenOnly: false});
   const [gameState, setGameState] = useState<PlayerState<NumberGuesserPlayerState>>();
   const [error, setError] = useState<string>("");
   const [winner, setWinner] = useState<number | undefined>();
@@ -200,6 +200,7 @@ const Game = () => {
       console.log("got a", e.type, "message", e)
       switch(e.type) {
         case 'settingsUpdate':
+        console.log("e.settings!!!", e.settings)
           setSetupState(e.settings);
           break
         case 'players':
@@ -246,7 +247,7 @@ const Game = () => {
     {phase === 'finished' && <span>Game is done! {winner === gameState?.position ? "YOU WIN": "YOU LOSE"}</span>}
     {phase === 'started' && gameState?.state.possibleGuesses.map(n => <button onClick={() => makeMove(n)} key={n}>{n}</button>)}
     {phase === 'new' && <>
-      {bootstrap.host && <p><input type="checkbox" checked={setupState ? setupState.evenOnly : false} onChange={e => setSetupState({evenOnly: e.currentTarget.checked})} />Even numbers only</p>}
+      {bootstrap.host && <p><input type="checkbox" checked={(setupState as any)['evenOnly'] ? true : false} onChange={e => setSetupState({evenOnly: e.currentTarget.checked})} />Even numbers only</p>}
       <h2>Users</h2>
       <ul>
         {users.map(p => <li key={p.id}>{p.name}</li>)}

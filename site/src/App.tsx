@@ -4,6 +4,7 @@ import History from './History';
 import { HistoryItem, InitialStateHistoryItem } from './types';
 import { Modal } from 'react-responsive-modal';
 import toast, { Toaster } from 'react-hot-toast';
+import Switch from "react-switch";
 
 import 'react-responsive-modal/styles.css';
 import './App.css';
@@ -286,14 +287,11 @@ function App() {
       UI.MoveMessage |
       UI.KeyMessage
     >) => {
-      const path = e.source && (e.source as WindowProxy).location.pathname
       switch(e.data.type) {
         case 'initialStateResult':
-          if (path !== '/game.html') return console.error("expected event from game.html!")
           resolveGamePromise(e.data.id, e.data.state)
           break
         case 'processMoveResult':
-          if (path !== '/game.html') return console.error("expected event from game.html!")
           if (e.data.error) {
             rejectGamePromise(e.data.id, e.data.error)
           } else {
@@ -301,16 +299,13 @@ function App() {
           }
           break
         case 'getPlayerStateResult':
-          if (path !== '/game.html') return console.error("expected event from game.html!")
           resolveGamePromise(e.data.id, e.data.state)
           break
         case 'updateSettings':
-          if (path !== '/ui.html') return console.error("expected event from ui.html!")
           setSettings(e.data.settings);
           sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
           break
         case 'move':
-          if (path !== '/ui.html') return console.error("expected event from ui.html!")
           const previousState = history.length === 0 ? initialState!.state : history[history.length - 1].state!;
           try {
             const moveUpdate = await processMove(previousState, {position: currentPlayer.position, data: e.data.data});
@@ -334,7 +329,6 @@ function App() {
           }
           break
         case 'start':
-          if (path !== '/ui.html') return console.error("expected event from ui.html!")
           try {
             const initialUpdate = await sendInitialState({ players, settings });
             const newInitialState = {
@@ -352,7 +346,6 @@ function App() {
           }
           break
         case 'ready':
-          if (path !== '/ui.html') return console.error("expected event from ui.html!")
           if (!initialState) {
             if (settings) {
               sendToUI({type: "settingsUpdate", settings});
@@ -402,7 +395,6 @@ function App() {
           break
         // special event for player switching
         case 'key':
-          if (path !== '/ui.html') return console.error("expected event from ui.html!")
           processKey(e.data.code)
           break
       }
@@ -490,12 +482,12 @@ function App() {
 
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
-          <input type="checkbox" checked={autoSwitch} onChange={() => setAutoSwitch(!autoSwitch)} />{phase === "new" && <input style={{width: '3em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/>}
+          <span style={{marginRight: '3em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /> Autoswitch players</span>
+          {phase === "new" && <span><input style={{width: '3em', marginRight: '1em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/> Number of players</span>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{padding: "3px", backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1}}>{p.name}</button>
-          )}
-          </span>
-          <button style={{fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
+            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{margin: "3px", padding: "3px", backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.userID !== p.userID) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
+          )}</span>
+          <button style={{marginLeft: '2em', fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
         </div>
         {reprocessing && <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>}
         {!reprocessing && (
