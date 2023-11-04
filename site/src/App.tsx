@@ -159,6 +159,7 @@ function App() {
       previousUpdate = newInitialState;
       console.time('reprocessHistory');
       let i = 0;
+      console.log('reprocessHistory items', history.length);
       while(i < history.length) {
         const { move, position } = history[i]
         try {
@@ -285,7 +286,7 @@ function App() {
       UI.MoveMessage |
       UI.KeyMessage
     >) => {
-      const path = (e.source! as WindowProxy).location.pathname
+      const path = e.source && (e.source as WindowProxy).location.pathname
       switch(e.data.type) {
         case 'initialStateResult':
           if (path !== '/game.html') return console.error("expected event from game.html!")
