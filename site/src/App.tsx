@@ -79,6 +79,12 @@ function App() {
     loadSaveStates()
   }, [loadSaveStates])
 
+  useEffect(() => {
+    if (phase === 'new') {
+      sendToUI({type: "settingsUpdate", settings});
+    }
+  }, [phase, settings])
+
   const saveCurrentState = useCallback((name: string): Promise<void> => {
     return fetch(`/states/${encodeURIComponent(name)}`, {
       headers: {
@@ -347,9 +353,7 @@ function App() {
           break
         case 'ready':
           if (!initialState) {
-            if (settings) {
-              sendToUI({type: "settingsUpdate", settings});
-            }
+            sendToUI({type: "settingsUpdate", settings});
             sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});
           } else {
             await updateUI({ game: getCurrentState(history) });
