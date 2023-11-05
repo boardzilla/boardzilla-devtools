@@ -482,8 +482,8 @@ function App() {
 
       <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
         <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
-          <span style={{marginRight: '3em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /> Autoswitch players</span>
-          {phase === "new" && <span><input style={{width: '3em', marginRight: '1em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/> Number of players</span>}
+          <span style={{marginRight: '0.5em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /></span> <span style={{marginRight: '3em'}}>Autoswitch players</span>
+          {phase === "new" && <span><input style={{width: '3em', marginRight: '0.5em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/> Number of players</span>}
           <span style={{flexGrow: 1}}>{players.map(p =>
             <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{margin: "3px", padding: "3px", backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.userID !== p.userID) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
           )}</span>
