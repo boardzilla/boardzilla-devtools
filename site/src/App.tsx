@@ -75,6 +75,11 @@ function App() {
     history?.length ? history[history.length - 1].state! : initialState?.state!
   ), [initialState]);
 
+  const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
+    if (reprocessing) return;
+    (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(data)
+  }, [reprocessing])
+
   useEffect(() => {
     loadSaveStates()
   }, [loadSaveStates])
@@ -83,7 +88,7 @@ function App() {
     if (phase === 'new') {
       sendToUI({type: "settingsUpdate", settings});
     }
-  }, [phase, settings])
+  }, [phase, sendToUI, settings])
 
   const saveCurrentState = useCallback((name: string): Promise<void> => {
     return fetch(`/states/${encodeURIComponent(name)}`, {
@@ -113,11 +118,6 @@ function App() {
       maxPlayers
     })
   }, [currentUserID]);
-
-  const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
-    if (reprocessing) return;
-    (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(data)
-  }, [reprocessing])
 
   const updateUI = useCallback(async (update: {game: Game.GameState, players?: Game.PlayerState[]}) => {
     const playerState = update.players?.find(p => p.position === currentPlayer.position)?.state || await getPlayerState(update.game, currentPlayer.position);
