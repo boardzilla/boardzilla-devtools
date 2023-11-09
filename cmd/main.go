@@ -69,7 +69,7 @@ func (n *notifier) notify() {
 func runBZ() error {
 	serverURL := os.Getenv("SERVER_URL")
 	if serverURL == "" {
-		serverURL = "https://boardzilla.io"
+		serverURL = "https://new.boardzilla.io"
 	}
 
 	if len(os.Args) == 1 {
@@ -317,7 +317,6 @@ func runBZ() error {
 					return fmt.Errorf("expected cookie in response")
 				}
 				auth = []byte(res.Header.Get("set-cookie"))
-				fmt.Printf("cookie! %s\n", auth)
 				if err := os.WriteFile(authPath, []byte(auth), 0400); err != nil {
 					return err
 				}
@@ -327,7 +326,9 @@ func runBZ() error {
 If you do not currently have an account, please create one by going to https://new.boardzilla.io/register\n`)
 				os.Exit(1)
 			default:
-				panic("didn't expect this!")
+				body, _ := io.ReadAll(res.Body)
+				defer res.Body.Close()
+				return fmt.Errorf("authentication sent status: %d body; %s", res.StatusCode, body)
 			}
 		} else {
 			auth, err = os.ReadFile(filepath.Clean(authPath))
@@ -396,8 +397,9 @@ If you do not currently have an account, please create one by going to https://n
 			fmt.Printf("Opening %s...\n\n", url)
 			return exec.Command("open", url).Start() // #nosec G204
 		default:
-			fmt.Printf("res was %#v\n", res)
-			panic("no!")
+			body, _ := io.ReadAll(res.Body)
+			defer res.Body.Close()
+			return fmt.Errorf("publishing sent status: %d body; %s", res.StatusCode, body)
 		}
 	default:
 		fmt.Printf("Unrecognized command: %s\n\n", command)
