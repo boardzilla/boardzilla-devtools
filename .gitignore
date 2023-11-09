@@ -4,3 +4,4 @@ node_modules
 /site/build/*
 /dist
 /bin
+/cmd/package.json

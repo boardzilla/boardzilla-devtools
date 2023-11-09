@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
+	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
@@ -28,6 +29,9 @@ import (
 	"golang.org/x/term"
 )
 
+//go:embed package.json
+var packageFS embed.FS
+
 const debounceDurationMS = 500
 
 func printHelp() {
@@ -36,6 +40,7 @@ func printHelp() {
 	fmt.Println("run -root <game root>                          Run the devtools for a game")
 	fmt.Println("info -root <game root>                         Get info about the game at root")
 	fmt.Println("submit -root <game root> -version <version>    Submit a game")
+	fmt.Println("version                                        Shows version installed")
 	fmt.Println("")
 }
 
@@ -80,6 +85,16 @@ func runBZ() error {
 	command := os.Args[1]
 
 	switch command {
+	case "version":
+		f, err := packageFS.ReadFile("package.json")
+		if err != nil {
+			return err
+		}
+		data := make(map[string]any)
+		if err := json.Unmarshal(f, &data); err != nil {
+			return err
+		}
+		fmt.Printf("Version is %s\n", data["version"].(string))
 	case "run":
 		runCmd := flag.NewFlagSet("run", flag.ExitOnError)
 		root := runCmd.String("root", "", "game root")

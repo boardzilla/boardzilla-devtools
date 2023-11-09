@@ -8,6 +8,7 @@ if [ -z ${GITHUB_TOKEN+x} ]; then
   exit 1
 fi
 
+cp package.json cmd/package.json
 cd site
 yarn
 yarn run build
