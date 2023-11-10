@@ -5,6 +5,9 @@
   <link rel="stylesheet" href="ui.css"/>
   <script src="ui.js"></script>
   <script>
+    if (window.parent !== window) {
+      window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    }
     window.addEventListener('keyup', (e) => {
       if (!e.shiftKey) return
       window.top.postMessage({type: "key", code: e.code}, "*")

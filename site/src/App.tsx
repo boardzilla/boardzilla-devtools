@@ -489,13 +489,13 @@ function App() {
           <span style={{marginRight: '0.5em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /></span> <span style={{marginRight: '3em'}}>Autoswitch players</span>
           {phase === "new" && <span><input style={{width: '3em', marginRight: '0.5em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/> Number of players</span>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{margin: "3px", padding: "3px", backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.userID !== p.userID) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
+            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.userID !== p.userID) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
           )}</span>
           <button style={{marginLeft: '2em', fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
         </div>
         {reprocessing && <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>}
         {!reprocessing && (
-          <iframe seamless={true} sandbox="allow-scripts allow-same-origin allow-forms allow-modals" style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
+          <iframe seamless={true} style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
         )};
         <iframe onLoad={() => reprocessHistoryCallback()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
