@@ -120,8 +120,9 @@ type User = {
 }
 
 type UserPlayer = {
-  color: string
   name: string
+  color: string
+  avatar: string
   position: number
   settings?: any
   userID?: string
