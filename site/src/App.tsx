@@ -170,7 +170,7 @@ function App() {
       while(i < history.length) {
         const { move, position } = history[i]
         try {
-          previousUpdate = await processMove(previousUpdate.game, {...move, position}, false);
+          previousUpdate = await processMove(previousUpdate.game, {position, data: move}, false);
           newHistory.push({position, move, seq: i, state: previousUpdate.game, messages: previousUpdate.messages})
         } catch(e) {
           console.error("error while reprocessing history", e)
@@ -184,6 +184,7 @@ function App() {
       throw e
     } finally {
       setPlayers(players);
+      setCurrentUserID(players[0].userID!)
       setInitialState(newInitialState ? {state: newInitialState.game, players, settings} : undefined)
       setHistory(newHistory);
       setPhase(newInitialState ? 'started' : 'new');
@@ -320,7 +321,7 @@ function App() {
               seq: history.length,
               state: moveUpdate.game,
               messages: moveUpdate.messages,
-              move: e.data,
+              move: e.data.data,
             }];
             setHistory(newHistory);
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})

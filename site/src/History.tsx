@@ -50,7 +50,7 @@ export default function History({items, initialState, revertTo, view, players, c
             <span style={{marginLeft: '3px', padding: '1px', border: `2px ${player(i.position).color} solid`}}>{player(i.position).name}</span>
             <button onClick={() => view(i.seq)}>View</button>
             <button onClick={() => revertTo(i.seq)}>Revert</button>
-            {i.move.data instanceof Array && (i.move.data.map((move: any, i: number) => (
+            {i.move instanceof Array && (i.move.map((move: any, i: number) => (
               <div key={i}>
                 <code>
                   {move.action}
@@ -58,11 +58,11 @@ export default function History({items, initialState, revertTo, view, players, c
                 </code>
               </div>
             )))}
-            {'action' in i.move.data && (
+            {'action' in i.move && (
               <div>
                 <code>
-                  {i.move.data?.action}
-                  ({i.move.data?.args && i.move.data?.args.join(', ')})
+                  {i.move.action}
+                  ({i.move.args && i.move.args.join(', ')})
                 </code>
               </div>
             )}

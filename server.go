@@ -8,6 +8,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -162,7 +163,13 @@ func (s *Server) Serve() error {
 	})
 
 	r.Get("/states/{name}", func(w http.ResponseWriter, r *http.Request) {
-		target := path.Join(saveStatesPath, chi.URLParam(r, "name"))
+		escapedTarget := path.Join(saveStatesPath, chi.URLParam(r, "name"))
+		target, err := url.PathUnescape(escapedTarget)
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
 		data, err := os.ReadFile(filepath.Clean(target))
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
