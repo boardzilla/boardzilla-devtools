@@ -371,6 +371,7 @@ function App() {
                 newPlayers.push({
                   color: op.color,
                   name: op.name,
+                  avatar: `https://i.pravatar.cc/200?u=${op.userID}`,
                   position: op.position,
                   userID: op.userID,
                 })
