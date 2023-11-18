@@ -372,6 +372,7 @@ function App() {
                   color: op.color,
                   name: op.name,
                   avatar: `https://i.pravatar.cc/200?u=${op.userID}`,
+                  host: op.userID === possibleUsers[0].id,
                   position: op.position,
                   userID: op.userID,
                 })

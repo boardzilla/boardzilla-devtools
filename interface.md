@@ -37,6 +37,8 @@ type Player = {
   color: string
   name: string
   position: number
+  avatar: string
+  host: boolean
   settings?: any
 }
 
