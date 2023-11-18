@@ -50,22 +50,14 @@ export default function History({items, initialState, revertTo, view, players, c
             <span style={{marginLeft: '3px', padding: '1px', border: `2px ${player(i.position).color} solid`}}>{player(i.position).name}</span>
             <button onClick={() => view(i.seq)}>View</button>
             <button onClick={() => revertTo(i.seq)}>Revert</button>
-            {i.move instanceof Array && (i.move.map((move: any, i: number) => (
+            {(i.move instanceof Array ? i.move : [i.move]).filter(m => 'action' in m).map((move: any, i: number) => (
               <div key={i}>
                 <code>
                   {move.action}
-                  ({move.args && move.args.join(', ')})
+                  ({Object.entries(move.args).map(([k, v]) => `${k}: ${v}`).join(', ')})
                 </code>
               </div>
-            )))}
-            {'action' in i.move && (
-              <div>
-                <code>
-                  {i.move.action}
-                  ({i.move.args && i.move.args.join(', ')})
-                </code>
-              </div>
-            )}
+            ))}
             {Object.entries(i.messages || []).map(([key, m]) => (
               <div key={key} dangerouslySetInnerHTML={{ __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>') }}/>
             ))}
