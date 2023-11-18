@@ -18,12 +18,12 @@ const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
 const minPlayers = parseInt(body.getAttribute("minPlayers")!);
 const possibleUsers = [
   {id: "0", name: "Evelyn"},
-  {id: "1", name: "Logan"},
-  {id: "2", name: "Avery"},
-  {id: "3", name: "Jayden"},
-  {id: "4", name: "Aischa"},
-  {id: "5", name: "Shyamapada"},
-  {id: "6", name: "Iovica"},
+  {id: "1", name: "Anastasia"},
+  {id: "2", name: "Jayden"},
+  {id: "3", name: "Priyanka"},
+  {id: "4", name: "Logan"},
+  {id: "5", name: "Avery"},
+  {id: "6", name: "Aischa"},
   {id: "7", name: "Liubika"},
   {id: "8", name: "Zvezdelina"},
   {id: "9", name: "Guadalupe"},
