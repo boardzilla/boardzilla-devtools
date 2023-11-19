@@ -185,7 +185,13 @@ func (s *Server) Serve() error {
 	})
 
 	r.Post("/states/{name}", func(w http.ResponseWriter, r *http.Request) {
-		target := path.Join(saveStatesPath, chi.URLParam(r, "name"))
+		escapedTarget := path.Join(saveStatesPath, chi.URLParam(r, "name"))
+		target, err := url.PathUnescape(escapedTarget)
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
 		f, err := os.OpenFile(filepath.Clean(target), os.O_RDWR|os.O_TRUNC|os.O_CREATE, 0600)
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
@@ -203,7 +209,13 @@ func (s *Server) Serve() error {
 	})
 
 	r.Delete("/states/{name}", func(w http.ResponseWriter, r *http.Request) {
-		target := path.Join(saveStatesPath, chi.URLParam(r, "name"))
+		escapedTarget := path.Join(saveStatesPath, chi.URLParam(r, "name"))
+		target, err := url.PathUnescape(escapedTarget)
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
 		if err := os.Remove(target); err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
