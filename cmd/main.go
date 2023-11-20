@@ -412,6 +412,10 @@ func (b *bz) submit() error {
 	statusCmd := exec.Command("git", "status", "--porcelain")
 	statusCmd.Dir = *root
 	out, err := statusCmd.Output()
+	if err != nil {
+		return fmt.Errorf("error checking git status: %w", err)
+	}
+
 	if len(out) != 0 {
 		fmt.Println("submit aborted, you have uncommitted changes")
 		os.Exit(1)
