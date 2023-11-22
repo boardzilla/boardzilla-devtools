@@ -216,12 +216,14 @@ function App() {
             case "ui":
               console.debug("UI reloading due to changes");
               (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow?.location.reload();
+              setBuildError(undefined)
               toast.success("UI Reloaded!")
               break
             case "game":
               setReprocessing(true);
               console.debug("Game reloading due to changes");
               (document.getElementById("game") as HTMLIFrameElement)?.contentWindow?.location.reload();
+              setBuildError(undefined)
               toast.success("Game Reloaded!")
               break
           }
