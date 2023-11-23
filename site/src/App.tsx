@@ -166,7 +166,7 @@ function App() {
       previousUpdate = newInitialState;
       console.time('reprocessHistory');
       let i = 0;
-      console.log('reprocessHistory items', history.length);
+      console.debug('reprocessHistory items', history.length);
       while(i < history.length) {
         const { move, position } = history[i]
         try {
@@ -241,7 +241,6 @@ function App() {
           }
           break
         case "ping":
-          console.debug("ping received");
           break
       }
     })
@@ -373,7 +372,7 @@ function App() {
                 newPlayers.push({
                   color: op.color,
                   name: op.name,
-                  avatar: `https://i.pravatar.cc/200?u=${op.userID}`,
+                  avatar: `https://i.pravatar.cc/200?u=bzp${op.userID}`,
                   host: op.userID === possibleUsers[0].id,
                   position: op.position,
                   userID: op.userID,
