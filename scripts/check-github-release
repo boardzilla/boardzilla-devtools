@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+tag=$(jq '.version' package.json -r)
+url=$(curl -Ls -o /dev/null -w %{url_effective} "https://github.com/boardzilla/boardzilla-devtools/releases/latest")
+released_version=$(basename $url)
+if [ "v$tag" != "$released_version" ]; then
+  echo "Released version $released_version does not match version in package.json v$tag"
+  exit 1
+fi
