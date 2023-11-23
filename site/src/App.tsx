@@ -76,9 +76,8 @@ function App() {
   ), [initialState]);
 
   const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
-    if (reprocessing) return;
     (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(data)
-  }, [reprocessing])
+  }, [])
 
   useEffect(() => {
     loadSaveStates()
@@ -120,6 +119,7 @@ function App() {
   }, [currentUserID]);
 
   const updateUI = useCallback(async (update: {game: Game.GameState, players?: Game.PlayerState[]}) => {
+    if (reprocessing) return;
     const playerState = update.players?.find(p => p.position === currentPlayer.position)?.state || await getPlayerState(update.game, currentPlayer.position);
     switch(update.game.phase) {
       case 'finished':
@@ -133,17 +133,23 @@ function App() {
         });
         break
       case 'started':
+        let position = currentPlayer.position;
+        if (autoSwitch && update.game.currentPlayers[0] !== currentPlayer.position) {
+          position = update.game.currentPlayers[0];
+          setCurrentUserID(players.find(p => p.position === position)!.userID!);
+          return
+        }
         sendToUI({
           type: "gameUpdate",
           state: {
-            position: currentPlayer.position,
+            position,
             state: playerState
           },
           currentPlayers: update.game.currentPlayers,
         });
         break
     }
-  }, [sendToUI, currentPlayer]);
+  }, [sendToUI, reprocessing, autoSwitch, players, currentPlayer]);
 
   const resetGame = useCallback(() => {
     setPhase("new");
