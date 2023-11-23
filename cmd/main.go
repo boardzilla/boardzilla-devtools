@@ -423,7 +423,7 @@ func (b *bz) submit() error {
 	if err != nil {
 		return err
 	}
-	packageJSONBytes, err := os.ReadFile(packageJSONPath)
+	packageJSONBytes, err := os.ReadFile(packageJSONPath) // #nosec G304
 	if err != nil {
 		return err
 	}
@@ -461,6 +461,9 @@ func (b *bz) submit() error {
 		differentVersion = currentVersion.Str != newVersion
 		version = &newVersion
 	}
+	if version == nil || *version == "" {
+		return fmt.Errorf("Requires -version <version>")
+	}
 	successful := false
 	versionTag := fmt.Sprintf("v%s", *version)
 	defer func() {
@@ -476,9 +479,6 @@ func (b *bz) submit() error {
 			color.Redf("error resetting: %s -- %s\n", err.Error(), out)
 		}
 	}()
-	if version == nil || *version == "" {
-		return fmt.Errorf("Requires -version <version>")
-	}
 
 	gitShaOut, err := sh(*root, "git", "rev-parse", "HEAD")
 	if err != nil {
