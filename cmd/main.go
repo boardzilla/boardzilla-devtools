@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"embed"
@@ -20,13 +19,15 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
+
+	"github.com/erikgeiser/promptkit/textinput"
+	"github.com/gookit/color"
+	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
 
 	devtools "github.com/boardzilla/boardzilla-devtools"
 	"github.com/rjeczalik/notify"
-
-	"golang.org/x/term"
 )
 
 //go:embed package.json
@@ -47,7 +48,8 @@ func printHelp() {
 func main() {
 	bzCli := newBz()
 	if err := bzCli.exec(); err != nil {
-		panic(err)
+		color.Grayf("error: %s\n", err.Error())
+		os.Exit(1)
 	}
 }
 
@@ -348,10 +350,11 @@ func (b *bz) getAuth() ([]byte, error) {
 				return auth, err
 			}
 		case 401:
-			fmt.Printf(`Cannot login with this username/password.
+			color.Println(`
+<error>🚫 Cannot login with this username/password.</>
 
-If you do not currently have an account, please create one by going to https://new.boardzilla.io/register\n`)
-			os.Exit(1)
+If you do not currently have an account, please create one by going to <cyan>https://new.boardzilla.io/register</> and signing up`)
+			return auth, fmt.Errorf("unauthorized")
 		default:
 			body, _ := io.ReadAll(res.Body)
 			defer res.Body.Close()
@@ -393,39 +396,93 @@ func (b *bz) submit() error {
 	submitCmd := flag.NewFlagSet("submit", flag.ExitOnError)
 	root := submitCmd.String("root", "", "game root")
 	version := submitCmd.String("version", "", "version")
+	interactive := submitCmd.Bool("interactive", false, "interactive")
 
 	if err := submitCmd.Parse(os.Args[2:]); err != nil {
 		return err
 	}
 
 	if *root == "" {
-		fmt.Println("Requires -root <game root>")
-		os.Exit(1)
-	}
-
-	if *version == "" {
-		fmt.Println("Requires -version <version>")
-		os.Exit(1)
+		color.Redln("Requires -root <game root>")
+		return fmt.Errorf("root required")
 	}
 
 	// check that git is clean
 	statusCmd := exec.Command("git", "status", "--porcelain")
 	statusCmd.Dir = *root
-	out, err := statusCmd.Output()
-	if err != nil {
+	if out, err := statusCmd.Output(); err != nil {
+		color.Redln("⛔️ Root directory must be a git repo\n")
 		return fmt.Errorf("error checking git status: %w", err)
+	} else if len(out) != 0 {
+		color.Redln("⛔️ Submit aborted due to uncommitted changes. Please ensure everything is committed, and submit again.\n")
+		return fmt.Errorf("uncommitted changes")
 	}
 
-	if len(out) != 0 {
-		fmt.Println("submit aborted, you have uncommitted changes")
-		os.Exit(1)
-	}
-
-	shaCmd := exec.Command("git", "rev-parse", "HEAD")
-	shaCmd.Dir = *root
-	gitShaOut, err := shaCmd.Output()
+	packageJSONPath := path.Join(*root, "package.json")
+	stat, err := os.Stat(packageJSONPath)
 	if err != nil {
-		return fmt.Errorf("error getting sha: %w", err)
+		return err
+	}
+	packageJSONBytes, err := os.ReadFile(packageJSONPath)
+	if err != nil {
+		return err
+	}
+	currentVersion := gjson.Get(string(packageJSONBytes), "version")
+	if !currentVersion.Exists() {
+		return fmt.Errorf("cannot get current version from package.json")
+	}
+	differentVersion := false
+	if *interactive {
+		versionInput := textinput.New("Enter your version:")
+		versionInput.Placeholder = currentVersion.Str
+		versionInput.Validate = func(s string) error {
+			if s == "" {
+				return fmt.Errorf("required")
+			}
+
+			return nil
+		}
+		versionInput.Template += `
+		{{- if .ValidationError -}}
+			{{- print " " (Foreground "1" .ValidationError.Error) -}}
+		{{- end -}}`
+
+		newVersion, err := versionInput.RunPrompt()
+		if err != nil {
+			return err
+		}
+		newPackageJSON, err := sjson.Set(string(packageJSONBytes), "version", newVersion)
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(path.Join(*root, "package.json"), []byte(newPackageJSON), stat.Mode()); err != nil {
+			return err
+		}
+		differentVersion = currentVersion.Str != newVersion
+		version = &newVersion
+	}
+	successful := false
+	versionTag := fmt.Sprintf("v%s", *version)
+	defer func() {
+		if successful {
+			return
+		}
+		if differentVersion {
+			if out, err := sh(*root, "git", "tag", "-d", versionTag); err != nil {
+				color.Redf("error deleting tag: %s -- %s\n", err.Error(), out)
+			}
+		}
+		if out, err := sh(*root, "git", "reset", "--hard"); err != nil {
+			color.Redf("error resetting: %s -- %s\n", err.Error(), out)
+		}
+	}()
+	if version == nil || *version == "" {
+		return fmt.Errorf("Requires -version <version>")
+	}
+
+	gitShaOut, err := sh(*root, "git", "rev-parse", "HEAD")
+	if err != nil {
+		return fmt.Errorf("error getting sha: %w -- %s", err, gitShaOut)
 	}
 	gitSha := strings.TrimSpace(string(gitShaOut))
 	builder, err := devtools.NewBuilder(*root)
@@ -436,20 +493,23 @@ func (b *bz) submit() error {
 	if err != nil {
 		return fmt.Errorf("manifest: %w", err)
 	}
+
 	auth, err := b.getAuth()
 	if err != nil {
 		return fmt.Errorf("unable to authenticate: %w", err)
 	}
 
-	fmt.Printf("Submitting game at %s\n", *root)
-	fmt.Printf("Cleaning\n")
+	color.Printf("Submitting game at <cyan>%s</>\n", *root)
+	fmt.Print("🧹 Cleaning\n")
 	if err := builder.Clean(); err != nil {
 		return err
 	}
-	fmt.Printf("Building\n")
+	fmt.Println("✅ Done cleaning")
+	fmt.Printf("🛠️ Building")
 	if err := builder.BuildProd(); err != nil {
 		return err
 	}
+	fmt.Println("✅ Done building")
 
 	pipeReader, pipeWriter := io.Pipe()
 	errs := make(chan error)
@@ -478,7 +538,7 @@ func (b *bz) submit() error {
 		}
 		errs <- pipeWriter.Close()
 	}()
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s", b.serverURL, url.PathEscape(manifest.Name), *version, gitSha), pipeReader)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s", b.serverURL, url.PathEscape(manifest.Name), versionTag, gitSha), pipeReader)
 	if err != nil {
 		return err
 	}
@@ -496,7 +556,8 @@ func (b *bz) submit() error {
 	}
 	switch res.StatusCode {
 	case 200:
-		fmt.Printf("Game %s submitted as version %s!\n\n", manifest.Name, *version)
+		color.Printf("🎉🎉🎉 Game <green>%s</> submitted as version <green>%s</>\n\n", manifest.Name, versionTag)
+		successful = true
 
 		var submitResponse struct {
 			ID uint64 `json:"id"`
@@ -505,6 +566,28 @@ func (b *bz) submit() error {
 		if err := json.NewDecoder(res.Body).Decode(&submitResponse); err != nil {
 			return err
 		}
+		if differentVersion {
+			color.Printf("Committing package.json with new version <green>%s</>\n", versionTag)
+			if out, err := sh(*root, "git", "add", "package.json"); err != nil {
+				return fmt.Errorf("error adding package.json: %w -- %s", err, out)
+			}
+			if out, err := sh(*root, "git", "commit", "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
+				return fmt.Errorf("error committing: %w -- %s", err, out)
+			}
+			color.Printf("Pushing package.json change\n")
+			if out, err := sh(*root, "git", "push"); err != nil {
+				return fmt.Errorf("error pushing change: %w -- %s", err, out)
+			}
+		}
+		color.Printf("Adding git tag for <green>%s</>\n", versionTag)
+		if out, err := sh(*root, "git", "tag", "-f", "-a", versionTag, "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
+			return fmt.Errorf("error adding tag: %w -- %s", err, out)
+		}
+		color.Printf("Pushing new tag <green>%s</>\n", versionTag)
+		if out, err := sh(*root, "git", "push", "--tags"); err != nil {
+			return fmt.Errorf("error pushing change: %w -- %s", err, out)
+		}
+
 		url := fmt.Sprintf("%s/home/games/%s/%d", b.serverURL, url.PathEscape(manifest.Name), submitResponse.ID)
 		fmt.Printf("Opening %s...\n\n", url)
 		return exec.Command("open", url).Start() // #nosec G204
@@ -533,7 +616,7 @@ func newGameWriter(serverURL, name string, mpw *multipart.Writer, root string) *
 
 func (gw *gameWriter) addFile(target string, src ...string) error {
 	assetPath := path.Join(src...)
-	fmt.Printf("adding file %s from %s\n", target, assetPath)
+	color.Printf("Adding file <cyan>%s</> from <cyan>%s</>", target, assetPath)
 	f, err := os.ReadFile(filepath.Clean(assetPath))
 	if err != nil {
 		return err
@@ -554,6 +637,7 @@ func (gw *gameWriter) addFile(target string, src ...string) error {
 			return err
 		}
 		if bytes.Equal(serverDigest, digest[:]) {
+			color.Println(", <yellow>skipping</>")
 			return nil
 		}
 	}
@@ -561,11 +645,10 @@ func (gw *gameWriter) addFile(target string, src ...string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("copying... %d\n", len(f))
 	if _, err := io.Copy(writer, bytes.NewReader(f)); err != nil {
 		return err
 	}
-	fmt.Printf("done copying...")
+	color.Println(" ✅")
 	return nil
 }
 
@@ -591,20 +674,50 @@ func (gw *gameWriter) addDir(target string, src ...string) error {
 }
 
 func credentials() (string, string, error) {
-	reader := bufio.NewReader(os.Stdin)
+	usernameInput := textinput.New("Enter your username:")
+	usernameInput.Placeholder = ""
+	usernameInput.Validate = func(s string) error {
+		if s == "" {
+			return fmt.Errorf("required")
+		}
 
-	fmt.Print("Enter Username: ")
-	username, err := reader.ReadString('\n')
+		return nil
+	}
+	usernameInput.Template += `
+	{{- if .ValidationError -}}
+		{{- print " " (Foreground "1" .ValidationError.Error) -}}
+	{{- end -}}`
+
+	username, err := usernameInput.RunPrompt()
 	if err != nil {
 		return "", "", err
 	}
 
-	fmt.Print("Enter Password: ")
-	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
+	passwordInput := textinput.New("Enter your password:")
+	passwordInput.Placeholder = ""
+	passwordInput.Validate = func(s string) error {
+		if s == "" {
+			return fmt.Errorf("required")
+		}
+
+		return nil
+	}
+	passwordInput.Hidden = true
+	passwordInput.Template += `
+	{{- if .ValidationError -}}
+		{{- print " " (Foreground "1" .ValidationError.Error) -}}
+	{{- end -}}`
+
+	password, err := passwordInput.RunPrompt()
 	if err != nil {
 		return "", "", err
 	}
 
-	password := string(bytePassword)
-	return strings.TrimSpace(username), strings.TrimSpace(password), nil
+	return username, password, nil
+}
+
+func sh(root, cmd string, rest ...string) ([]byte, error) {
+	ex := exec.Command(cmd, rest...)
+	ex.Dir = root
+	return ex.CombinedOutput()
 }
