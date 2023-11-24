@@ -41,7 +41,6 @@ cd -
 touch site/build/.gitkeep
 ./scripts/check
 echo $version
-sha=$(git rev-parse HEAD)
 git add package.json
 git commit -m"Bump to version v$version"
 git tag -a "v${version}" -m"Release version ${version}"
@@ -51,13 +50,13 @@ git push
 
 tag=$(jq '.version' package.json -r)
 
-url="https://github.com/boardzilla/boardzilla-devtools/releases/edit/untagged-$sha"
+url="https://github.com/boardzilla/boardzilla-devtools/releases"
 echo "Opening $url"
 open $url
 
 set +e
 echo "Waiting for release to become public"
-until ./check-github-release
+until ./scripts/check-github-release
 do
   sleep 5
 done
