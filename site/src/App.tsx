@@ -152,7 +152,7 @@ function App() {
         });
         break
     }
-  }, [sendToUI, reprocessing, autoSwitch, players, currentPlayer, currentUserID, currentUserIDRequested]);
+  }, [sendToUI, reprocessing, autoSwitch, players, currentPlayer, currentUserIDRequested]);
 
   const resetGame = useCallback(() => {
     setPhase("new");
