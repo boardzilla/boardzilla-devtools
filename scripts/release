@@ -41,15 +41,16 @@ cd -
 touch site/build/.gitkeep
 ./scripts/check
 echo $version
+sha=$(git rev-parse HEAD)
 git add package.json
 git commit -m"Bump to version v$version"
 git tag -a "v${version}" -m"Release version ${version}"
 goreleaser release --clean
 git push --tags
-
+git push
 
 tag=$(jq '.version' package.json -r)
-open https://github.com/boardzilla/boardzilla-devtools/releases/tag/v$version
+open https://github.com/boardzilla/boardzilla-devtools/releases/edit/untagged-$sha
 
 set +e
 echo "Waiting for release to become public"
