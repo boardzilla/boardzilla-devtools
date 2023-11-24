@@ -1,5 +1,5 @@
 import ReconnectingEventSource from "reconnecting-eventsource";
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import History from './History';
 import { HistoryItem, InitialStateHistoryItem } from './types';
 import { Modal } from 'react-responsive-modal';
@@ -52,10 +52,12 @@ function App() {
   const [numberOfUsers, setNumberOfUsers] = useState(minPlayers);
   const [phase, setPhase] = useState<"new" | "started">("new");
   const [currentUserID, setCurrentUserID] = useState(possibleUsers[0].id);
+  const [currentUserIDRequested, setCurrentUserIDRequested] = useState<string | undefined>(undefined);
   const [players, setPlayers] = useState<UI.UserPlayer[]>([]);
   const [buildError, setBuildError] = useState<BuildError | undefined>();
   const [settings, setSettings] = useState<Game.GameSettings>({});
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyPin, setHistoryPin] = useState<number | undefined>(undefined);
   const [helpOpen, setHelpOpen] = useState(false);
   const [saveStatesOpen, setSaveStatesOpen] = useState(false);
   const [saveStates, setSaveStates] = useState<SaveState[]>([])
@@ -63,7 +65,7 @@ function App() {
   const [autoSwitch, setAutoSwitch] = useState(true);
   const [reprocessing, setReprocessing] = useState(true);
 
-  const currentPlayer = players.find(p => p.userID === currentUserID)!
+  const currentPlayer = useMemo(() => players.find(p => p.userID === currentUserID)!, [players, currentUserID]);
 
   const loadSaveStates = useCallback(async () => {
     const response = await fetch('/states')
@@ -71,9 +73,10 @@ function App() {
     setSaveStates((states as {entries: SaveState[]}).entries)
   }, []);
 
-  const getCurrentState = useCallback((history?: HistoryItem[]): Game.GameState => (
-    history?.length ? history[history.length - 1].state! : initialState?.state!
-  ), [initialState]);
+  const getCurrentState = useCallback((history?: HistoryItem[]): Game.GameState => {
+    const historyItem = historyPin ?? (history?.length ?? 0) - 1;
+    return history && historyItem >= 0  ? history[historyItem].state! : initialState?.state!
+  }, [initialState, historyPin]);
 
   const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(data)
@@ -134,7 +137,7 @@ function App() {
         break
       case 'started':
         let position = currentPlayer.position;
-        if (autoSwitch && update.game.currentPlayers[0] !== currentPlayer.position) {
+        if (autoSwitch && update.game.currentPlayers[0] !== currentPlayer.position && currentUserIDRequested === undefined) {
           position = update.game.currentPlayers[0];
           setCurrentUserID(players.find(p => p.position === position)!.userID!);
           return
@@ -149,7 +152,7 @@ function App() {
         });
         break
     }
-  }, [sendToUI, reprocessing, autoSwitch, players, currentPlayer]);
+  }, [sendToUI, reprocessing, autoSwitch, players, currentPlayer, currentUserID, currentUserIDRequested]);
 
   const resetGame = useCallback(() => {
     setPhase("new");
@@ -172,7 +175,6 @@ function App() {
       previousUpdate = newInitialState;
       console.time('reprocessHistory');
       let i = 0;
-      console.debug('reprocessHistory items', history.length);
       while(i < history.length) {
         const { move, position } = history[i]
         try {
@@ -191,8 +193,10 @@ function App() {
     } finally {
       setPlayers(players);
       setCurrentUserID(players[0].userID!)
+      setCurrentUserIDRequested(undefined)
       setInitialState(newInitialState ? {state: newInitialState.game, players, settings} : undefined)
       setHistory(newHistory);
+      setHistoryPin(undefined);
       setPhase(newInitialState ? 'started' : 'new');
     }
     return previousUpdate ? previousUpdate.game : undefined
@@ -220,14 +224,12 @@ function App() {
         case "reload":
           switch(e.target) {
             case "ui":
-              console.debug("UI reloading due to changes");
               (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow?.location.reload();
               setBuildError(undefined)
               toast.success("UI Reloaded!")
               break
             case "game":
               setReprocessing(true);
-              console.debug("Game reloading due to changes");
               (document.getElementById("game") as HTMLIFrameElement)?.contentWindow?.location.reload();
               setBuildError(undefined)
               toast.success("Game Reloaded!")
@@ -237,11 +239,9 @@ function App() {
         case "buildError":
           switch(e.target) {
             case "ui":
-              console.debug("UI build error");
               setBuildError({type:"ui", out: e.out, err: e.err})
               break
             case "game":
-              console.debug("Game build error");
               setBuildError({type:"game", out: e.out, err: e.err})
               break
           }
@@ -331,7 +331,9 @@ function App() {
               move: e.data.data,
             }];
             setHistory(newHistory);
+            setHistoryPin(undefined);
             sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
+            setCurrentUserIDRequested(undefined);
             if (moveUpdate.game.phase === 'started' && autoSwitch && moveUpdate.game.currentPlayers[0] !== currentPlayer.position) {
               setCurrentUserID(players.find(p => p.position === moveUpdate.game.currentPlayers[0])!.userID!);
               return
@@ -443,7 +445,7 @@ function App() {
       await saveCurrentState(name)
     } catch(e) {
       toast.error(`Error reprocessing history: ${String(e)}`)
-      console.log(e)
+      console.error(e)
     }
     setSaveStatesOpen(false);
     (document.getElementById("game") as HTMLIFrameElement)?.contentWindow?.location.reload();
@@ -499,7 +501,7 @@ function App() {
           <span style={{marginRight: '0.5em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /></span> <span style={{marginRight: '3em'}}>Autoswitch players</span>
           {phase === "new" && <span><input style={{width: '3em', marginRight: '0.5em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/> Number of players</span>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => setCurrentUserID(p.userID!)} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.userID !== p.userID) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
+            <button className="player" onClick={() => {setCurrentUserIDRequested(p.userID!); setCurrentUserID(p.userID!)}} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.userID !== p.userID) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
           )}</span>
           <button style={{marginLeft: '2em', fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
         </div>
@@ -519,7 +521,7 @@ function App() {
         </h2>
         <History
           players={players}
-          view={n => updateUI({game : n === -1 ? initialState!.state : history[n].state })}
+          view={n => { setHistoryPin(n === history.length ? undefined : n); updateUI({ game: n === -1 ? initialState!.state : history[n].state })}}
           revertTo={n => {setHistory(history.slice(0, n+1)); updateUI({ game: n === -1 ? initialState!.state : history[n].state })}}
           initialState={initialState}
           items={history}
