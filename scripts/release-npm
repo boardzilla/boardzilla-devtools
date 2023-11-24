@@ -1,7 +1,0 @@
-#!/bin/bash
-
-set -e
-
-git update-index --really-refresh
-git diff-index --quiet HEAD
-npm publish --access public

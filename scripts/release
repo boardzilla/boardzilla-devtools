@@ -1,0 +1,61 @@
+#!/bin/bash
+
+set -e
+
+if [ -z ${1+x} ]; then
+  echo "Usage: scripts/release <version>"
+  echo
+  echo "<version> is missing!"
+  echo
+  exit 1
+fi
+
+if [ -z ${GITHUB_TOKEN+x} ]; then
+  echo "You need to supply a GITHUB_TOKEN env variable before you can publish"
+  echo
+  exit 1
+fi
+
+version=$1
+tag=$(jq '.version' package.json -r)
+
+if [ "$tag" = "$version" ]; then
+  echo "This version is already published"
+  echo
+  exit 1
+fi
+
+# check if git is clean
+git update-index --really-refresh
+git diff-index --quiet HEAD
+
+# update version
+echo "$( jq '.version = "$version"' package.json )" > package-new.json
+mv package-new.json package.json
+cp package.json cmd/package.json
+cd site
+yarn
+yarn run build
+cd -
+touch site/build/.gitkeep
+./scripts/check
+echo $version
+git add package.json
+git commit -m"Bump to version v$version"
+git tag -a "v${version}" -m"Release version ${version}"
+goreleaser release --clean
+git push --tags
+
+
+tag=$(jq '.version' package.json -r)
+open https://github.com/boardzilla/boardzilla-devtools/releases/tag/v$version
+
+set +e
+echo "Waiting for release to become public"
+until curl -s -f -o /dev/null "https://github.com/boardzilla/boardzilla-devtools/releases/tag/v$version"
+do
+  sleep 5
+done
+
+set -e
+npm publish --access public
