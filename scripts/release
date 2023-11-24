@@ -50,11 +50,14 @@ git push --tags
 git push
 
 tag=$(jq '.version' package.json -r)
-open https://github.com/boardzilla/boardzilla-devtools/releases/edit/untagged-$sha
+
+url="https://github.com/boardzilla/boardzilla-devtools/releases/edit/untagged-$sha"
+echo "Opening $url"
+open $url
 
 set +e
 echo "Waiting for release to become public"
-until curl -s -f -o /dev/null "https://github.com/boardzilla/boardzilla-devtools/releases/tag/v$version"
+until ./check-github-release
 do
   sleep 5
 done
