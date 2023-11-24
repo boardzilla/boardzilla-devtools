@@ -76,6 +76,7 @@ func (n *notifier) notify() {
 
 type bz struct {
 	serverURL string
+	root      string
 }
 
 func newBz() *bz {
@@ -137,13 +138,12 @@ func (b *bz) run() error {
 
 	gameRoot, err := filepath.Abs(*root)
 	if err != nil {
-		log.Fatalf("error: %#v", err)
+		return err
 	}
 	if gameRoot == "" {
-		fmt.Println("Requires -root <game root>")
-		os.Exit(1)
+		return fmt.Errorf("Requires -root <game root>")
 	}
-
+	b.root = gameRoot
 	devBuilder, err := devtools.NewBuilder(gameRoot)
 	if err != nil {
 		log.Fatal(err)
@@ -263,6 +263,20 @@ func (b *bz) run() error {
 	return nil
 }
 
+type userGameVersion struct {
+	ID           uint64 `json:"id"`
+	Name         string `json:"name"`
+	FriendlyName string `json:"friendlyName"`
+	Description  string `json:"description"`
+	ImagePath    string `json:"imagePath"`
+	CreatedAt    string `json:"createdAt"`
+	UpdatedAt    string `json:"updatedAt"`
+	Version      string `json:"version"`
+	ReleaseNotes string `json:"releaseNotes"`
+	State        string `json:"state"`
+	GitSha       string `json:"gitSha"`
+}
+
 func (b *bz) info() error {
 	infoCmd := flag.NewFlagSet("info", flag.ExitOnError)
 	root := infoCmd.String("root", "", "game root")
@@ -272,8 +286,9 @@ func (b *bz) info() error {
 
 	if *root == "" {
 		fmt.Println("Requires -root <game root>")
-		os.Exit(1)
+		return fmt.Errorf("no root specified")
 	}
+	b.root = *root
 
 	builder, err := devtools.NewBuilder(*root)
 	if err != nil {
@@ -283,7 +298,7 @@ func (b *bz) info() error {
 	if err != nil {
 		return err
 	}
-	res, err := http.Get(fmt.Sprintf("%s/games/%s", b.serverURL, url.PathEscape(manifest.Name)))
+	res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s", b.serverURL, url.PathEscape(manifest.Name)))
 	if err != nil {
 		return err
 	}
@@ -291,16 +306,62 @@ func (b *bz) info() error {
 	switch res.StatusCode {
 	case http.StatusNotFound:
 		fmt.Printf("No game exists for %s!\n\nBe the first to claim it by submitting a game here", manifest.Name)
+		return fmt.Errorf("no game found")
 	case http.StatusOK:
 		var gameInfo struct {
-			LatestVersion string `json:"latest_version"`
+			Name              string  `db:"name" json:"name"`
+			LatestPublishedID *uint64 `db:"last_published_id" json:"latestPublishedID"`
+			LatestSubmittedID *uint64 `db:"last_submitted_id" json:"latestSubmittedID"`
+			CreatedAt         string  `db:"created_at" json:"createdAt"`
 		}
 		if err := json.NewDecoder(res.Body).Decode(&gameInfo); err != nil {
 			return err
 		}
+		color.Printf("\nGame <fg=cyan;op=bold>%s</>\n\nCreated at %s\n\n", gameInfo.Name, gameInfo.CreatedAt)
 
-		fmt.Printf("%s\n\nLatest version is %s\n", manifest.Name, gameInfo.LatestVersion)
+		if gameInfo.LatestPublishedID != nil {
+			info := &userGameVersion{}
+			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(manifest.Name), *gameInfo.LatestPublishedID))
+			if err != nil {
+				return err
+			}
+			defer res.Body.Close()
+			if err := json.NewDecoder(res.Body).Decode(info); err != nil {
+				return err
+			}
+			color.Printf("Published version <cyan>%s</> id <cyan>%d</>\n", info.Version, info.ID)
+			color.Printf("Name: <bold>%s</>\n", info.Name)
+			color.Printf("Friendly name: <bold>%s</>\n", info.FriendlyName)
+			color.Printf("Git sha: <bold>%s</>\n", info.GitSha)
+			color.Printf("Description:\n\n<bold>%s</>\n\n", info.Description)
+			color.Printf("Release notes:\n\n<bold>%s</>\n\n", info.ReleaseNotes)
+		} else {
+			color.Grayln("No currently published game")
+		}
+		if gameInfo.LatestSubmittedID != nil {
+			info := &userGameVersion{}
+			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(manifest.Name), *gameInfo.LatestSubmittedID))
+			if err != nil {
+				return err
+			}
+			defer res.Body.Close()
+			if err := json.NewDecoder(res.Body).Decode(info); err != nil {
+				return err
+			}
+			color.Printf("Submitted version <cyan>%s</> id <cyan>%d</>\n", info.Version, info.ID)
+			color.Printf("Name: <bold>%s</>\n", info.Name)
+			color.Printf("Friendly name: <bold>%s</>\n", info.FriendlyName)
+			color.Printf("Git sha: <bold>%s</>\n", info.GitSha)
+			color.Printf("Description:\n\n<bold>%s</>\n\n", info.Description)
+			color.Printf("Release notes:\n\n<bold>%s</>\n\n", info.ReleaseNotes)
+		} else {
+			color.Grayln("No currently submitted game")
+		}
 	}
+
+	url := fmt.Sprintf("%s/home/games/%s", b.serverURL, url.PathEscape(manifest.Name))
+	color.Printf("Visit <bold>%s</> for more information\n", url)
+
 	return nil
 }
 
@@ -350,10 +411,11 @@ func (b *bz) getAuth() ([]byte, error) {
 				return auth, err
 			}
 		case 401:
-			color.Println(`
+			color.Printf(`
 <error>🚫 Cannot login with this username/password.</>
 
-If you do not currently have an account, please create one by going to <cyan>https://new.boardzilla.io/register</> and signing up`)
+If you do not currently have an account, please create one by going to <cyan>%s/register</> and signing up
+`, b.serverURL)
 			return auth, fmt.Errorf("unauthorized")
 		default:
 			body, _ := io.ReadAll(res.Body)
@@ -406,6 +468,7 @@ func (b *bz) submit() error {
 		color.Redln("Requires -root <game root>")
 		return fmt.Errorf("root required")
 	}
+	b.root = *root
 
 	// check that git is clean
 	statusCmd := exec.Command("git", "status", "--porcelain")
@@ -471,16 +534,16 @@ func (b *bz) submit() error {
 			return
 		}
 		if differentVersion {
-			if out, err := sh(*root, "git", "tag", "-d", versionTag); err != nil {
+			if out, err := b.sh("git", "tag", "-d", versionTag); err != nil {
 				color.Redf("error deleting tag: %s -- %s\n", err.Error(), out)
 			}
 		}
-		if out, err := sh(*root, "git", "reset", "--hard"); err != nil {
+		if out, err := b.sh("git", "reset", "--hard"); err != nil {
 			color.Redf("error resetting: %s -- %s\n", err.Error(), out)
 		}
 	}()
 
-	gitShaOut, err := sh(*root, "git", "rev-parse", "HEAD")
+	gitShaOut, err := b.sh("git", "rev-parse", "HEAD")
 	if err != nil {
 		return fmt.Errorf("error getting sha: %w -- %s", err, gitShaOut)
 	}
@@ -493,7 +556,6 @@ func (b *bz) submit() error {
 	if err != nil {
 		return fmt.Errorf("manifest: %w", err)
 	}
-
 	auth, err := b.getAuth()
 	if err != nil {
 		return fmt.Errorf("unable to authenticate: %w", err)
@@ -568,23 +630,23 @@ func (b *bz) submit() error {
 		}
 		if differentVersion {
 			color.Printf("Committing package.json with new version <green>%s</>\n", versionTag)
-			if out, err := sh(*root, "git", "add", "package.json"); err != nil {
+			if out, err := b.sh("git", "add", "package.json"); err != nil {
 				return fmt.Errorf("error adding package.json: %w -- %s", err, out)
 			}
-			if out, err := sh(*root, "git", "commit", "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
+			if out, err := b.sh("git", "commit", "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
 				return fmt.Errorf("error committing: %w -- %s", err, out)
 			}
 			color.Printf("Pushing package.json change\n")
-			if out, err := sh(*root, "git", "push"); err != nil {
+			if out, err := b.sh("git", "push"); err != nil {
 				return fmt.Errorf("error pushing change: %w -- %s", err, out)
 			}
 		}
 		color.Printf("Adding git tag for <green>%s</>\n", versionTag)
-		if out, err := sh(*root, "git", "tag", "-f", "-a", versionTag, "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
+		if out, err := b.sh("git", "tag", "-f", "-a", versionTag, "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
 			return fmt.Errorf("error adding tag: %w -- %s", err, out)
 		}
 		color.Printf("Pushing new tag <green>%s</>\n", versionTag)
-		if out, err := sh(*root, "git", "push", "--tags"); err != nil {
+		if out, err := b.sh("git", "push", "--tags"); err != nil {
 			return fmt.Errorf("error pushing change: %w -- %s", err, out)
 		}
 
@@ -716,8 +778,22 @@ func credentials() (string, string, error) {
 	return username, password, nil
 }
 
-func sh(root, cmd string, rest ...string) ([]byte, error) {
+func (b *bz) sh(cmd string, rest ...string) ([]byte, error) {
 	ex := exec.Command(cmd, rest...)
-	ex.Dir = root
+	ex.Dir = b.root
 	return ex.CombinedOutput()
+}
+
+func (b *bz) doGetReq(url string) (*http.Response, error) {
+	auth, err := b.getAuth()
+	if err != nil {
+		return nil, fmt.Errorf("unable to authenticate: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("cookie", string(auth))
+	return http.DefaultClient.Do(req)
 }
