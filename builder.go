@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+
+	"github.com/gookit/color"
 )
 
 const (
@@ -68,11 +70,11 @@ func (b *Builder) BuildUI() ([]byte, []byte, error) {
 }
 
 func (b *Builder) buildUI(m *ManifestV1, prod bool) ([]byte, []byte, error) {
-	fmt.Printf("Buidling UI %s\n", m.UI.BuildCommand)
 	buildCmd := m.UI.BuildCommand.Dev
 	if prod {
 		buildCmd = m.UI.BuildCommand.Production
 	}
+	color.Printf("Buidling UI <grey>%s</>\n", buildCmd)
 	return b.run(path.Join(b.root, m.UI.Root), buildCmd)
 }
 
@@ -85,11 +87,11 @@ func (b *Builder) BuildGame() ([]byte, []byte, error) {
 }
 
 func (b *Builder) buildGame(m *ManifestV1, prod bool) ([]byte, []byte, error) {
-	fmt.Printf("Buidling Game %s\n", m.Game.BuildCommand)
 	buildCmd := m.Game.BuildCommand.Dev
 	if prod {
 		buildCmd = m.Game.BuildCommand.Production
 	}
+	color.Printf("Buidling Game <grey>%s</>\n", buildCmd)
 	return b.run(path.Join(b.root, m.Game.Root), buildCmd)
 }
 
@@ -182,7 +184,11 @@ func (b *Builder) run(dir, cmdStr string) ([]byte, []byte, error) {
 	cmd.Stderr = io.MultiWriter(os.Stderr, errbuf)
 	cmd.Dir = dir
 	err := cmd.Run()
-	fmt.Printf("%s done with err %#v\n", cmdStr, err)
+	if err == nil {
+		fmt.Printf("%s succeeded\n", cmdStr)
+	} else {
+		fmt.Printf("%s encountered an error: %s\n", cmdStr, err.Error())
+	}
 
 	return outbuf.Bytes(), errbuf.Bytes(), err
 }

@@ -232,7 +232,7 @@ func (b *bz) run() error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("Running dev builder on port %d at game root %s\n", *port, gameRoot)
+	color.Printf("Running dev builder on port <bold>%d</> at game root <bold>%s</>\n", *port, gameRoot)
 	go func() {
 		for i := range rebuilt {
 			switch i {
@@ -256,7 +256,7 @@ func (b *bz) run() error {
 		}
 	}()
 	// Block main goroutine forever.
-	fmt.Printf("Ready on :%d ✏️✏️✏️\n", *port)
+	color.Printf("🦖 Ready on <bold>:%d</>\n", *port)
 	if err := server.Serve(); err != nil {
 		log.Fatal(err)
 	}
