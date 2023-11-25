@@ -2,22 +2,16 @@
 
 set -e
 
-if [ -z ${1+x} ]; then
-  echo "Usage: scripts/release <version>"
-  echo
-  echo "<version> is missing!"
-  echo
-  exit 1
-fi
-
 if [ -z ${GITHUB_TOKEN+x} ]; then
   echo "You need to supply a GITHUB_TOKEN env variable before you can publish"
   echo
   exit 1
 fi
 
-version=$1
 tag=$(jq '.version' package.json -r)
+
+echo "The current version is ${tag}, please enter a new version"
+read -p 'Version: ' version
 
 if [ "$tag" = "$version" ]; then
   echo "This version is already published"
