@@ -10,6 +10,11 @@
   left: -1px;
 }
 
+html.dark #history {
+  background: #333;
+  border-left: 1px solid #aaa;
+}
+
 #history button {
   cursor: pointer;
   margin-left: 1em;

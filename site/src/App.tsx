@@ -5,7 +5,6 @@ import { HistoryItem, InitialStateHistoryItem } from './types';
 import { Modal } from 'react-responsive-modal';
 import toast, { Toaster } from 'react-hot-toast';
 import Switch from "react-switch";
-
 import 'react-responsive-modal/styles.css';
 import './App.css';
 
@@ -64,6 +63,16 @@ function App() {
   const [historyCollapsed, setHistoryCollapsed] = useState(false);
   const [autoSwitch, setAutoSwitch] = useState(true);
   const [reprocessing, setReprocessing] = useState(true);
+  const [darkMode, setDarkMode] = useState(localStorage.getItem("dark") === "true");
+
+  useEffect(() => {
+    localStorage.setItem("dark", darkMode ? "true" : "false")
+    if (darkMode) {
+      document.documentElement.classList.add("dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+    }
+  }, [darkMode])
 
   const currentPlayer = useMemo(() => players.find(p => p.userID === currentUserID)!, [players, currentUserID]);
 
@@ -461,7 +470,6 @@ function App() {
     <>
     <Toaster/>
     <div style={{display:'flex', flexDirection:'row'}}>
-
       <Modal open={!!buildError} onClose={() => setBuildError(undefined)} center>
         <h2>BUILD ERROR!</h2>
         <h3>{buildError?.type}</h3>
@@ -503,11 +511,12 @@ function App() {
           <span style={{flexGrow: 1}}>{players.map(p =>
             <button className="player" onClick={() => {setCurrentUserIDRequested(p.userID!); setCurrentUserID(p.userID!)}} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.userID !== p.userID) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
           )}</span>
+          <span style={{marginRight: '0.5em'}}>🌞</span><Switch onChange={(v) => setDarkMode(v)} checked={darkMode} uncheckedIcon={false} checkedIcon={false} /><span style={{marginLeft: '0.5em'}}>🌚</span>
           <button style={{marginLeft: '2em', fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
         </div>
         {reprocessing && <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>}
         {!reprocessing && (
-          <iframe seamless={true} style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
+          <iframe seamless={true} style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?dark=${darkMode ? "true" : "false"}&bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
         )};
         <iframe onLoad={() => reprocessHistoryCallback()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>

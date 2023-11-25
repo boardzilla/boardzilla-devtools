@@ -6,11 +6,19 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  border-bottom: 1px solid black;
+  border-bottom: 1px solid #666;
   padding: 0 8px;
   border-right: 1px solid #eee;
   z-index: 1;
   background: #eee;
+  color: #111;
+}
+
+html.dark .header {
+  border-bottom: 1px solid #aaa;
+  border-right: 1px solid #333;
+  background: #333;
+  color: #eee;
 }
 
 .button-link {
