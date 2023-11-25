@@ -39,8 +39,8 @@ git add package.json
 git commit -m"Bump to version v$version"
 git tag -a "v${version}" -m"Release version ${version}"
 goreleaser release --clean
-git push origin "v${version}"
 git push
+git push origin "v${version}"
 
 tag=$(jq '.version' package.json -r)
 
