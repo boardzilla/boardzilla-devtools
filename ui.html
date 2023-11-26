@@ -1,4 +1,5 @@
-<html {{if .Dark}}class="dark"{{end}}>
+<!DOCTYPE html>
+<html>
   <body data-bootstrap-json="{{.Bootstrap}}">
     <div id="root"></div>
   </body>
@@ -8,6 +9,19 @@
     if (window.parent !== window) {
       window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
     }
+
+    window.top.postMessage({type: "sendDark"}, "*")
+    window.addEventListener('message', function(e) {
+      console.log("GETTING SOMETHING", e.data.type)
+      if (e.data.type === "darkSetting") {
+        if (e.data.dark) {
+          document.documentElement.classList.add("dark")
+        } else {
+          document.documentElement.classList.remove("dark")
+        }
+      }
+    }, false)
+
     window.addEventListener('keyup', (e) => {
       if (!e.shiftKey) return
       window.top.postMessage({type: "key", code: e.code}, "*")

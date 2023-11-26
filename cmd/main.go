@@ -535,7 +535,7 @@ func (b *bz) submit() error {
 		}
 		if differentVersion {
 			if out, err := b.sh("git", "tag", "-d", versionTag); err != nil {
-				color.Redf("error deleting tag: %s -- %s\n", err.Error(), out)
+				color.Grayf("error deleting tag: %s -- %s, ignoring\n", err.Error(), out)
 			}
 		}
 		if out, err := b.sh("git", "reset", "--hard"); err != nil {

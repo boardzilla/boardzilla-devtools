@@ -307,9 +307,7 @@ func (s *Server) Serve() error {
 		}
 		var data struct {
 			Bootstrap string
-			Dark      bool
 		}
-		data.Dark = r.URL.Query().Get("dark") == "true"
 		data.Bootstrap = r.URL.Query().Get("bootstrap")
 		w.Header().Add("Content-type", "text/html")
 		w.Header().Add("Cache-control", "no-store")

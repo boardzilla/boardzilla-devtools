@@ -115,3 +115,15 @@ export type KeyMessage = {
   type: "key"
   code: string
 }
+
+// weird message for dark mode
+export type SendDarkMessage = {
+  type: 'sendDark'
+}
+
+
+export type DarkSettingEvent = {
+  type: 'darkSetting'
+  dark: boolean
+}
+

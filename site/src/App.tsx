@@ -87,7 +87,7 @@ function App() {
     return history && historyItem >= 0  ? history[historyItem].state! : initialState?.state!
   }, [initialState, historyPin]);
 
-  const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent) => {
+  const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(data)
   }, [])
 
@@ -308,7 +308,8 @@ function App() {
       UI.UpdateSelfPlayerMessage |
       UI.ReadyMessage |
       UI.MoveMessage |
-      UI.KeyMessage
+      UI.KeyMessage |
+      UI.SendDarkMessage
     >) => {
       switch(e.data.type) {
         case 'initialStateResult':
@@ -422,6 +423,12 @@ function App() {
         case 'key':
           processKey(e.data.code)
           break
+        case 'sendDark':
+          sendToUI({
+            type: 'darkSetting',
+            dark: document.documentElement.classList.contains('dark'),
+          })
+          break
       }
     }
 
@@ -444,6 +451,10 @@ function App() {
   useEffect(() => {
     sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});
   }, [numberOfUsers, players, sendToUI])
+
+  useEffect(() => {
+    sendToUI({ type: 'darkSetting', dark: darkMode !== false })
+  }, [darkMode, sendToUI])
 
   const loadState = useCallback(async (name: string) => {
     setReprocessing(true)
@@ -516,7 +527,7 @@ function App() {
         </div>
         {reprocessing && <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>}
         {!reprocessing && (
-          <iframe seamless={true} style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?dark=${darkMode ? "true" : "false"}&bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
+          <iframe seamless={true} style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
         )};
         <iframe onLoad={() => reprocessHistoryCallback()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
