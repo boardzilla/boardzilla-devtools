@@ -277,7 +277,9 @@ func (s *Server) Serve() error {
 		}
 		w.Header().Add("Content-type", "text/css")
 		w.WriteHeader(200)
-		w.Write(f)
+		if _, err := w.Write(f); err != nil {
+			fmt.Printf("error while writing: %s", err.Error())
+		}
 	})
 
 	r.Get("/files/dm-sans-latin-ext-wght-normal.woff2", func(w http.ResponseWriter, r *http.Request) {
@@ -289,7 +291,9 @@ func (s *Server) Serve() error {
 		}
 		w.Header().Add("Content-type", "font/woff2")
 		w.WriteHeader(200)
-		w.Write(f)
+		if _, err := w.Write(f); err != nil {
+			fmt.Printf("error while writing: %s", err.Error())
+		}
 	})
 
 	r.Get("/files/dm-sans-latin-wght-normal.woff2", func(w http.ResponseWriter, r *http.Request) {
@@ -301,7 +305,9 @@ func (s *Server) Serve() error {
 		}
 		w.Header().Add("Content-type", "font/woff2")
 		w.WriteHeader(200)
-		w.Write(f)
+		if _, err := w.Write(f); err != nil {
+			fmt.Printf("error while writing: %s", err.Error())
+		}
 	})
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -364,7 +370,9 @@ func (s *Server) Serve() error {
 		w.Header().Add("Content-type", "text/html")
 		w.Header().Add("Cache-control", "no-store")
 		w.WriteHeader(200)
-		w.Write(f)
+		if _, err := w.Write(f); err != nil {
+			fmt.Printf("error while writing: %s", err.Error())
+		}
 	})
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
