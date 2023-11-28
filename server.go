@@ -23,6 +23,8 @@ var liveDev = os.Getenv("LIVE_DEV") == "1"
 
 //go:embed *.html
 //go:embed site/build/*
+//go:embed site/node_modules/@fontsource-variable/dm-sans/index.css
+//go:embed site/node_modules/@fontsource-variable/dm-sans/files/*
 var site embed.FS
 
 type Server struct {
@@ -266,8 +268,44 @@ func (s *Server) Serve() error {
 		}
 	})
 
+	r.Get("/font.css", func(w http.ResponseWriter, r *http.Request) {
+		f, err := s.getFile("site/node_modules/@fontsource-variable/dm-sans/index.css")
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		w.Header().Add("Content-type", "text/css")
+		w.WriteHeader(200)
+		w.Write(f)
+	})
+
+	r.Get("/files/dm-sans-latin-ext-wght-normal.woff2", func(w http.ResponseWriter, r *http.Request) {
+		f, err := s.getFile("site/node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-ext-wght-normal.woff2")
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		w.Header().Add("Content-type", "font/woff2")
+		w.WriteHeader(200)
+		w.Write(f)
+	})
+
+	r.Get("/files/dm-sans-latin-wght-normal.woff2", func(w http.ResponseWriter, r *http.Request) {
+		f, err := s.getFile("site/node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2")
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		w.Header().Add("Content-type", "font/woff2")
+		w.WriteHeader(200)
+		w.Write(f)
+	})
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		f, err := s.getFile("/index.html")
+		f, err := s.getBuildFile("index.html")
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
@@ -293,7 +331,7 @@ func (s *Server) Serve() error {
 	})
 
 	r.Get("/ui.html", func(w http.ResponseWriter, r *http.Request) {
-		f, err := s.getFile("/ui.html")
+		f, err := s.getFile("ui.html")
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
@@ -316,10 +354,23 @@ func (s *Server) Serve() error {
 		}
 	})
 
+	r.Get("/game.html", func(w http.ResponseWriter, r *http.Request) {
+		f, err := s.getFile("game.html")
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		w.Header().Add("Content-type", "text/html")
+		w.Header().Add("Cache-control", "no-store")
+		w.WriteHeader(200)
+		w.Write(f)
+	})
+
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		assetPath := chi.URLParam(r, "*")
 		ext := filepath.Ext(assetPath)
-		f, err := s.getFile("/" + assetPath)
+		f, err := s.getBuildFile("/" + assetPath)
 		if err != nil {
 			f, err = os.ReadFile(filepath.Clean(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, assetPath)))
 		}
@@ -381,13 +432,21 @@ func (s *Server) BuildError(t int, o, e string) {
 	}
 }
 
-func (s *Server) getFile(n string) ([]byte, error) {
+func (s *Server) getBuildFile(n string) ([]byte, error) {
 	switch n {
 	case "/game.html", "/ui.html":
 		n = path.Join(".", n)
 	default:
 		n = path.Join("site", "build", n)
 	}
+	if liveDev {
+		return os.ReadFile(filepath.Clean(n))
+	}
+	return site.ReadFile(n)
+}
+
+func (s *Server) getFile(n string) ([]byte, error) {
+	n = path.Join(".", n)
 	if liveDev {
 		return os.ReadFile(filepath.Clean(n))
 	}

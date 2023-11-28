@@ -4,6 +4,12 @@
     <div id="root"></div>
   </body>
   <link rel="stylesheet" href="ui.css"/>
+  <link rel="stylesheet" href="/font.css"/>
+  <style>
+    body {
+      font-family: 'DM Sans Variable', sans-serif;
+    }
+  </style>
   <script src="ui.js"></script>
   <script>
     if (window.parent !== window) {
@@ -12,7 +18,6 @@
 
     window.top.postMessage({type: "sendDark"}, "*")
     window.addEventListener('message', function(e) {
-      console.log("GETTING SOMETHING", e.data.type)
       if (e.data.type === "darkSetting") {
         if (e.data.dark) {
           document.documentElement.classList.add("dark")
