@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -e
 
 if [ -z ${GITHUB_TOKEN+x} ]; then
   echo "You need to supply a GITHUB_TOKEN env variable before you can publish"
@@ -8,25 +7,29 @@ if [ -z ${GITHUB_TOKEN+x} ]; then
   exit 1
 fi
 
+# check if git is clean
+if ! $(git diff-index --quiet HEAD); then
+  echo "Aborting release due to git not being in a clean state"
+  echo
+  exit 1
+fi
+
+set -e
+
 tag=$(jq '.version' package.json -r)
 
 echo "The current version is ${tag}, please enter a new version"
-read -p 'Version: ' version
+version=""
+
+while ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; do
+  read -p 'Version: ' version
+done
 
 if [ "$tag" = "$version" ]; then
   echo "This version is already published"
   echo
   exit 1
 fi
-
-# check if git is clean
-git update-index --really-refresh
-git diff-index --quiet HEAD
-
-# update version
-echo "$( jq .version=\"${version}\" package.json )" > package-new.json
-mv package-new.json package.json
-cp package.json cmd/package.json
 
 cd site
 yarn
@@ -35,6 +38,11 @@ cd -
 touch site/build/.gitkeep
 ./scripts/check
 echo $version
+
+# update version
+echo "$( jq .version=\"${version}\" package.json )" > package-new.json
+mv package-new.json package.json
+cp package.json cmd/package.json
 git add package.json
 git commit -m"Bump to version v$version"
 git tag -a "v${version}" -m"Release version ${version}"
@@ -53,7 +61,9 @@ echo "Waiting for release to become public"
 until ./scripts/check-github-release
 do
   sleep 5
+  echo -n "."
 done
+echo "Release is public, proceeding"
 
 set -e
 npm publish --access public
