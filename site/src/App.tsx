@@ -418,7 +418,16 @@ function App() {
           sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
           break
         case 'updateSelfPlayer':
-          break
+          const {name, color} = e.data
+          setPlayers(players.map(p => {
+            if (p.userID !== currentUserID) return p
+            return {
+              ...p,
+              name,
+              color,
+            }
+          }))
+        break
         // special event for player switching
         case 'key':
           processKey(e.data.code)
@@ -434,7 +443,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch, currentUserID]);
 
   useEffect(() => {
     const l = (e: globalThis.KeyboardEvent):any => {
