@@ -459,6 +459,7 @@ func (b *bz) submit() error {
 	root := submitCmd.String("root", "", "game root")
 	version := submitCmd.String("version", "", "version")
 	interactive := submitCmd.Bool("interactive", false, "interactive")
+	noGitOps := submitCmd.Bool("no-git", false, "no git ops")
 
 	if err := submitCmd.Parse(os.Args[2:]); err != nil {
 		return err
@@ -531,6 +532,9 @@ func (b *bz) submit() error {
 	versionTag := fmt.Sprintf("v%s", *version)
 	defer func() {
 		if successful {
+			return
+		}
+		if *noGitOps {
 			return
 		}
 		if differentVersion {
@@ -628,28 +632,29 @@ func (b *bz) submit() error {
 		if err := json.NewDecoder(res.Body).Decode(&submitResponse); err != nil {
 			return err
 		}
-		if differentVersion {
-			color.Printf("Committing package.json with new version <green>%s</>\n", versionTag)
-			if out, err := b.sh("git", "add", "package.json"); err != nil {
-				return fmt.Errorf("error adding package.json: %w -- %s", err, out)
+		if !*noGitOps {
+			if differentVersion {
+				color.Printf("Committing package.json with new version <green>%s</>\n", versionTag)
+				if out, err := b.sh("git", "add", "package.json"); err != nil {
+					return fmt.Errorf("error adding package.json: %w -- %s", err, out)
+				}
+				if out, err := b.sh("git", "commit", "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
+					return fmt.Errorf("error committing: %w -- %s", err, out)
+				}
+				color.Printf("Pushing package.json change\n")
+				if out, err := b.sh("git", "push"); err != nil {
+					return fmt.Errorf("error pushing change: %w -- %s", err, out)
+				}
 			}
-			if out, err := b.sh("git", "commit", "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
-				return fmt.Errorf("error committing: %w -- %s", err, out)
+			color.Printf("Adding git tag for <green>%s</>\n", versionTag)
+			if out, err := b.sh("git", "tag", "-f", "-a", versionTag, "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
+				return fmt.Errorf("error adding tag: %w -- %s", err, out)
 			}
-			color.Printf("Pushing package.json change\n")
-			if out, err := b.sh("git", "push"); err != nil {
+			color.Printf("Pushing new tag <green>%s</>\n", versionTag)
+			if out, err := b.sh("git", "push", "--tags"); err != nil {
 				return fmt.Errorf("error pushing change: %w -- %s", err, out)
 			}
 		}
-		color.Printf("Adding git tag for <green>%s</>\n", versionTag)
-		if out, err := b.sh("git", "tag", "-f", "-a", versionTag, "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
-			return fmt.Errorf("error adding tag: %w -- %s", err, out)
-		}
-		color.Printf("Pushing new tag <green>%s</>\n", versionTag)
-		if out, err := b.sh("git", "push", "--tags"); err != nil {
-			return fmt.Errorf("error pushing change: %w -- %s", err, out)
-		}
-
 		url := fmt.Sprintf("%s/home/games/%s/%d", b.serverURL, url.PathEscape(manifest.Name), submitResponse.ID)
 		fmt.Printf("Opening %s...\n\n", url)
 		return exec.Command("open", url).Start() // #nosec G204
