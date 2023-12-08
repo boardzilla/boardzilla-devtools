@@ -85,7 +85,7 @@ type Move = {
 
 ### UI
 
-The game ui occurs in two phases "new" and "started".  The phase will be indicated by
+The game ui occurs in two phases "new" and "started". The phase will be indicated by
 
 During "new", it will recv the following messages.
 
@@ -115,60 +115,57 @@ window.top.postMessage(m: MoveMessage | ReadyMessage)
 ```
 
 #### recv events by ui
+
 ```ts
 type User = {
-  id: string
-  name: string
-}
+  id: string;
+  name: string;
+  avatar: string;
+  playerDetails?: {
+    color: string;
+    position: number;
+    settings?: any;
+  };
+};
 
-type UserPlayer = {
-  name: string
-  color: string
-  avatar: string
-  position: number
-  settings?: any
-  userID?: string
-}
-
-type PlayersEvent = {
-  type: "players"
-  players: UserPlayer[]
-  users: User[]
-}
+type UsersEvent = {
+  type: "users";
+  users: User[];
+};
 
 // an update to the setup state
 type SettingsUpdateEvent = {
-  type: "settingsUpdate"
-  settings: GameSettings
-}
+  type: "settingsUpdate";
+  settings: GameSettings;
+};
 
 type GameUpdateEvent = {
-  type: "gameUpdate"
-  state: PlayerState
-  currentPlayers: number[]
-}
+  type: "gameUpdate";
+  state: PlayerState;
+  currentPlayers: number[];
+};
 
 type GameFinishedEvent = {
-  type: "gameFinished"
-  state: PlayerState
-  winners: number[]
-}
+  type: "gameFinished";
+  state: PlayerState;
+  winners: number[];
+};
 
 // indicates the disposition of a message that was processed
 type MessageProcessedEvent = {
-  type: "messageProcessed"
-  id: string
-  error?: string
-}
+  type: "messageProcessed";
+  id: string;
+  error?: string;
+};
 
 type HighlightEvent = {
-  type: "highlight"
-  id: string
-}
+  type: "highlight";
+  id: string;
+};
 
 type UnhighlightAllEvent = {
-  type: "unhighlightAll"
-}
+  type: "unhighlightAll";
+};
 ```
 
 #### sent events by ui
@@ -192,12 +189,12 @@ type SeatOperation = {
 
 type UnseatOperation = {
   type: 'unseat'
-  position: number
+  userID: string
 }
 
 type UpdateOperation = {
   type: 'update'
-  position: number
+  userID: number
   color?: string
   name?: string
   settings?: any
