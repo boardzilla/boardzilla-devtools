@@ -582,10 +582,6 @@ func (b *bz) submit() error {
 	mpw := multipart.NewWriter(pipeWriter)
 	gw := newGameWriter(b.serverURL, manifest.Name, mpw, *root)
 	go func() {
-		if err := gw.addFile("game.v1.json", *root, "game.v1.json"); err != nil {
-			errs <- err
-			return
-		}
 		if err := gw.addFile("game.js", *root, manifest.Game.Root, manifest.Game.OutputFile); err != nil {
 			errs <- err
 			return
