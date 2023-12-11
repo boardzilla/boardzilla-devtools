@@ -17,18 +17,18 @@ const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
 const minPlayers = parseInt(body.getAttribute("minPlayers")!);
 const possibleUsers = [
   {id: "0", name: "Evelyn"},
-  {id: "1", name: "Anastasia"},
-  {id: "2", name: "Jayden"},
-  {id: "3", name: "Priyanka"},
-  {id: "4", name: "Logan"},
-  {id: "5", name: "Avery"},
-  {id: "6", name: "Aischa"},
-  {id: "7", name: "Liubika"},
-  {id: "8", name: "Zvezdelina"},
-  {id: "9", name: "Guadalupe"},
+  {id: "1", name: "Jennifer"},
+  {id: "2", name: "Kateryna"},
+  {id: "3", name: "Logan"},
+  {id: "4", name: "Liubika"},
+  {id: "5", name: "Aischa"},
+  {id: "6", name: "Leilani"},
+  {id: "7", name: "Avery"},
+  {id: "8", name: "Guadalupe"},
+  {id: "9", name: "Zvezdelina"},
 ];
 
-const avatarURL = (userID: string): string => `https://i.pravatar.cc/200?u=bzp${userID}`
+const avatarURL = (userID: string): string => `https://i.pravatar.cc/200?u=bup${userID}`
 
 const playerDetailsForUser = (players: UI.UserPlayer[], userID: string): {color: string, position: number, settings?: any} | undefined => {
   const player = players.find(p => p.userID === userID)
@@ -407,7 +407,7 @@ function App() {
                 newPlayers.push({
                   color: op.color,
                   name: op.name,
-                  avatar: `https://i.pravatar.cc/200?u=bzp${op.userID}`,
+                  avatar: avatarURL(op.userID),
                   host: op.userID === possibleUsers[0].id,
                   position: op.position,
                   userID: op.userID,
