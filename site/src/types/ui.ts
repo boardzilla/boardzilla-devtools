@@ -1,13 +1,18 @@
 import * as Game from './game'
 
-export type User = {
+type User = {
   id: string
   name: string
+  avatar: string
+  playerDetails?: {
+    color: string
+    position: number
+    settings?: any
+  }
 }
 
-export type PlayersEvent = {
-  type: "players"
-  players: UserPlayer[]
+export type UsersEvent = {
+  type: "users"
   users: User[]
 }
 
@@ -50,7 +55,7 @@ export type UpdateSettingsMessage = {
 // host only
 type SeatOperation = {
   type: 'seat'
-  position: number,
+  position: number
   userID: string
   color: string
   name: string
@@ -59,12 +64,12 @@ type SeatOperation = {
 
 type UnseatOperation = {
   type: 'unseat'
-  position: number,
+  userID: string
 }
 
 type UpdateOperation = {
   type: 'update'
-  position: number,
+  userID: string
   color?: string
   name?: string
   settings?: any
@@ -72,13 +77,13 @@ type UpdateOperation = {
 
 type ReserveOperation = {
   type: 'reserve'
-  position: number,
+  position: number
   color: string
   name: string
   settings?: any
 }
 
-type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation |ReserveOperation
+type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
 
 // host only
 export type UpdatePlayersMessage = {

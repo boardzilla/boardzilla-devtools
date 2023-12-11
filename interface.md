@@ -91,8 +91,7 @@ During "new", it will recv the following messages.
 
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
-  UserEvent |
-  PlayersEvent |
+  UsersEvent |
   SettingsUpdateEvent |
   GameUpdateEvent |
   GameFinishedEvent |
@@ -194,7 +193,7 @@ type UnseatOperation = {
 
 type UpdateOperation = {
   type: 'update'
-  userID: number
+  userID: string
   color?: string
   name?: string
   settings?: any

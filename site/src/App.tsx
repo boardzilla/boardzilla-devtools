@@ -28,6 +28,18 @@ const possibleUsers = [
   {id: "9", name: "Guadalupe"},
 ];
 
+const avatarURL = (userID: string): string => `https://i.pravatar.cc/200?u=bzp${userID}`
+
+const playerDetailsForUser = (players: UI.UserPlayer[], userID: string): {color: string, position: number, settings?: any} | undefined => {
+  const player = players.find(p => p.userID === userID)
+  if (!player) return undefined
+  return {
+    color: player.color,
+    position: player.position,
+    settings: player.settings
+  }
+}
+
 type BuildError = {
   type: "ui" | "game"
   out: string
@@ -87,7 +99,7 @@ function App() {
     return history && historyItem >= 0  ? history[historyItem].state! : initialState?.state!
   }, [initialState, historyPin]);
 
-  const sendToUI = useCallback((data: UI.PlayersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent) => {
+  const sendToUI = useCallback((data: UI.UsersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(data)
   }, [])
 
@@ -374,7 +386,12 @@ function App() {
         case 'ready':
           if (!initialState) {
             sendToUI({type: "settingsUpdate", settings});
-            sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});
+            sendToUI({type: "users", users: possibleUsers.slice(0, numberOfUsers).map(u => ({
+              id: u.id,
+              name: u.name,
+              avatar: avatarURL(u.id),
+              playerDetails: playerDetailsForUser(players, u.id),
+            }))});
           } else {
             await updateUI({ game: getCurrentState(history) });
           }
@@ -397,10 +414,12 @@ function App() {
                 })
                 break
               case 'unseat':
-                newPlayers = newPlayers.filter(p => p.position !== op.position)
+                const unseatOp = op
+                newPlayers = newPlayers.filter(p => p.userID !== unseatOp.userID)
                 break
               case 'update':
-                p = newPlayers.find(p => p.position === op.position)
+                const updateOp = op
+                p = newPlayers.find(p => p.userID === updateOp.userID)
                 if (!p) continue
                 if (op.color) {
                   p.color = op.color
@@ -458,8 +477,13 @@ function App() {
   }, [players, processKey])
 
   useEffect(() => {
-    sendToUI({type: "players", players, users: possibleUsers.slice(0, numberOfUsers)});
-  }, [numberOfUsers, players, sendToUI])
+    sendToUI({type: "users", users: possibleUsers.slice(0, numberOfUsers).map(u => ({
+      id: u.id,
+      name: u.name,
+      avatar: avatarURL(u.id),
+      playerDetails: playerDetailsForUser(players, u.id),
+    }))});
+}, [numberOfUsers, players, sendToUI])
 
   useEffect(() => {
     sendToUI({ type: 'darkSetting', dark: darkMode !== false })
