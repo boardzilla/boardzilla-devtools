@@ -586,10 +586,6 @@ func (b *bz) submit() error {
 			errs <- err
 			return
 		}
-		if err := gw.addFile(manifest.Image, *root, manifest.Image); err != nil {
-			errs <- err
-			return
-		}
 		if err := gw.addFile("game.js", *root, manifest.Game.Root, manifest.Game.OutputFile); err != nil {
 			errs <- err
 			return
@@ -604,7 +600,7 @@ func (b *bz) submit() error {
 		}
 		errs <- pipeWriter.Close()
 	}()
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s", b.serverURL, url.PathEscape(manifest.Name), versionTag, gitSha), pipeReader)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d", b.serverURL, url.PathEscape(manifest.Name), versionTag, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers), pipeReader)
 	if err != nil {
 		return err
 	}
