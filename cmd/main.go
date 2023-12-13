@@ -289,23 +289,18 @@ func (b *bz) info() error {
 		return fmt.Errorf("no root specified")
 	}
 	b.root = *root
-
-	builder, err := devtools.NewBuilder(*root)
+	name, err := b.getGameName()
 	if err != nil {
 		return err
 	}
-	manifest, err := builder.Manifest()
-	if err != nil {
-		return err
-	}
-	res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s", b.serverURL, url.PathEscape(manifest.Name)))
+	res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s", b.serverURL, url.PathEscape(name)))
 	if err != nil {
 		return err
 	}
 
 	switch res.StatusCode {
 	case http.StatusNotFound:
-		fmt.Printf("No game exists for %s!\n\nBe the first to claim it by submitting a game here", manifest.Name)
+		fmt.Printf("No game exists for %s!\n\nBe the first to claim it by submitting a game here", name)
 		return fmt.Errorf("no game found")
 	case http.StatusOK:
 		var gameInfo struct {
@@ -321,7 +316,7 @@ func (b *bz) info() error {
 
 		if gameInfo.LatestPublishedID != nil {
 			info := &userGameVersion{}
-			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(manifest.Name), *gameInfo.LatestPublishedID))
+			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(name), *gameInfo.LatestPublishedID))
 			if err != nil {
 				return err
 			}
@@ -340,7 +335,7 @@ func (b *bz) info() error {
 		}
 		if gameInfo.LatestSubmittedID != nil {
 			info := &userGameVersion{}
-			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(manifest.Name), *gameInfo.LatestSubmittedID))
+			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(name), *gameInfo.LatestSubmittedID))
 			if err != nil {
 				return err
 			}
@@ -359,10 +354,27 @@ func (b *bz) info() error {
 		}
 	}
 
-	url := fmt.Sprintf("%s/home/games/%s", b.serverURL, url.PathEscape(manifest.Name))
+	url := fmt.Sprintf("%s/home/games/%s", b.serverURL, url.PathEscape(name))
 	color.Printf("Visit <bold>%s</> for more information\n", url)
 
 	return nil
+}
+
+func (b *bz) getGameName() (string, error) {
+	packageJSONPath := path.Join(b.root, "package.json")
+	_, err := os.Stat(packageJSONPath)
+	if err != nil {
+		return "", err
+	}
+	packageJSONBytes, err := os.ReadFile(packageJSONPath) // #nosec G304
+	if err != nil {
+		return "", err
+	}
+	nameResult := gjson.Get(string(packageJSONBytes), "name")
+	if !nameResult.Exists() {
+		return "", fmt.Errorf("cannot get current name from package.json")
+	}
+	return nameResult.Str, nil
 }
 
 func (b *bz) getAuth() ([]byte, error) {
@@ -580,7 +592,12 @@ func (b *bz) submit() error {
 	pipeReader, pipeWriter := io.Pipe()
 	errs := make(chan error)
 	mpw := multipart.NewWriter(pipeWriter)
-	gw := newGameWriter(b.serverURL, manifest.Name, mpw, *root)
+	name, err := b.getGameName()
+	if err != nil {
+		return err
+	}
+
+	gw := newGameWriter(b.serverURL, name, mpw, *root)
 	go func() {
 		if err := gw.addFile("game.js", *root, manifest.Game.Root, manifest.Game.OutputFile); err != nil {
 			errs <- err
@@ -596,7 +613,7 @@ func (b *bz) submit() error {
 		}
 		errs <- pipeWriter.Close()
 	}()
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d", b.serverURL, url.PathEscape(manifest.Name), versionTag, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers), pipeReader)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d", b.serverURL, url.PathEscape(name), versionTag, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers), pipeReader)
 	if err != nil {
 		return err
 	}
@@ -614,7 +631,7 @@ func (b *bz) submit() error {
 	}
 	switch res.StatusCode {
 	case 200:
-		color.Printf("🎉🎉🎉 Game <green>%s</> submitted as version <green>%s</>\n\n", manifest.Name, versionTag)
+		color.Printf("🎉🎉🎉 Game <green>%s</> submitted as version <green>%s</>\n\n", name, versionTag)
 		successful = true
 
 		var submitResponse struct {
@@ -647,7 +664,7 @@ func (b *bz) submit() error {
 				return fmt.Errorf("error pushing change: %w -- %s", err, out)
 			}
 		}
-		url := fmt.Sprintf("%s/home/games/%s/%d", b.serverURL, url.PathEscape(manifest.Name), submitResponse.ID)
+		url := fmt.Sprintf("%s/home/games/%s/%d", b.serverURL, url.PathEscape(name), submitResponse.ID)
 		fmt.Printf("Opening %s...\n\n", url)
 		return exec.Command("open", url).Start() // #nosec G204
 	default:
