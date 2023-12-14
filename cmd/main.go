@@ -82,7 +82,7 @@ type bz struct {
 func newBz() *bz {
 	serverURL := os.Getenv("SERVER_URL")
 	if serverURL == "" {
-		serverURL = "https://new.boardzilla.io"
+		serverURL = "https://www.boardzilla.io"
 	}
 	return &bz{
 		serverURL: serverURL,
@@ -472,6 +472,7 @@ func (b *bz) submit() error {
 	version := submitCmd.String("version", "", "version")
 	interactive := submitCmd.Bool("interactive", false, "interactive")
 	noGitOps := submitCmd.Bool("no-git", false, "no git ops")
+	noCleanCheck := submitCmd.Bool("no-clean-check", false, "no clean check")
 
 	if err := submitCmd.Parse(os.Args[2:]); err != nil {
 		return err
@@ -483,15 +484,17 @@ func (b *bz) submit() error {
 	}
 	b.root = *root
 
-	// check that git is clean
-	statusCmd := exec.Command("git", "status", "--porcelain")
-	statusCmd.Dir = *root
-	if out, err := statusCmd.Output(); err != nil {
-		color.Redln("⛔️ Root directory must be a git repo\n")
-		return fmt.Errorf("error checking git status: %w", err)
-	} else if len(out) != 0 {
-		color.Redln("⛔️ Submit aborted due to uncommitted changes. Please ensure everything is committed, and submit again.\n")
-		return fmt.Errorf("uncommitted changes")
+	if !*noCleanCheck {
+		// check that git is clean
+		statusCmd := exec.Command("git", "status", "--porcelain")
+		statusCmd.Dir = *root
+		if out, err := statusCmd.Output(); err != nil {
+			color.Redln("⛔️ Root directory must be a git repo\n")
+			return fmt.Errorf("error checking git status: %w", err)
+		} else if len(out) != 0 {
+			color.Redln("⛔️ Submit aborted due to uncommitted changes. Please ensure everything is committed, and submit again.\n")
+			return fmt.Errorf("uncommitted changes")
+		}
 	}
 
 	packageJSONPath := path.Join(*root, "package.json")
