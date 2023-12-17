@@ -84,7 +84,7 @@ type Move = {
 
 ### UI
 
-The game ui occurs in two phases "new" and "started". The phase will be indicated by
+The game ui occurs in three phases "new", "started" and "finished". 
 
 During "new", it will recv the following messages.
 
@@ -111,6 +111,8 @@ window.addEventListener('message', (evt: MessageEvent<
 >))
 window.top.postMessage(m: MoveMessage | ReadyMessage)
 ```
+
+Once a game has received `GameFinishedEvent`, it will receive no other events.
 
 #### recv events by ui
 
