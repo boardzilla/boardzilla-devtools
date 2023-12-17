@@ -2,6 +2,10 @@ body {
   margin: 0;
 }
 
+iframe {
+  border: none;
+}
+
 .header {
   display: flex;
   flex-direction: row;
@@ -12,6 +16,10 @@ body {
   z-index: 1;
   background: #eee;
   color: #111;
+}
+
+.fullscreen .header {
+  display: none;
 }
 
 html.dark .header {

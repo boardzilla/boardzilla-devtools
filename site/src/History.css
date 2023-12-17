@@ -1,5 +1,6 @@
 #history {
   background: #eee;
+  overflow: hidden;
   width: min(300px, 30vw);
   height: 100vh;
   display: flex;
@@ -8,6 +9,12 @@
   padding-left: 1vw;
   position: relative;
   left: -1px;
+}
+
+.fullscreen #history {
+  width: 0 !important;
+  border-left: none;
+  padding-left: 0;
 }
 
 html.dark #history {

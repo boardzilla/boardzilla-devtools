@@ -73,6 +73,7 @@ function App() {
   const [saveStatesOpen, setSaveStatesOpen] = useState(false);
   const [saveStates, setSaveStates] = useState<SaveState[]>([])
   const [historyCollapsed, setHistoryCollapsed] = useState(false);
+  const [fullScreen, setFullScreen] = useState(false);
   const [autoSwitch, setAutoSwitch] = useState(true);
   const [reprocessing, setReprocessing] = useState(true);
   const [darkMode, setDarkMode] = useState(localStorage.getItem("dark") === "true");
@@ -286,6 +287,9 @@ function App() {
       case 'KeyS':
         setSaveStatesOpen((s) => !s)
         return true
+      case 'KeyF':
+        setFullScreen(s => !s);
+        return true;
       case 'KeyR':
         setReprocessing(true);
         (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow?.location.reload();
@@ -513,7 +517,7 @@ function App() {
   return (
     <>
     <Toaster/>
-    <div style={{display:'flex', flexDirection:'row'}}>
+      <div className={fullScreen || navigator.userAgent.match(/Mobi/) ? 'fullscreen' : ''} style={{display:'flex', flexDirection:'row'}}>
       <Modal open={!!buildError} onClose={() => setBuildError(undefined)} center>
         <h2>BUILD ERROR!</h2>
         <h3>{buildError?.type}</h3>
@@ -530,6 +534,8 @@ function App() {
           <dd>Switch between users</dd>
           <dt><kbd>Shift</kbd> + <kbd>R</kbd></dt>
           <dd>Manually reload UI/Game iframes</dd>
+          <dt><kbd>Shift</kbd> + <kbd>F</kbd></dt>
+          <dd>Toggle full screen</dd>
           <dt><kbd>Shift</kbd> + <kbd>S</kbd></dt>
           <dd>Toggle save state model open</dd>
         </dl>
@@ -548,20 +554,22 @@ function App() {
         </div>
       </Modal>
 
-      <div style={{display: 'flex', flexDirection:'column', flexGrow: 1}}>
-        <div className="header" style={{display: 'flex', flexDirection:'row', alignItems: "center"}}>
+      <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1}}>
+        <div className="header">
           <span style={{marginRight: '0.5em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /></span> <span style={{marginRight: '3em'}}>Autoswitch players</span>
           {phase === "new" && <span><input style={{width: '3em', marginRight: '0.5em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/> Number of players</span>}
           <span style={{flexGrow: 1}}>{players.map(p =>
             <button className="player" onClick={() => {setCurrentUserIDRequested(p.userID!); setCurrentUserID(p.userID!)}} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.userID !== p.userID) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
           )}</span>
-          <span style={{marginRight: '0.5em'}}>🌞</span><Switch onChange={(v) => setDarkMode(v)} checked={darkMode} uncheckedIcon={false} checkedIcon={false} /><span style={{marginLeft: '0.5em'}}>🌚</span>
+          <span style={{marginRight: '0.5em'}}>🌞</span>
+          <Switch onChange={(v) => setDarkMode(v)} checked={darkMode} uncheckedIcon={false} checkedIcon={false} />
+          <span style={{marginLeft: '0.5em'}}>🌚</span>
           <button style={{marginLeft: '2em', fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
         </div>
         {reprocessing && <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>}
         {!reprocessing && (
           <iframe seamless={true} style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
-        )};
+        )}
         <iframe onLoad={() => reprocessHistoryCallback()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
       <div id="history" className={historyCollapsed ? "collapsed" : ""}>
