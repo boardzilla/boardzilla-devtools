@@ -593,7 +593,6 @@ func (b *bz) submit() error {
 	fmt.Println("✅ Done building")
 
 	pipeReader, pipeWriter := io.Pipe()
-	errs := make(chan error)
 	mpw := multipart.NewWriter(pipeWriter)
 	name, err := b.getGameName()
 	if err != nil {
@@ -603,19 +602,19 @@ func (b *bz) submit() error {
 	gw := newGameWriter(b.serverURL, name, mpw, *root)
 	go func() {
 		if err := gw.addFile("game.js", *root, manifest.Game.Root, manifest.Game.OutputFile); err != nil {
-			errs <- err
-			return
+			panic(err)
 		}
 		if err := gw.addDir("ui", *root, manifest.UI.Root, manifest.UI.OutputDirectory); err != nil {
-			errs <- err
-			return
+			panic(err)
 		}
 		if err := mpw.Close(); err != nil {
-			errs <- err
-			return
+			panic(err)
 		}
-		errs <- pipeWriter.Close()
+		if err := pipeWriter.Close(); err != nil {
+			panic(err)
+		}
 	}()
+
 	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d", b.serverURL, url.PathEscape(name), versionTag, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers), pipeReader)
 	if err != nil {
 		return err
@@ -624,9 +623,6 @@ func (b *bz) submit() error {
 	req.Header.Add("Cookie", string(auth))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
-	}
-	if err := <-errs; err != nil {
 		return err
 	}
 	if err != nil {
@@ -700,24 +696,27 @@ func (gw *gameWriter) addFile(target string, src ...string) error {
 	if err != nil {
 		return err
 	}
-	digest := sha256.Sum256(f)
-	req, err := http.NewRequest(http.MethodHead, fmt.Sprintf("%s/api/assets/%s/%s", gw.serverURL, url.PathEscape(gw.name), assetPath), nil)
-	if err != nil {
-		return err
-	}
-	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		parts := strings.SplitN(req.Header.Get("Digest"), "=", 2)
-		serverDigest, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if strings.HasPrefix(target, "ui/") {
+		assetTarget, _ := strings.CutPrefix(target, "ui/")
+		digest := sha256.Sum256(f)
+		req, err := http.NewRequest(http.MethodHead, fmt.Sprintf("%s/api/assets/%s/%s", gw.serverURL, url.PathEscape(gw.name), assetTarget), nil)
 		if err != nil {
 			return err
 		}
-		if bytes.Equal(serverDigest, digest[:]) {
-			color.Println(", <yellow>skipping</>")
-			return nil
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
+		}
+		if res.StatusCode == 204 {
+			parts := strings.SplitN(res.Header.Get("Digest"), "=", 2)
+			serverDigest, err := base64.RawURLEncoding.DecodeString(parts[1])
+			if err != nil {
+				return err
+			}
+			if bytes.Equal(serverDigest, digest[:]) {
+				color.Println(", <yellow>skipping</>")
+				return nil
+			}
 		}
 	}
 	writer, err := gw.mpw.CreateFormFile(target, target)
