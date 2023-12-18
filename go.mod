@@ -1,6 +1,6 @@
 module github.com/boardzilla/boardzilla-devtools
 
-go 1.21.4
+go 1.21.5
 
 require (
 	github.com/erikgeiser/promptkit v0.9.0
