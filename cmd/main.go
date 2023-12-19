@@ -764,21 +764,6 @@ func (b *bz) doGetReq(url string) (*http.Response, error) {
 }
 
 func (b *bz) getInfo(name string) (*userGame, error) {
-	infoCmd := flag.NewFlagSet("info", flag.ExitOnError)
-	root := infoCmd.String("root", "", "game root")
-	if err := infoCmd.Parse(os.Args[2:]); err != nil {
-		return nil, err
-	}
-
-	if *root == "" {
-		fmt.Println("Requires -root <game root>")
-		return nil, fmt.Errorf("no root specified")
-	}
-	b.root = *root
-	name, err := b.getGameName()
-	if err != nil {
-		return nil, err
-	}
 	res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s", b.serverURL, url.PathEscape(name)))
 	if err != nil {
 		return nil, err
