@@ -73,12 +73,12 @@ github.com/tidwall/match
 # github.com/tidwall/pretty v1.2.0
 ## explicit; go 1.16
 github.com/tidwall/pretty
-# github.com/tidwall/sjson v1.2.5
-## explicit; go 1.14
-github.com/tidwall/sjson
 # github.com/xo/terminfo v0.0.0-20210125001918-ca9a967f8778
 ## explicit; go 1.15
 github.com/xo/terminfo
+# golang.org/x/mod v0.14.0
+## explicit; go 1.18
+golang.org/x/mod/semver
 # golang.org/x/sync v0.3.0
 ## explicit; go 1.17
 golang.org/x/sync/errgroup

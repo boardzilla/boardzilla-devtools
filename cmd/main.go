@@ -6,6 +6,7 @@ import (
 	"embed"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -17,17 +18,17 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	devtools "github.com/boardzilla/boardzilla-devtools"
 	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/gookit/color"
-	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
-
-	devtools "github.com/boardzilla/boardzilla-devtools"
 	"github.com/rjeczalik/notify"
+	"github.com/tidwall/gjson"
+	"golang.org/x/mod/semver"
 )
 
 //go:embed package.json
@@ -58,6 +59,31 @@ type notifier struct {
 	notified bool
 	lock     sync.Mutex
 }
+
+type userGameVersion struct {
+	ID           uint64 `json:"id"`
+	Name         string `json:"name"`
+	FriendlyName string `json:"friendlyName"`
+	Description  string `json:"description"`
+	ImagePath    string `json:"imagePath"`
+	CreatedAt    string `json:"createdAt"`
+	UpdatedAt    string `json:"updatedAt"`
+	Version      string `json:"version"`
+	ReleaseNotes string `json:"releaseNotes"`
+	State        string `json:"state"`
+	GitSha       string `json:"gitSha"`
+}
+
+type userGame struct {
+	Name              string  `json:"name"`
+	LatestPublishedID *uint64 `json:"latestPublishedID"`
+	LatestSubmittedID *uint64 `json:"latestSubmittedID"`
+	CreatedAt         string  `json:"createdAt"`
+	LatestPublished   *userGameVersion
+	LatestSubmitted   *userGameVersion
+}
+
+var gameNotFound = errors.New("no game found")
 
 func (n *notifier) notify() {
 	n.lock.Lock()
@@ -111,6 +137,59 @@ func (b *bz) exec() error {
 		printHelp()
 		os.Exit(1)
 	}
+
+	return nil
+}
+
+func (b *bz) info() error {
+	infoCmd := flag.NewFlagSet("info", flag.ExitOnError)
+	root := infoCmd.String("root", "", "game root")
+	if err := infoCmd.Parse(os.Args[2:]); err != nil {
+		return err
+	}
+
+	if *root == "" {
+		fmt.Println("Requires -root <game root>")
+		return fmt.Errorf("no root specified")
+	}
+	b.root = *root
+	name, err := b.getGameName()
+	if err != nil {
+		return err
+	}
+	gi, err := b.getInfo(name)
+	if err != nil {
+		if err == gameNotFound {
+			fmt.Printf("No game exists for %s!\n\nBe the first to claim it by submitting a game here", name)
+			return nil
+		}
+		return err
+	}
+
+	color.Printf("\nGame <fg=cyan;op=bold>%s</>\n\nCreated at %s\n\n", gi.Name, gi.CreatedAt)
+	if gi.LatestPublished != nil {
+		color.Printf("Published version <cyan>%s</> id <cyan>%d</>\n", gi.LatestPublished.Version, gi.LatestPublished.ID)
+		color.Printf("Name: <bold>%s</>\n", gi.LatestPublished.Name)
+		color.Printf("Friendly name: <bold>%s</>\n", gi.LatestPublished.FriendlyName)
+		color.Printf("Git sha: <bold>%s</>\n", gi.LatestPublished.GitSha)
+		color.Printf("Description:\n\n<bold>%s</>\n\n", gi.LatestPublished.Description)
+		color.Printf("Release notes:\n\n<bold>%s</>\n\n", gi.LatestPublished.ReleaseNotes)
+	} else {
+		color.Grayln("No currently published game\n")
+	}
+
+	if gi.LatestSubmitted != nil {
+		color.Printf("Submitted version <cyan>%s</> id <cyan>%d</>\n", gi.LatestSubmitted.Version, gi.LatestSubmitted.ID)
+		color.Printf("Name: <bold>%s</>\n", gi.LatestSubmitted.Name)
+		color.Printf("Friendly name: <bold>%s</>\n", gi.LatestSubmitted.FriendlyName)
+		color.Printf("Git sha: <bold>%s</>\n", gi.LatestSubmitted.GitSha)
+		color.Printf("Description:\n\n<bold>%s</>\n\n", gi.LatestSubmitted.Description)
+		color.Printf("Release notes:\n\n<bold>%s</>\n\n", gi.LatestSubmitted.ReleaseNotes)
+	} else {
+		color.Grayln("No currently submitted game\n")
+	}
+	url := fmt.Sprintf("%s/home/games/%s", b.serverURL, url.PathEscape(name))
+	color.Printf("Visit <bold>%s</> for more information\n", url)
 
 	return nil
 }
@@ -263,103 +342,6 @@ func (b *bz) run() error {
 	return nil
 }
 
-type userGameVersion struct {
-	ID           uint64 `json:"id"`
-	Name         string `json:"name"`
-	FriendlyName string `json:"friendlyName"`
-	Description  string `json:"description"`
-	ImagePath    string `json:"imagePath"`
-	CreatedAt    string `json:"createdAt"`
-	UpdatedAt    string `json:"updatedAt"`
-	Version      string `json:"version"`
-	ReleaseNotes string `json:"releaseNotes"`
-	State        string `json:"state"`
-	GitSha       string `json:"gitSha"`
-}
-
-func (b *bz) info() error {
-	infoCmd := flag.NewFlagSet("info", flag.ExitOnError)
-	root := infoCmd.String("root", "", "game root")
-	if err := infoCmd.Parse(os.Args[2:]); err != nil {
-		return err
-	}
-
-	if *root == "" {
-		fmt.Println("Requires -root <game root>")
-		return fmt.Errorf("no root specified")
-	}
-	b.root = *root
-	name, err := b.getGameName()
-	if err != nil {
-		return err
-	}
-	res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s", b.serverURL, url.PathEscape(name)))
-	if err != nil {
-		return err
-	}
-
-	switch res.StatusCode {
-	case http.StatusNotFound:
-		fmt.Printf("No game exists for %s!\n\nBe the first to claim it by submitting a game here", name)
-		return fmt.Errorf("no game found")
-	case http.StatusOK:
-		var gameInfo struct {
-			Name              string  `db:"name" json:"name"`
-			LatestPublishedID *uint64 `db:"last_published_id" json:"latestPublishedID"`
-			LatestSubmittedID *uint64 `db:"last_submitted_id" json:"latestSubmittedID"`
-			CreatedAt         string  `db:"created_at" json:"createdAt"`
-		}
-		if err := json.NewDecoder(res.Body).Decode(&gameInfo); err != nil {
-			return err
-		}
-		color.Printf("\nGame <fg=cyan;op=bold>%s</>\n\nCreated at %s\n\n", gameInfo.Name, gameInfo.CreatedAt)
-
-		if gameInfo.LatestPublishedID != nil {
-			info := &userGameVersion{}
-			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(name), *gameInfo.LatestPublishedID))
-			if err != nil {
-				return err
-			}
-			defer res.Body.Close()
-			if err := json.NewDecoder(res.Body).Decode(info); err != nil {
-				return err
-			}
-			color.Printf("Published version <cyan>%s</> id <cyan>%d</>\n", info.Version, info.ID)
-			color.Printf("Name: <bold>%s</>\n", info.Name)
-			color.Printf("Friendly name: <bold>%s</>\n", info.FriendlyName)
-			color.Printf("Git sha: <bold>%s</>\n", info.GitSha)
-			color.Printf("Description:\n\n<bold>%s</>\n\n", info.Description)
-			color.Printf("Release notes:\n\n<bold>%s</>\n\n", info.ReleaseNotes)
-		} else {
-			color.Grayln("No currently published game")
-		}
-		if gameInfo.LatestSubmittedID != nil {
-			info := &userGameVersion{}
-			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(name), *gameInfo.LatestSubmittedID))
-			if err != nil {
-				return err
-			}
-			defer res.Body.Close()
-			if err := json.NewDecoder(res.Body).Decode(info); err != nil {
-				return err
-			}
-			color.Printf("Submitted version <cyan>%s</> id <cyan>%d</>\n", info.Version, info.ID)
-			color.Printf("Name: <bold>%s</>\n", info.Name)
-			color.Printf("Friendly name: <bold>%s</>\n", info.FriendlyName)
-			color.Printf("Git sha: <bold>%s</>\n", info.GitSha)
-			color.Printf("Description:\n\n<bold>%s</>\n\n", info.Description)
-			color.Printf("Release notes:\n\n<bold>%s</>\n\n", info.ReleaseNotes)
-		} else {
-			color.Grayln("No currently submitted game")
-		}
-	}
-
-	url := fmt.Sprintf("%s/home/games/%s", b.serverURL, url.PathEscape(name))
-	color.Printf("Visit <bold>%s</> for more information\n", url)
-
-	return nil
-}
-
 func (b *bz) getGameName() (string, error) {
 	packageJSONPath := path.Join(b.root, "package.json")
 	_, err := os.Stat(packageJSONPath)
@@ -469,8 +451,6 @@ func (b *bz) testAuth(auth []byte) (bool, error) {
 func (b *bz) submit() error {
 	submitCmd := flag.NewFlagSet("submit", flag.ExitOnError)
 	root := submitCmd.String("root", "", "game root")
-	version := submitCmd.String("version", "", "version")
-	interactive := submitCmd.Bool("interactive", false, "interactive")
 	noGitOps := submitCmd.Bool("no-git", false, "no git ops")
 	noCleanCheck := submitCmd.Bool("no-clean-check", false, "no clean check")
 
@@ -497,71 +477,58 @@ func (b *bz) submit() error {
 		}
 	}
 
-	packageJSONPath := path.Join(*root, "package.json")
-	stat, err := os.Stat(packageJSONPath)
+	name, err := b.getGameName()
 	if err != nil {
 		return err
 	}
-	packageJSONBytes, err := os.ReadFile(packageJSONPath) // #nosec G304
-	if err != nil {
-		return err
-	}
-	currentVersion := gjson.Get(string(packageJSONBytes), "version")
-	if !currentVersion.Exists() {
-		return fmt.Errorf("cannot get current version from package.json")
-	}
-	differentVersion := false
-	if *interactive {
-		versionInput := textinput.New("Enter your version:")
-		versionInput.Placeholder = currentVersion.Str
-		versionInput.Validate = func(s string) error {
-			if s == "" {
-				return fmt.Errorf("required")
-			}
 
-			return nil
+	// calculate next version
+	info, err := b.getInfo(name)
+	nextVersion := "v0.0.1"
+	if err != nil && err != gameNotFound {
+		return err
+	}
+	if info.LatestPublished != nil {
+		majorMinor := semver.MajorMinor(info.LatestPublished.Version)
+		patchStr := info.LatestPublished.Version[len(majorMinor)+1:]
+		patch, err := strconv.ParseUint(patchStr, 10, 64)
+		if err != nil {
+			return err
 		}
-		versionInput.Template += `
+		nextVersion = fmt.Sprintf("%s.%d", majorMinor, patch+1)
+	} else if info.LatestSubmitted != nil {
+		nextVersion = info.LatestSubmitted.Version
+	}
+
+	// check with user that its correct
+	versionInput := textinput.New("Enter your version:")
+	versionInput.InitialValue = nextVersion
+	versionInput.Validate = func(s string) error {
+		if s == "" {
+			return fmt.Errorf("required")
+		}
+		if !semver.IsValid(s) {
+			return fmt.Errorf("expected a valid semver version")
+		}
+
+		if info.LatestPublished != nil {
+			if semver.Compare(s, info.LatestPublished.Version) != 1 {
+				return fmt.Errorf("expected version to be higher than %s", info.LatestPublished.Version)
+			}
+		}
+		return nil
+	}
+	versionInput.Template += `
 		{{- if .ValidationError -}}
 			{{- print " " (Foreground "1" .ValidationError.Error) -}}
 		{{- end -}}`
 
-		newVersion, err := versionInput.RunPrompt()
-		if err != nil {
-			return err
-		}
-		newPackageJSON, err := sjson.Set(string(packageJSONBytes), "version", newVersion)
-		if err != nil {
-			return err
-		}
-		if err := os.WriteFile(path.Join(*root, "package.json"), []byte(newPackageJSON), stat.Mode()); err != nil {
-			return err
-		}
-		differentVersion = currentVersion.Str != newVersion
-		version = &newVersion
+	version, err := versionInput.RunPrompt()
+	if err != nil {
+		return err
 	}
-	if version == nil || *version == "" {
-		return fmt.Errorf("Requires -version <version>")
-	}
-	successful := false
-	versionTag := fmt.Sprintf("v%s", *version)
-	defer func() {
-		if successful {
-			return
-		}
-		if *noGitOps {
-			return
-		}
-		if differentVersion {
-			if out, err := b.sh("git", "tag", "-d", versionTag); err != nil {
-				color.Grayf("error deleting tag: %s -- %s, ignoring\n", err.Error(), out)
-			}
-		}
-		if out, err := b.sh("git", "reset", "--hard"); err != nil {
-			color.Redf("error resetting: %s -- %s\n", err.Error(), out)
-		}
-	}()
 
+	// submit game
 	gitShaOut, err := b.sh("git", "rev-parse", "HEAD")
 	if err != nil {
 		return fmt.Errorf("error getting sha: %w -- %s", err, gitShaOut)
@@ -594,10 +561,6 @@ func (b *bz) submit() error {
 
 	pipeReader, pipeWriter := io.Pipe()
 	mpw := multipart.NewWriter(pipeWriter)
-	name, err := b.getGameName()
-	if err != nil {
-		return err
-	}
 
 	gw := newGameWriter(b.serverURL, name, mpw, *root)
 	go func() {
@@ -615,7 +578,7 @@ func (b *bz) submit() error {
 		}
 	}()
 
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d", b.serverURL, url.PathEscape(name), versionTag, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers), pipeReader)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d", b.serverURL, url.PathEscape(name), version, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers), pipeReader)
 	if err != nil {
 		return err
 	}
@@ -630,9 +593,9 @@ func (b *bz) submit() error {
 	}
 	switch res.StatusCode {
 	case 200:
-		color.Printf("🎉🎉🎉 Game <green>%s</> submitted as version <green>%s</>\n\n", name, versionTag)
-		successful = true
-
+		now := time.Now()
+		versionTag := fmt.Sprintf("%s-%s-%02d-%02d-%02d", version, now.Format(time.DateOnly), now.Hour(), now.Minute(), now.Second())
+		color.Printf("🎉🎉🎉 Game <green>%s</> submitted as version <green>%s</> with git tag <gray>%s</>\n\n", name, version, versionTag)
 		var submitResponse struct {
 			ID uint64 `json:"id"`
 		}
@@ -641,26 +604,12 @@ func (b *bz) submit() error {
 			return err
 		}
 		if !*noGitOps {
-			if differentVersion {
-				color.Printf("Committing package.json with new version <green>%s</>\n", versionTag)
-				if out, err := b.sh("git", "add", "package.json"); err != nil {
-					return fmt.Errorf("error adding package.json: %w -- %s", err, out)
-				}
-				if out, err := b.sh("git", "commit", "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
-					return fmt.Errorf("error committing: %w -- %s", err, out)
-				}
-				color.Printf("Pushing package.json change\n")
-				if out, err := b.sh("git", "push"); err != nil {
-					return fmt.Errorf("error pushing change: %w -- %s", err, out)
-				}
-			}
+			// construct a tag based on that
+			// if successful, add git tag
+			// push git tag
 			color.Printf("Adding git tag for <green>%s</>\n", versionTag)
-			if out, err := b.sh("git", "tag", "-f", "-a", versionTag, "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
+			if out, err := b.sh("git", "tag", "-a", versionTag, "-m", fmt.Sprintf("Bump to %s", versionTag)); err != nil {
 				return fmt.Errorf("error adding tag: %w -- %s", err, out)
-			}
-			color.Printf("Pushing new tag <green>%s</>\n", versionTag)
-			if out, err := b.sh("git", "push", "--tags"); err != nil {
-				return fmt.Errorf("error pushing change: %w -- %s", err, out)
 			}
 		}
 		url := fmt.Sprintf("%s/home/games/%s/%d", b.serverURL, url.PathEscape(name), submitResponse.ID)
@@ -812,4 +761,63 @@ func (b *bz) doGetReq(url string) (*http.Response, error) {
 	}
 	req.Header.Add("cookie", string(auth))
 	return http.DefaultClient.Do(req)
+}
+
+func (b *bz) getInfo(name string) (*userGame, error) {
+	infoCmd := flag.NewFlagSet("info", flag.ExitOnError)
+	root := infoCmd.String("root", "", "game root")
+	if err := infoCmd.Parse(os.Args[2:]); err != nil {
+		return nil, err
+	}
+
+	if *root == "" {
+		fmt.Println("Requires -root <game root>")
+		return nil, fmt.Errorf("no root specified")
+	}
+	b.root = *root
+	name, err := b.getGameName()
+	if err != nil {
+		return nil, err
+	}
+	res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s", b.serverURL, url.PathEscape(name)))
+	if err != nil {
+		return nil, err
+	}
+
+	gameInfo := &userGame{}
+
+	switch res.StatusCode {
+	case http.StatusNotFound:
+		return nil, gameNotFound
+	case http.StatusOK:
+		if err := json.NewDecoder(res.Body).Decode(&gameInfo); err != nil {
+			return nil, err
+		}
+
+		if gameInfo.LatestPublishedID != nil {
+			info := &userGameVersion{}
+			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(name), *gameInfo.LatestPublishedID))
+			if err != nil {
+				return nil, err
+			}
+			defer res.Body.Close()
+			if err := json.NewDecoder(res.Body).Decode(info); err != nil {
+				return nil, err
+			}
+			gameInfo.LatestPublished = info
+		}
+		if gameInfo.LatestSubmittedID != nil {
+			info := &userGameVersion{}
+			res, err := b.doGetReq(fmt.Sprintf("%s/api/me/games/%s/%d", b.serverURL, url.PathEscape(name), *gameInfo.LatestSubmittedID))
+			if err != nil {
+				return nil, err
+			}
+			defer res.Body.Close()
+			if err := json.NewDecoder(res.Body).Decode(info); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return gameInfo, nil
 }

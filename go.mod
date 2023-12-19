@@ -8,7 +8,7 @@ require (
 	github.com/gookit/color v1.5.4
 	github.com/rjeczalik/notify v0.9.3
 	github.com/tidwall/gjson v1.17.0
-	github.com/tidwall/sjson v1.2.5
+	golang.org/x/mod v0.14.0
 )
 
 require (
