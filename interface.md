@@ -97,6 +97,7 @@ window.addEventListener('message', (evt: MessageEvent<
   GameUpdateEvent |
   GameFinishedEvent |
   MessageProcessedEvent
+  UserOnlineEvent
 >))
 window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
 ```
@@ -109,7 +110,8 @@ During "started", it will recv the following events.
 window.addEventListener('message', (evt: MessageEvent<
   GameUpdateEvent |
   GameFinishedEvent |
-  MessageProcessed
+  MessageProcessed |
+  UserOnlineEvent
 >))
 window.top.postMessage(m: MoveMessage | ReadyMessage)
 ```
@@ -133,6 +135,12 @@ type User = {
 type UsersEvent = {
   type: "users";
   users: User[];
+};
+
+type UserOnlineEvent = {
+  type: "userOnline";
+  id: string;
+  online: boolean;
 };
 
 // an update to the setup state
