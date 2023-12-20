@@ -58,6 +58,18 @@ type SaveStateData = {
   initialState: InitialStateHistoryItem
 }
 
+type MessageType = Game.InitialStateResultMessage |
+  Game.ProcessMoveResultMessage |
+  Game.GetPlayerStateMessage |
+  UI.UpdateSettingsMessage |
+  UI.UpdatePlayersMessage |
+  UI.StartMessage |
+  UI.UpdateSelfPlayerMessage |
+  UI.ReadyMessage |
+  UI.MoveMessage |
+  UI.KeyMessage |
+  UI.SendDarkMessage
+
 function App() {
   const [initialState, setInitialState] = useState<InitialStateHistoryItem | undefined>();
   const [numberOfUsers, setNumberOfUsers] = useState(minPlayers);
@@ -101,7 +113,7 @@ function App() {
   }, [initialState, historyPin]);
 
   const sendToUI = useCallback((data: UI.UsersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent) => {
-    (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(data)
+    (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(JSON.parse(JSON.stringify(data)))
   }, [])
 
   useEffect(() => {
@@ -314,51 +326,41 @@ function App() {
   }, [players])
 
   useEffect(() => {
-    const listener = async (e: MessageEvent<
-      Game.InitialStateResultMessage |
-      Game.ProcessMoveResultMessage |
-      Game.GetPlayerStateMessage |
-      UI.UpdateSettingsMessage |
-      UI.UpdatePlayersMessage |
-      UI.StartMessage |
-      UI.UpdateSelfPlayerMessage |
-      UI.ReadyMessage |
-      UI.MoveMessage |
-      UI.KeyMessage |
-      UI.SendDarkMessage
-    >) => {
-      switch(e.data.type) {
+    const listener = async (e: MessageEvent<MessageType>) => {
+      const evt = JSON.parse(JSON.stringify(e.data)) as MessageType
+
+      switch(evt.type) {
         case 'initialStateResult':
-          resolveGamePromise(e.data.id, e.data.state)
+          resolveGamePromise(evt.id, evt.state)
           break
         case 'processMoveResult':
-          if (e.data.error) {
-            rejectGamePromise(e.data.id, e.data.error)
+          if (evt.error) {
+            rejectGamePromise(evt.id, evt.error)
           } else {
-            resolveGamePromise(e.data.id, e.data.state)
+            resolveGamePromise(evt.id, evt.state)
           }
           break
         case 'getPlayerStateResult':
-          resolveGamePromise(e.data.id, e.data.state)
+          resolveGamePromise(evt.id, evt.state)
           break
         case 'updateSettings':
-          setSettings(e.data.settings);
-          sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
+          setSettings(evt.settings);
+          sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
           break
         case 'move':
           const previousState = history.length === 0 ? initialState!.state : history[history.length - 1].state!;
           try {
-            const moveUpdate = await processMove(previousState, {position: currentPlayer.position, data: e.data.data});
+            const moveUpdate = await processMove(previousState, {position: currentPlayer.position, data: evt.data});
             const newHistory = [...history, {
               position: currentPlayer.position,
               seq: history.length,
               state: moveUpdate.game,
               messages: moveUpdate.messages,
-              move: e.data.data,
+              move: evt.data,
             }];
             setHistory(newHistory);
             setHistoryPin(undefined);
-            sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
+            sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
             setCurrentUserIDRequested(undefined);
             if (moveUpdate.game.phase === 'started' && autoSwitch && moveUpdate.game.currentPlayers[0] !== currentPlayer.position) {
               setCurrentUserID(players.find(p => p.position === moveUpdate.game.currentPlayers[0])!.userID!);
@@ -367,7 +369,7 @@ function App() {
             await updateUI(moveUpdate);
           } catch(err) {
             console.error('error during move', err);
-            sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
+            sendToUI({type: "messageProcessed", id: evt.id, error: String(err)})
           }
           break
         case 'start':
@@ -380,11 +382,11 @@ function App() {
             };
             setInitialState(newInitialState);
             setPhase("started");
-            sendToUI({type: "messageProcessed", id: e.data.id, error: undefined});
+            sendToUI({type: "messageProcessed", id: evt.id, error: undefined});
             await updateUI(initialUpdate);
           } catch(err) {
             console.error('error during start', err);
-            sendToUI({type: "messageProcessed", id: e.data.id, error: String(err)})
+            sendToUI({type: "messageProcessed", id: evt.id, error: String(err)})
           }
           break
         case 'ready':
@@ -403,7 +405,7 @@ function App() {
         case 'updatePlayers':
           let newPlayers = players.slice()
           let p: Game.Player | undefined
-          for (let op of e.data.operations) {
+          for (let op of evt.operations) {
             switch (op.type) {
               case 'reserve':
                 break
@@ -438,10 +440,10 @@ function App() {
             }
             setPlayers(newPlayers)
           }
-          sendToUI({type: "messageProcessed", id: e.data.id, error: undefined})
+          sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
           break
         case 'updateSelfPlayer':
-          const {name, color} = e.data
+          const {name, color} = evt
           setPlayers(players.map(p => {
             if (p.userID !== currentUserID) return p
             return {
@@ -453,7 +455,7 @@ function App() {
         break
         // special event for player switching
         case 'key':
-          processKey(e.data.code)
+          processKey(evt.code)
           break
         case 'sendDark':
           sendToUI({
