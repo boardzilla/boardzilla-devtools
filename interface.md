@@ -51,6 +51,7 @@ type GameSettings = Record<string, any>
 type GameStartedState = {
   currentPlayers: number[]
   phase: 'started'
+  scores?: Record<string, number>
 } & Record<string, any>
 
 type GameFinishedState = {
@@ -68,6 +69,7 @@ type SetupState = {
 type PlayerState = {
   position: number
   state: PlayerGameState
+  summary: string
 }
 
 type GameUpdate = {
@@ -84,7 +86,7 @@ type Move = {
 
 ### UI
 
-The game ui occurs in three phases "new", "started" and "finished". 
+The game ui occurs in three phases "new", "started" and "finished".
 
 During "new", it will recv the following messages.
 
