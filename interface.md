@@ -51,7 +51,6 @@ type GameSettings = Record<string, any>
 type GameStartedState = {
   currentPlayers: number[]
   phase: 'started'
-  scores?: Record<string, number>
 } & Record<string, any>
 
 type GameFinishedState = {
@@ -70,6 +69,7 @@ type PlayerState = {
   position: number
   state: PlayerGameState
   summary: string
+  score?: number
 }
 
 type GameUpdate = {
