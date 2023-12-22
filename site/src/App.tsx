@@ -486,7 +486,7 @@ function App() {
     players.forEach(p => {
       sendToUI({type: "userOnline", id: p.userID!, online: true})
     })
-  }, [players])
+  }, [players, sendToUI])
 
   useEffect(() => {
     sendToUI({type: "users", users: possibleUsers.slice(0, numberOfUsers).map(u => ({
