@@ -162,10 +162,8 @@ function App() {
       case 'finished':
         sendToUI({
           type: "gameFinished",
-          state: {
-            position: currentPlayer.position,
-            state: playerState
-          },
+          position: currentPlayer.position,
+          state: playerState,
           winners: update.game.winners,
         });
         break
@@ -178,10 +176,8 @@ function App() {
         }
         sendToUI({
           type: "gameUpdate",
-          state: {
-            position,
-            state: playerState
-          },
+          position: currentPlayer.position,
+          state: playerState,
           currentPlayers: update.game.currentPlayers,
         });
         break

@@ -24,13 +24,15 @@ export type SettingsUpdateEvent = {
 
 export type GameUpdateEvent = {
   type: "gameUpdate"
-  state: Game.PlayerState
+  state: Game.PlayerGameState
+  position: number
   currentPlayers: number[]
 }
 
 export type GameFinishedEvent = {
   type: "gameFinished"
-  state: Game.PlayerState
+  state: Game.PlayerGameState
+  position: number
   winners: number[]
 }
 

@@ -18,6 +18,8 @@ export type PlayerGameState = Record<string, any>
 export type PlayerState = {
   position: number
   state: PlayerGameState
+  summary?: string
+  score?: number
 }
 
 export type SetupState = {
