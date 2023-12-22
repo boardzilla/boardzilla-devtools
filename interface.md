@@ -151,13 +151,15 @@ type SettingsUpdateEvent = {
 
 type GameUpdateEvent = {
   type: "gameUpdate";
-  state: PlayerState;
+  state: PlayerGameState;
+  position: number;
   currentPlayers: number[];
 };
 
 type GameFinishedEvent = {
   type: "gameFinished";
-  state: PlayerState;
+  state: PlayerGameState;
+  position: number;
   winners: number[];
 };
 
