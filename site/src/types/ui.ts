@@ -132,3 +132,8 @@ export type DarkSettingEvent = {
   dark: boolean
 }
 
+export type UserOnlineEvent = {
+  type: "userOnline";
+  id: string;
+  online: boolean;
+};

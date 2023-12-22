@@ -112,7 +112,7 @@ function App() {
     return history && historyItem >= 0  ? history[historyItem].state! : initialState?.state!
   }, [initialState, historyPin]);
 
-  const sendToUI = useCallback((data: UI.UsersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent) => {
+  const sendToUI = useCallback((data: UI.UsersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent | UI.UserOnlineEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(JSON.parse(JSON.stringify(data)))
   }, [])
 
@@ -481,6 +481,12 @@ function App() {
     window.addEventListener('keyup', l);
     return () => window.removeEventListener('keyup', l);
   }, [players, processKey])
+
+  useEffect(() => {
+    players.forEach(p => {
+      sendToUI({type: "userOnline", id: p.userID!, online: true})
+    })
+  }, [players])
 
   useEffect(() => {
     sendToUI({type: "users", users: possibleUsers.slice(0, numberOfUsers).map(u => ({
