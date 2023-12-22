@@ -51,12 +51,14 @@ type GameSettings = Record<string, any>
 type GameStartedState = {
   currentPlayers: number[]
   phase: 'started'
-} & Record<string, any>
+  state: any
+}
 
 type GameFinishedState = {
   winners: number[]
   phase: 'finished'
-} & Record<string, any>
+  state: any
+}
 
 type PlayerGameState = any
 
