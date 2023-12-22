@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"sync"
@@ -397,6 +398,17 @@ func (s *Server) Serve() error {
 		Handler:           r,
 		ReadHeaderTimeout: 200 * time.Millisecond,
 		Addr:              fmt.Sprintf(":%d", s.port),
+	}
+	if liveDev {
+		go func() {
+			cmd := exec.Command("npm", "run", "build:watch") // #nosec G204
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			cmd.Dir = "site"
+			if err := cmd.Run(); err != nil {
+				panic(err)
+			}
+		}()
 	}
 	return srv.ListenAndServe()
 }
