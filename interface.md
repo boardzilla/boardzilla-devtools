@@ -30,7 +30,7 @@ Must export an object `game` with two functions, `initialState` and `processMove
 ```ts
 initialState(setup: SetupState): GameUpdate
 processMove(previousState: GameStartedState, move: Move): GameUpdate
-getPlayerState(state: GameStartedState | GameFinishedState, position: number): PlayerGameState
+getPlayerState(state: GameState, position: number): PlayerGameState
 
 type Player = {
   color: string
@@ -48,19 +48,21 @@ type Message = {
 
 type GameSettings = Record<string, any>
 
+type GameState = any
+
+type PlayerGameState = any
+
 type GameStartedState = {
   currentPlayers: number[]
   phase: 'started'
-  state: any
+  state: GameState
 }
 
 type GameFinishedState = {
   winners: number[]
   phase: 'finished'
-  state: any
+  state: GameState
 }
-
-type PlayerGameState = any
 
 type SetupState = {
   players: Player[]
