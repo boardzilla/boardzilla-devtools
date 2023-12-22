@@ -401,7 +401,7 @@ func (s *Server) Serve() error {
 	}
 	if liveDev {
 		go func() {
-			cmd := exec.Command("npm", "run", "build:watch") // #nosec G204
+			cmd := exec.Command("npm", "run", "build:watch")
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			cmd.Dir = "site"

@@ -68,7 +68,7 @@ type SetupState = {
 type PlayerState = {
   position: number
   state: PlayerGameState
-  summary: string
+  summary?: string
   score?: number
 }
 
