@@ -24,14 +24,14 @@ export type SettingsUpdateEvent = {
 
 export type GameUpdateEvent = {
   type: "gameUpdate"
-  state: Game.PlayerGameState
+  state: Game.InternalPlayerState
   position: number
   currentPlayers: number[]
 }
 
 export type GameFinishedEvent = {
   type: "gameFinished"
-  state: Game.PlayerGameState
+  state: Game.InternalPlayerState
   position: number
   winners: number[]
 }
@@ -127,7 +127,6 @@ export type KeyMessage = {
 export type SendDarkMessage = {
   type: 'sendDark'
 }
-
 
 export type DarkSettingEvent = {
   type: 'darkSetting'
