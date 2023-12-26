@@ -13,7 +13,7 @@
         break;
       case 'processMove':
         try {
-          const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data}, event.data.trackMovement);
+          const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data});
           window.top.postMessage({type: "processMoveResult", id: event.data.id, error: undefined, state: gameUpdate}, "*")
         } catch (e) {
           console.error(e);
