@@ -13,31 +13,36 @@ export type Message = {
 }
 
 export type GameSettings = Record<string, any>
-export type PlayerGameState = Record<string, any>
 
-export type PlayerState = {
-  position: number
-  state: PlayerGameState
-  summary?: string
-  score?: number
+export type InternalGameState = any
+
+export type InternalPlayerState = any
+
+export type GameStartedState = {
+  currentPlayers: number[]
+  phase: 'started'
+  state: InternalGameState
 }
+
+export type GameFinishedState = {
+  winners: number[]
+  phase: 'finished'
+  state: InternalGameState
+}
+
+export type GameState = GameStartedState | GameFinishedState
 
 export type SetupState = {
   players: Player[]
   settings: GameSettings
 }
 
-export type GameStartedState = {
-  currentPlayers: number[]
-  phase: 'started'
-} & Record<string, any>
-
-export type GameFinishedState = {
-  winners: number[]
-  phase: 'finished'
-} & Record<string, any>
-
-export type GameState = GameStartedState | GameFinishedState
+export type PlayerState = {
+  position: number
+  state: InternalPlayerState
+  summary?: string
+  score?: number
+}
 
 export type GameUpdate = {
   game: GameState
@@ -48,26 +53,6 @@ export type GameUpdate = {
 export type Move = {
   position: number
   data: any
-}
-
-export type InitialStateEvent = {
-  type: "initialState"
-  setup: SetupState
-  id: string
-}
-
-export type ProcessMoveEvent = {
-  type: "processMove"
-  previousState: GameState
-  move: Move
-  id: string
-}
-
-export type GetPlayerStateEvent = {
-  type: "getPlayerState"
-  id: string
-  state: GameState
-  position: number
 }
 
 export type InitialStateResultMessage = {
@@ -86,5 +71,5 @@ export type ProcessMoveResultMessage = {
 export type GetPlayerStateMessage = {
   type: "getPlayerStateResult"
   id: string
-  state: PlayerGameState
+  state: InternalPlayerState
 }
