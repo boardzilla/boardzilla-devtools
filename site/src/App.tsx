@@ -208,7 +208,7 @@ function App() {
       while(i < history.length && previousUpdate.game.phase !== 'finished') {
         const { move, position } = history[i]
         try {
-          previousUpdate = await processMove(previousUpdate.game, {position, data: move}, false);
+          previousUpdate = await processMove(previousUpdate.game, {position, data: move});
           newHistory.push({position, move, seq: i, state: previousUpdate.game, messages: previousUpdate.messages})
         } catch(e) {
           console.error("error while reprocessing history", e)
