@@ -155,7 +155,7 @@ function App() {
     })
   }, [currentUserID]);
 
-  const updateUI = useCallback(async (update: {game: Game.GameState, players?: Game.PlayerState[]}) => {
+  const updateUI = useCallback(async (update: {game: Game.GameState, players?: Game.PlayerState[]}, readOnly: boolean) => {
     if (reprocessing) return;
     const playerState = update.players?.find(p => p.position === currentPlayer.position)?.state || await getPlayerState(update.game.state, currentPlayer.position);
     switch(update.game.phase) {
@@ -179,6 +179,7 @@ function App() {
           position: currentPlayer.position,
           state: playerState,
           currentPlayers: update.game.currentPlayers,
+          readOnly,
         });
         break
     }
@@ -237,7 +238,7 @@ function App() {
     try {
       if (initialState && settings) {
         const newState = await reprocessHistory(history, settings, players)
-        if (newState) await updateUI({ game: newState });
+        if (newState) await updateUI({ game: newState }, false);
       }
     } catch(e) {
       console.log("error reprocessing history")
@@ -363,7 +364,7 @@ function App() {
               setCurrentUserID(players.find(p => p.position === (moveUpdate.game as Game.GameStartedState).currentPlayers[0])!.userID!);
               return
             }
-            await updateUI(moveUpdate);
+            await updateUI(moveUpdate, false);
           } catch(err) {
             console.error('error during move', err);
             sendToUI({type: "messageProcessed", id: evt.id, error: String(err)})
@@ -380,7 +381,7 @@ function App() {
             setInitialState(newInitialState);
             setPhase("started");
             sendToUI({type: "messageProcessed", id: evt.id, error: undefined});
-            await updateUI(initialUpdate);
+            await updateUI(initialUpdate, false);
           } catch(err) {
             console.error('error during start', err);
             sendToUI({type: "messageProcessed", id: evt.id, error: String(err)})
@@ -396,7 +397,7 @@ function App() {
               playerDetails: playerDetailsForUser(players, u.id),
             }))});
           } else {
-            await updateUI({ game: getCurrentState(history) });
+            await updateUI({ game: getCurrentState(history) }, false);
           }
           break
         case 'updatePlayers':
@@ -519,6 +520,16 @@ function App() {
     await loadSaveStates();
   }, [loadSaveStates]);
 
+  const viewHistory = useCallback((idx: number) => {
+    setHistoryPin(idx === history.length -1 ? undefined : idx);
+    updateUI({ game: idx === -1 ? initialState!.state : history[idx].state }, idx !== history.length -1)
+  }, [history, initialState, updateUI])
+
+  const revertTo = useCallback((idx: number) => {
+    setHistory(history.slice(0, idx+1))
+    updateUI({ game: idx === -1 ? initialState!.state : history[idx].state }, false)
+  }, [history, initialState, updateUI])
+
   return (
     <>
     <Toaster/>
@@ -587,8 +598,8 @@ function App() {
         </h2>
         <History
           players={players}
-          view={n => { setHistoryPin(n === history.length ? undefined : n); updateUI({ game: n === -1 ? initialState!.state : history[n].state })}}
-          revertTo={n => {setHistory(history.slice(0, n+1)); updateUI({ game: n === -1 ? initialState!.state : history[n].state })}}
+          view={n => viewHistory(n)}
+          revertTo={n => revertTo(n)}
           initialState={initialState}
           items={history}
           collapsed={historyCollapsed}

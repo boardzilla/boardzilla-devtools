@@ -27,6 +27,7 @@ export type GameUpdateEvent = {
   state: Game.InternalPlayerState
   position: number
   currentPlayers: number[]
+  readOnly?: boolean
 }
 
 export type GameFinishedEvent = {

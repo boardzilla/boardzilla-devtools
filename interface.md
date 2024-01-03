@@ -160,6 +160,7 @@ type GameUpdateEvent = {
   state: InternalPlayerState;
   position: number;
   currentPlayers: number[];
+  readOnly?: boolean;
 };
 
 type GameFinishedEvent = {

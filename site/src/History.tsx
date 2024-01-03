@@ -41,16 +41,16 @@ export default function History({items, initialState, revertTo, view, players, c
       {initialState && collapsed &&
         <button key="-1" onClick={() => view(-1)} style={{background: '#999'}}>-</button>
       }
-      {items.map(i => collapsed ? (
-        <button key={i.seq} onClick={() => view(i.seq)} style={{background: player(i.position).color}}>{player(i.position).name.slice(0,1)}</button>
+      {items.map((item, i) => collapsed ? (
+        <button key={item.seq} onClick={() => view(item.seq)} style={{background: player(item.position).color}}>{player(item.position).name.slice(0,1)}</button>
       ) : (
-        <div style={{backgroundColor: i.seq % 2 === 0 ? "#ccc" : "#fff"}} key={i.seq}>
+        <div style={{backgroundColor: item.seq % 2 === 0 ? "#ccc" : "#fff"}} key={item.seq}>
           <>
-            {i.seq}
-            <span style={{marginLeft: '3px', padding: '1px', border: `2px ${player(i.position).color} solid`}}>{player(i.position).name}</span>
-            <button onClick={() => view(i.seq)}>View</button>
-            <button onClick={() => revertTo(i.seq)}>Revert</button>
-            {(i.move instanceof Array ? i.move : [i.move]).filter(m => 'name' in m).map((move: any, i: number) => (
+            {item.seq}
+            <span style={{marginLeft: '3px', padding: '1px', border: `2px ${player(item.position).color} solid`}}>{player(item.position).name}</span>
+            <button onClick={() => view(item.seq)}>View</button>
+            {(i !== items.length - 1) && <button onClick={() => revertTo(item.seq)}>Revert</button>}
+            {(item.move instanceof Array ? item.move : [item.move]).filter(m => 'name' in m).map((move: any, i: number) => (
               <div key={i}>
                 <code>
                   {move.name}
@@ -58,10 +58,10 @@ export default function History({items, initialState, revertTo, view, players, c
                 </code>
               </div>
             ))}
-            {Object.entries(i.messages || []).map(([key, m]) => (
+            {Object.entries(item.messages || []).map(([key, m]) => (
               <div key={key} dangerouslySetInnerHTML={{ __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>') }}/>
             ))}
-            {i.state?.state.board && <JsonView value={i.state?.state.board} collapsed={0} />}
+            {item.state?.state.board && <JsonView value={item.state?.state.board} collapsed={0} />}
           </>
         </div>
       ))}
