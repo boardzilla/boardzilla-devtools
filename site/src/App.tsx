@@ -155,7 +155,7 @@ function App() {
     })
   }, [currentUserID]);
 
-  const updateUI = useCallback(async (update: {game: Game.GameState, players?: Game.PlayerState[]}, readOnly: boolean) => {
+  const updateUI = useCallback(async (update: {game: Game.GameState, players?: Game.PlayerState[]}) => {
     if (reprocessing) return;
     const playerState = update.players?.find(p => p.position === currentPlayer.position)?.state || await getPlayerState(update.game.state, currentPlayer.position);
     switch(update.game.phase) {
@@ -179,11 +179,11 @@ function App() {
           position: currentPlayer.position,
           state: playerState,
           currentPlayers: update.game.currentPlayers,
-          readOnly,
+          readOnly: historyPin !== undefined,
         });
         break
     }
-  }, [sendToUI, reprocessing, autoSwitch, players, currentPlayer, currentUserIDRequested]);
+  }, [sendToUI, reprocessing, autoSwitch, players, currentPlayer, currentUserIDRequested, historyPin]);
 
   const resetGame = useCallback(() => {
     setPhase("new");
@@ -238,7 +238,7 @@ function App() {
     try {
       if (initialState && settings) {
         const newState = await reprocessHistory(history, settings, players)
-        if (newState) await updateUI({ game: newState }, false);
+        if (newState) await updateUI({ game: newState });
       }
     } catch(e) {
       console.log("error reprocessing history")
@@ -364,7 +364,7 @@ function App() {
               setCurrentUserID(players.find(p => p.position === (moveUpdate.game as Game.GameStartedState).currentPlayers[0])!.userID!);
               return
             }
-            await updateUI(moveUpdate, false);
+            await updateUI(moveUpdate);
           } catch(err) {
             console.error('error during move', err);
             sendToUI({type: "messageProcessed", id: evt.id, error: String(err)})
@@ -381,7 +381,7 @@ function App() {
             setInitialState(newInitialState);
             setPhase("started");
             sendToUI({type: "messageProcessed", id: evt.id, error: undefined});
-            await updateUI(initialUpdate, false);
+            await updateUI(initialUpdate);
           } catch(err) {
             console.error('error during start', err);
             sendToUI({type: "messageProcessed", id: evt.id, error: String(err)})
@@ -397,7 +397,7 @@ function App() {
               playerDetails: playerDetailsForUser(players, u.id),
             }))});
           } else {
-            await updateUI({ game: getCurrentState(history) }, false);
+            await updateUI({ game: getCurrentState(history) });
           }
           break
         case 'updatePlayers':
@@ -521,14 +521,19 @@ function App() {
   }, [loadSaveStates]);
 
   const viewHistory = useCallback((idx: number) => {
-    setHistoryPin(idx === history.length -1 ? undefined : idx);
-    updateUI({ game: idx === -1 ? initialState!.state : history[idx].state }, idx !== history.length -1)
-  }, [history, initialState, updateUI])
+    setHistoryPin(() => idx === history.length -1 ? undefined : idx);
+  }, [history])
 
   const revertTo = useCallback((idx: number) => {
     setHistory(history.slice(0, idx+1))
-    updateUI({ game: idx === -1 ? initialState!.state : history[idx].state }, false)
-  }, [history, initialState, updateUI])
+    setHistoryPin(undefined)
+  }, [history])
+
+  useEffect(() => {
+    if (!initialState) return
+    const idx = historyPin === undefined ? history.length - 1 : historyPin
+    updateUI({ game: idx === -1 ? initialState.state : history[idx].state })
+  }, [history, historyPin, initialState, updateUI])
 
   return (
     <>
