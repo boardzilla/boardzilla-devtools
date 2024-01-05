@@ -289,6 +289,32 @@ function App() {
     return () => evtSource.close()
   }, [])
 
+  const generateUsers = useCallback((): UI.User[] => {
+    const users = possibleUsers.slice(0, numberOfUsers).map(u => ({
+      id: u.id,
+      name: u.name,
+      avatar: avatarURL(u.id),
+      playerDetails: playerDetailsForUser(players, u.id),
+    }))
+
+    players.forEach(p => {
+      if (users.find(u => u.id === p.userID)) return
+
+      users.push({
+        id: p.userID,
+        name: p.name,
+        avatar: avatarURL(p.userID),
+        playerDetails: {
+          color: p.color,
+          position: p.position,
+          settings: p.settings,
+        }
+      })
+    })
+
+    return users
+  }, [numberOfUsers, players])
+
   const processKey = useCallback((code: string): boolean => {
     const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
     const validKeys = keys.slice(0, players.length)
@@ -390,12 +416,7 @@ function App() {
         case 'ready':
           if (!initialState) {
             sendToUI({type: "settingsUpdate", settings});
-            sendToUI({type: "users", users: possibleUsers.slice(0, numberOfUsers).map(u => ({
-              id: u.id,
-              name: u.name,
-              avatar: avatarURL(u.id),
-              playerDetails: playerDetailsForUser(players, u.id),
-            }))});
+            sendToUI({type: "users", users: generateUsers()});
           } else {
             await updateUI({ game: getCurrentState(history) });
           }
@@ -406,6 +427,14 @@ function App() {
           for (let op of evt.operations) {
             switch (op.type) {
               case 'reserve':
+                newPlayers.push({
+                  color: op.color,
+                  name: op.name,
+                  avatar: avatarURL("reserved"),
+                  host: false,
+                  position: op.position,
+                  userID: crypto.randomUUID(),
+                })
                 break
               case 'seat':
                 newPlayers.push({
@@ -466,7 +495,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch, currentUserID]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch, currentUserID, generateUsers]);
 
   useEffect(() => {
     const l = (e: globalThis.KeyboardEvent):any => {
@@ -487,13 +516,8 @@ function App() {
   }, [players, sendToUI])
 
   useEffect(() => {
-    sendToUI({type: "users", users: possibleUsers.slice(0, numberOfUsers).map(u => ({
-      id: u.id,
-      name: u.name,
-      avatar: avatarURL(u.id),
-      playerDetails: playerDetailsForUser(players, u.id),
-    }))});
-}, [numberOfUsers, players, sendToUI])
+    sendToUI({type: "users", users: generateUsers()});
+}, [generateUsers, sendToUI])
 
   useEffect(() => {
     sendToUI({ type: 'darkSetting', dark: darkMode !== false })

@@ -1,6 +1,6 @@
 import * as Game from './game'
 
-type User = {
+export type User = {
   id: string
   name: string
   avatar: string
@@ -45,7 +45,7 @@ export type MessageProcessedEvent = {
 }
 
 export type UserPlayer = Game.Player & {
-  userID?: string
+  userID: string
 }
 
 // host only
