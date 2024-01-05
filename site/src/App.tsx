@@ -546,18 +546,14 @@ function App() {
 
   const viewHistory = useCallback((idx: number) => {
     setHistoryPin(() => idx === history.length -1 ? undefined : idx);
-  }, [history])
+    updateUI({ game: idx === -1 ? initialState!.state : history[idx].state })
+  }, [updateUI, initialState, history])
 
   const revertTo = useCallback((idx: number) => {
     setHistory(history.slice(0, idx+1))
-    setHistoryPin(undefined)
-  }, [history])
-
-  useEffect(() => {
-    if (!initialState) return
-    const idx = historyPin === undefined ? history.length - 1 : historyPin
-    updateUI({ game: idx === -1 ? initialState.state : history[idx].state })
-  }, [history, historyPin, initialState, updateUI])
+    setHistoryPin(undefined);
+    updateUI({ game: idx === -1 ? initialState!.state : history[idx].state })
+  }, [updateUI, initialState, history])
 
   return (
     <>
