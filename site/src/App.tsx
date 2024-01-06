@@ -290,12 +290,15 @@ function App() {
   }, [])
 
   const generateUsers = useCallback((): UI.User[] => {
-    const users = possibleUsers.slice(0, numberOfUsers).map(u => ({
-      id: u.id,
-      name: u.name,
-      avatar: avatarURL(u.id),
-      playerDetails: playerDetailsForUser(players, u.id),
-    }))
+    const users = possibleUsers.slice(0, numberOfUsers).map(u => {
+      const player = players.find(p => u.id === p.userID);
+      return ({
+        id: u.id,
+        name: player?.name ?? u.name,
+        avatar: avatarURL(u.id),
+        playerDetails: playerDetailsForUser(players, u.id),
+      })
+    })
 
     players.forEach(p => {
       if (users.find(u => u.id === p.userID)) return
@@ -517,7 +520,7 @@ function App() {
 
   useEffect(() => {
     sendToUI({type: "users", users: generateUsers()});
-}, [generateUsers, sendToUI])
+  }, [generateUsers, sendToUI])
 
   useEffect(() => {
     sendToUI({ type: 'darkSetting', dark: darkMode !== false })
