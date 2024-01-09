@@ -44,9 +44,7 @@ export type MessageProcessedEvent = {
   error?: string
 }
 
-export type UserPlayer = Game.Player & {
-  userID: string
-}
+export type UserPlayer = Game.Player
 
 // host only
 export type UpdateSettingsMessage = {

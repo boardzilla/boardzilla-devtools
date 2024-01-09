@@ -31,7 +31,7 @@ const possibleUsers = [
 const avatarURL = (userID: string): string => `https://i.pravatar.cc/200?u=bup${userID}`
 
 const playerDetailsForUser = (players: UI.UserPlayer[], userID: string): {color: string, position: number, settings?: any} | undefined => {
-  const player = players.find(p => p.userID === userID)
+  const player = players.find(p => p.id === userID)
   if (!player) return undefined
   return {
     color: player.color,
@@ -99,7 +99,7 @@ function App() {
     }
   }, [darkMode])
 
-  const currentPlayer = useMemo(() => players.find(p => p.userID === currentUserID)!, [players, currentUserID]);
+  const currentPlayer = useMemo(() => players.find(p => p.id === currentUserID)!, [players, currentUserID]);
 
   const loadSaveStates = useCallback(async () => {
     const response = await fetch('/states')
@@ -171,7 +171,7 @@ function App() {
         let position = currentPlayer.position;
         if (autoSwitch && update.game.currentPlayers[0] !== currentPlayer.position && currentUserIDRequested === undefined) {
           position = update.game.currentPlayers[0];
-          setCurrentUserID(players.find(p => p.position === position)!.userID!);
+          setCurrentUserID(players.find(p => p.position === position)!.id!);
           return
         }
         sendToUI({
@@ -223,7 +223,7 @@ function App() {
       throw e
     } finally {
       setPlayers(players);
-      setCurrentUserID(players[0].userID!)
+      setCurrentUserID(players[0].id!)
       setCurrentUserIDRequested(undefined)
       setInitialState(newInitialState ? {state: newInitialState.game, players, settings} : undefined)
       setHistory(newHistory);
@@ -298,12 +298,12 @@ function App() {
     }))
 
     players.forEach(p => {
-      if (users.find(u => u.id === p.userID)) return
+      if (users.find(u => u.id === p.id)) return
 
       users.push({
-        id: p.userID,
+        id: p.id,
         name: p.name,
-        avatar: avatarURL(p.userID),
+        avatar: avatarURL(p.id),
         playerDetails: {
           color: p.color,
           position: p.position,
@@ -341,7 +341,7 @@ function App() {
       case 'Digit9':
       case 'Digit0':
         const idx = validKeys.indexOf(code)
-        setCurrentUserID(players[idx].userID!);
+        setCurrentUserID(players[idx].id!);
         return true
       default:
         return false
@@ -387,7 +387,7 @@ function App() {
             sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
             setCurrentUserIDRequested(undefined);
             if (moveUpdate.game.phase === 'started' && autoSwitch && moveUpdate.game.currentPlayers[0] !== currentPlayer.position) {
-              setCurrentUserID(players.find(p => p.position === (moveUpdate.game as Game.GameStartedState).currentPlayers[0])!.userID!);
+              setCurrentUserID(players.find(p => p.position === (moveUpdate.game as Game.GameStartedState).currentPlayers[0])!.id!);
               return
             }
             await updateUI(moveUpdate);
@@ -433,7 +433,7 @@ function App() {
                   avatar: avatarURL("reserved"),
                   host: false,
                   position: op.position,
-                  userID: crypto.randomUUID(),
+                  id: crypto.randomUUID(),
                 })
                 break
               case 'seat':
@@ -443,16 +443,16 @@ function App() {
                   avatar: avatarURL(op.userID),
                   host: op.userID === possibleUsers[0].id,
                   position: op.position,
-                  userID: op.userID,
+                  id: op.userID,
                 })
                 break
               case 'unseat':
                 const unseatOp = op
-                newPlayers = newPlayers.filter(p => p.userID !== unseatOp.userID)
+                newPlayers = newPlayers.filter(p => p.id !== unseatOp.userID)
                 break
               case 'update':
                 const updateOp = op
-                p = newPlayers.find(p => p.userID === updateOp.userID)
+                p = newPlayers.find(p => p.id === updateOp.userID)
                 if (!p) continue
                 if (op.color) {
                   p.color = op.color
@@ -472,7 +472,7 @@ function App() {
         case 'updateSelfPlayer':
           const {name, color} = evt
           setPlayers(players.map(p => {
-            if (p.userID !== currentUserID) return p
+            if (p.id !== currentUserID) return p
             return {
               ...p,
               name,
@@ -511,7 +511,7 @@ function App() {
 
   useEffect(() => {
     players.forEach(p => {
-      sendToUI({type: "userOnline", id: p.userID!, online: true})
+      sendToUI({type: "userOnline", id: p.id!, online: true})
     })
   }, [players, sendToUI])
 
@@ -600,7 +600,7 @@ function App() {
           <span style={{marginRight: '0.5em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /></span> <span style={{marginRight: '3em'}}>Autoswitch players</span>
           {phase === "new" && <span><input style={{width: '3em', marginRight: '0.5em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/> Number of players</span>}
           <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => {setCurrentUserIDRequested(p.userID!); setCurrentUserID(p.userID!)}} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.userID !== p.userID) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.userID !== p.userID) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
+            <button className="player" onClick={() => {setCurrentUserIDRequested(p.id!); setCurrentUserID(p.id!)}} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.id !== p.id) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.id !== p.id) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
           )}</span>
           <span style={{marginRight: '0.5em'}}>🌞</span>
           <Switch onChange={(v) => setDarkMode(v)} checked={darkMode} uncheckedIcon={false} checkedIcon={false} />

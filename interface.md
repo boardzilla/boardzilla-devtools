@@ -33,6 +33,7 @@ processMove(previousState: GameStartedState, move: Move): GameUpdate
 getPlayerState(state: InternalGameState, position: number): InternalPlayerState
 
 type Player = {
+  id: string
   color: string
   name: string
   position: number
