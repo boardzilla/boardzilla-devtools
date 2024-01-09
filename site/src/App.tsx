@@ -558,6 +558,11 @@ function App() {
     updateUI({ game: idx === -1 ? initialState!.state : history[idx].state })
   }, [updateUI, initialState, history])
 
+  const resetRandomSeed = useCallback(() => {
+    sessionStorage.setItem('rseed', crypto.randomUUID());
+    resetGame()
+  }, [])
+
   return (
     <>
     <Toaster/>
@@ -608,7 +613,8 @@ function App() {
           <span style={{marginRight: '0.5em'}}>🌞</span>
           <Switch onChange={(v) => setDarkMode(v)} checked={darkMode} uncheckedIcon={false} checkedIcon={false} />
           <span style={{marginLeft: '0.5em'}}>🌚</span>
-          <button style={{marginLeft: '2em', fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
+          <button style={{marginLeft: '1em'}} onClick={() => resetRandomSeed()}>Reset seed</button>
+          <button style={{marginLeft: '0.5em', fontSize: '20pt'}} className="button-link" onClick={() => setHelpOpen(true)}>ⓘ</button>
         </div>
         {reprocessing && <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>}
         {!reprocessing && (
