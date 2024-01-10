@@ -1,4 +1,5 @@
 export type Player = {
+  id: string
   color: string
   name: string
   avatar: string
