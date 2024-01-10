@@ -395,7 +395,6 @@ function App() {
             }
             await updateUI(moveUpdate);
           } catch(err) {
-            console.error('error during move', err);
             sendToUI({type: "messageProcessed", id: evt.id, error: String(err)})
           }
           break
