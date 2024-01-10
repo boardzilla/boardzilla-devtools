@@ -291,7 +291,7 @@ function App() {
 
   const generateUsers = useCallback((): UI.User[] => {
     const users = possibleUsers.slice(0, numberOfUsers).map(u => {
-      const player = players.find(p => u.id === p.userID);
+      const player = players.find(p => u.id === p.id);
       return ({
         id: u.id,
         name: player?.name ?? u.name,
@@ -561,7 +561,7 @@ function App() {
   const resetRandomSeed = useCallback(() => {
     sessionStorage.setItem('rseed', crypto.randomUUID());
     resetGame()
-  }, [])
+  }, [resetGame])
 
   return (
     <>
