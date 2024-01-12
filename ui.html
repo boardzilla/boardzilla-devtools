@@ -11,6 +11,14 @@
       window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = window.parent.__REACT_DEVTOOLS_GLOBAL_HOOK__;
     }
 
+    const methods = ['debug', 'log', 'warn', 'error', 'info', 'trace']
+    methods.forEach(m => {
+      const oldMethod = console[m]
+      console[m] = function(...data) {
+        oldMethod.apply(null, ["%c$ui  ", "color: #bada55"].concat(data))
+      }
+    })
+
     window.top.postMessage({type: "sendDark"}, "*")
     window.addEventListener('message', function(e) {
       if (e.data.type === "darkSetting") {

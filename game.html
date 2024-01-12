@@ -1,6 +1,14 @@
 <html>
   <script src="game.js"></script>
   <script>
+    const methods = ['debug', 'log', 'warn', 'error', 'info', 'trace']
+    methods.forEach(m => {
+      const oldMethod = console[m]
+      console[m] = function(...data) {
+        oldMethod.apply(null, ["%c$game", "color: #aa4330"].concat(data))
+      }
+    })
+
     window.addEventListener('message', (event) => {
       switch (event.data.type) {
       case 'initialState':
