@@ -488,16 +488,18 @@ func (b *bz) submit() error {
 	if err != nil && err != gameNotFound {
 		return err
 	}
-	if info.LatestPublished != nil {
-		majorMinor := semver.MajorMinor(info.LatestPublished.Version)
-		patchStr := info.LatestPublished.Version[len(majorMinor)+1:]
-		patch, err := strconv.ParseUint(patchStr, 10, 64)
-		if err != nil {
-			return err
+	if info != nil {
+		if info.LatestPublished != nil {
+			majorMinor := semver.MajorMinor(info.LatestPublished.Version)
+			patchStr := info.LatestPublished.Version[len(majorMinor)+1:]
+			patch, err := strconv.ParseUint(patchStr, 10, 64)
+			if err != nil {
+				return err
+			}
+			nextVersion = fmt.Sprintf("%s.%d", majorMinor, patch+1)
+		} else if info.LatestSubmitted != nil {
+			nextVersion = info.LatestSubmitted.Version
 		}
-		nextVersion = fmt.Sprintf("%s.%d", majorMinor, patch+1)
-	} else if info.LatestSubmitted != nil {
-		nextVersion = info.LatestSubmitted.Version
 	}
 
 	// check with user that its correct
@@ -511,7 +513,7 @@ func (b *bz) submit() error {
 			return fmt.Errorf("expected a valid semver version")
 		}
 
-		if info.LatestPublished != nil {
+		if info != nil && info.LatestPublished != nil {
 			if semver.Compare(s, info.LatestPublished.Version) != 1 {
 				return fmt.Errorf("expected version to be higher than %s", info.LatestPublished.Version)
 			}
