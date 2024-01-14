@@ -123,7 +123,11 @@ window.addEventListener('message', (evt: MessageEvent<
 window.top.postMessage(m: MoveMessage | ReadyMessage)
 ```
 
-Once a game has received `GameFinishedEvent`, it will receive no other events.
+Once a game has received `GameFinishedEvent`, it can only recv the following event.
+
+```ts
+window.top.postMessage(m: RematchMessage)
+```
 
 #### recv events by ui
 
@@ -250,6 +254,11 @@ type MoveMessage = {
   type: 'move'
   id: string
   data: any
+}
+
+type RematchMessage = {
+  type: "rematch"
+  rematch: boolean
 }
 
 // bootstrap data
