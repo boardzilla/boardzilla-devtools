@@ -1,6 +1,6 @@
 {
   "name": "@boardzilla/devtools",
-  "version": "0.0.51",
+  "version": "0.0.52",
   "description": "Devtools for developing games on boardzilla.io",
   "scripts": {
     "prepare": "./scripts/check-github-release",
