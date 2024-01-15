@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -614,6 +615,10 @@ func (b *bz) submit() error {
 				return fmt.Errorf("error adding tag: %w -- %s", err, out)
 			}
 		}
+		if err := gw.postPreloadAssets(auth, submitResponse.ID); err != nil {
+			return err
+		}
+
 		url := fmt.Sprintf("%s/home/games/%s/%d", b.serverURL, url.PathEscape(name), submitResponse.ID)
 		fmt.Printf("Opening %s...\n\n", url)
 		return exec.Command("open", url).Start() // #nosec G204
@@ -624,19 +629,26 @@ func (b *bz) submit() error {
 	}
 }
 
+type preload struct {
+	Path string `json:"path"`
+	As   string `json:"as"`
+}
+
 type gameWriter struct {
 	mpw       *multipart.Writer
 	root      string
 	name      string
 	serverURL string
+	assets    []*preload
 }
 
 func newGameWriter(serverURL, name string, mpw *multipart.Writer, root string) *gameWriter {
 	return &gameWriter{
-		serverURL: serverURL,
-		name:      name,
 		mpw:       mpw,
 		root:      root,
+		name:      name,
+		serverURL: serverURL,
+		assets:    []*preload{},
 	}
 }
 
@@ -649,6 +661,17 @@ func (gw *gameWriter) addFile(target string, src ...string) error {
 	}
 	if strings.HasPrefix(target, "ui/") {
 		assetTarget, _ := strings.CutPrefix(target, "ui/")
+		assetTypes := strings.Split(mime.TypeByExtension(path.Ext(assetTarget)), "/")
+		var assetType string
+		switch assetTypes[0] {
+		case "image":
+			assetType = "image"
+		case "audio":
+			assetType = "audio"
+		}
+		if assetType != "" {
+			gw.assets = append(gw.assets, &preload{assetTarget, assetType})
+		}
 		digest := sha256.Sum256(f)
 		req, err := http.NewRequest(http.MethodHead, fmt.Sprintf("%s/api/assets/%s/%s", gw.serverURL, url.PathEscape(gw.name), assetTarget), nil)
 		if err != nil {
@@ -678,6 +701,30 @@ func (gw *gameWriter) addFile(target string, src ...string) error {
 		return err
 	}
 	color.Println(" ✅")
+	return nil
+}
+
+func (gw *gameWriter) postPreloadAssets(auth []byte, id uint64) error {
+	var preloadAssets struct {
+		Preload []*preload `json:"preload"`
+	}
+	preloadAssets.Preload = gw.assets
+	body, err := json.Marshal(preloadAssets)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%d/preload", gw.serverURL, url.PathEscape(gw.name), id), bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("cookie", string(auth))
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 204 {
+		return fmt.Errorf("unable to post preload assets: %s", res.Status)
+	}
 	return nil
 }
 
