@@ -23,6 +23,7 @@ import (
 var liveDev = os.Getenv("LIVE_DEV") == "1"
 
 //go:embed *.html
+//go:embed *.jpg
 //go:embed site/build/*
 //go:embed site/node_modules/@fontsource-variable/dm-sans/index.css
 //go:embed site/node_modules/@fontsource-variable/dm-sans/files/*
@@ -356,6 +357,7 @@ func (s *Server) Serve() error {
 		data.Bootstrap = r.URL.Query().Get("bootstrap")
 		w.Header().Add("Content-type", "text/html")
 		w.Header().Add("Cache-control", "no-store")
+		w.Header().Add("Content-Security-Policy", "default-src 'self'; connect-src 'none'")
 		if err := t.Execute(w, data); err != nil {
 			fmt.Printf("error: %#v\n", err)
 		}
@@ -373,6 +375,20 @@ func (s *Server) Serve() error {
 		w.WriteHeader(200)
 		if _, err := w.Write(f); err != nil {
 			fmt.Printf("error while writing: %s", err.Error())
+		}
+	})
+
+	r.Get("/_profile/*", func(w http.ResponseWriter, r *http.Request) {
+		assetPath := chi.URLParam(r, "*")
+		f, err := s.getBuildFile(assetPath)
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		w.Header().Add("Content-type", "image/jpg")
+		if _, err := w.Write(f); err != nil {
+			fmt.Printf("error: %#v\n", err)
 		}
 	})
 
@@ -454,7 +470,7 @@ func (s *Server) BuildError(t int, o, e string) {
 
 func (s *Server) getBuildFile(n string) ([]byte, error) {
 	switch n {
-	case "/game.html", "/ui.html":
+	case "/game.html", "/ui.html", "0.jpg", "1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg", "7.jpg", "8.jpg", "9.jpg":
 		n = path.Join(".", n)
 	default:
 		n = path.Join("site", "build", n)

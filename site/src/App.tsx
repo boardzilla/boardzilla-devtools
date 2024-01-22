@@ -12,6 +12,13 @@ import * as UI from './types/ui'
 import * as Game from './types/game'
 import { sendInitialState, processMove, getPlayerState, resolveGamePromise, rejectGamePromise } from './game';
 
+declare module 'react' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  export interface IframeHTMLAttributes<T> {
+    credentialless?: boolean;
+  }
+}
+
 const body = document.getElementsByTagName("body")[0];
 const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
 const minPlayers = parseInt(body.getAttribute("minPlayers")!);
@@ -28,7 +35,7 @@ const possibleUsers = [
   {id: "9", name: "Zvezdelina"},
 ];
 
-const avatarURL = (userID: string): string => `https://i.pravatar.cc/200?u=bup${userID}`
+const avatarURL = (userID: string): string => `/_profile/${userID}.jpg`
 
 const playerDetailsForUser = (players: UI.UserPlayer[], userID: string): {color: string, position: number, settings?: any} | undefined => {
   const player = players.find(p => p.id === userID)
@@ -617,7 +624,14 @@ function App() {
         </div>
         {reprocessing && <div style={{height: '100vh', width: '100vw'}}>REPROCESSING HISTORY</div>}
         {!reprocessing && (
-          <iframe seamless={true} style={{border: 1, flexGrow: 4}} id="ui" title="ui" src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}></iframe>
+          <iframe
+            seamless
+            credentialless
+            style={{border: 1, flexGrow: 4}}
+            id="ui"
+            title="ui"
+            src={`/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`}
+          />
         )}
         <iframe onLoad={() => reprocessHistoryCallback()} style={{height: '0', width: '0'}} id="game" title="game" src="/game.html"></iframe>
       </div>
