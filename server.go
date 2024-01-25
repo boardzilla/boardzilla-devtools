@@ -357,7 +357,7 @@ func (s *Server) Serve() error {
 		data.Bootstrap = r.URL.Query().Get("bootstrap")
 		w.Header().Add("Content-type", "text/html")
 		w.Header().Add("Cache-control", "no-store")
-		w.Header().Add("Content-Security-Policy", "default-src 'self'; connect-src 'none'; object-src 'self' data:")
+		w.Header().Add("Content-Security-Policy", "default-src 'self'; connect-src 'none'; object-src 'self' data:; script-src 'self' 'unsafe-inline'")
 		if err := t.Execute(w, data); err != nil {
 			fmt.Printf("error: %#v\n", err)
 		}
