@@ -12,13 +12,6 @@ import * as UI from './types/ui'
 import * as Game from './types/game'
 import { sendInitialState, processMove, getPlayerState, resolveGamePromise, rejectGamePromise } from './game';
 
-declare module 'react' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  export interface IframeHTMLAttributes<T> {
-    credentialless?: boolean;
-  }
-}
-
 const body = document.getElementsByTagName("body")[0];
 const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
 const minPlayers = parseInt(body.getAttribute("minPlayers")!);
@@ -626,7 +619,6 @@ function App() {
         {!reprocessing && (
           <iframe
             seamless
-            credentialless
             style={{border: 1, flexGrow: 4}}
             id="ui"
             title="ui"
