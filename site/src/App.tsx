@@ -540,7 +540,7 @@ function App() {
     const response = await fetch(`/states/${encodeURIComponent(name)}`);
     const state = await response.json() as SaveStateData;
     try {
-      const [_, initialState, history, settings, players] = await reprocessHistory(state.history, state.settings, state.players);
+      const [, initialState, history, settings, players] = await reprocessHistory(state.history, state.settings, state.players);
       if (initialState) await saveCurrentState(name, initialState, history, settings, players)
     } catch(e) {
       toast.error(`Error reprocessing history: ${String(e)}`)
