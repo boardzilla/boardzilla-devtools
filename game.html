@@ -5,7 +5,7 @@
     methods.forEach(m => {
       const oldMethod = console[m]
       console[m] = function(...data) {
-        oldMethod.apply(null, ["%c$game", "color: #aa4330"].concat(data))
+        if (window.showDebug) oldMethod.apply(null, ["%c$game", "color: #aa4330"].concat(data))
       }
     })
 

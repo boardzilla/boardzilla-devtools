@@ -126,7 +126,13 @@ function App() {
     }
   }, [phase, sendToUI, settings])
 
-  const saveCurrentState = useCallback(async (name: string): Promise<void> => {
+  const saveCurrentState = useCallback(async (
+    name: string,
+    initialState: InitialStateHistoryItem,
+    history: HistoryItem[],
+    settings: Game.GameSettings,
+    players: UI.UserPlayer[]
+  ): Promise<void> => {
     return fetch(`/states/${encodeURIComponent(name)}`, {
       headers: {
         'Content-type': 'application/json',
@@ -136,15 +142,15 @@ function App() {
       }),
       method: "POST"
     }).then(() => loadSaveStates())
-  }, [initialState, history, loadSaveStates, players, settings]);
+  }, [loadSaveStates]);
 
   const saveCurrentStateCallback = useCallback((e: React.SyntheticEvent) => {
     e.preventDefault();
     const target = e.target as typeof e.target & {
       name: { value: string };
     };
-    saveCurrentState(target.name.value)
-  }, [saveCurrentState])
+    saveCurrentState(target.name.value, initialState!, history, settings, players)
+  }, [saveCurrentState, initialState, history, settings, players])
 
   const bootstrap = useCallback((): string => {
     return JSON.stringify({
@@ -197,8 +203,11 @@ function App() {
     (document.getElementById("game") as HTMLIFrameElement)?.contentWindow?.location.reload();
   }, [])
 
-  const reprocessHistory = useCallback(async (history: HistoryItem[], settings: Game.GameSettings, players: UI.UserPlayer[]) => {
+  const reprocessHistory = useCallback(async (history: HistoryItem[], settings: Game.GameSettings, players: UI.UserPlayer[]): Promise<[
+    Game.GameState | undefined, InitialStateHistoryItem | undefined, HistoryItem[], Game.GameSettings, Game.Player[]
+  ]> => {
     let newInitialState: Game.GameUpdate | undefined;
+    let initialState: InitialStateHistoryItem | undefined = undefined;
     let previousUpdate: Game.GameUpdate | undefined;
     const newHistory: HistoryItem[] = []
     try {
@@ -225,23 +234,24 @@ function App() {
       setPlayers(players);
       setCurrentUserID(players[0].id!)
       setCurrentUserIDRequested(undefined)
-      setInitialState(newInitialState ? {state: newInitialState.game, players, settings} : undefined)
+      initialState = newInitialState ? {state: newInitialState.game, players, settings} : undefined;
+      setInitialState(initialState)
       setHistory(newHistory);
       setHistoryPin(undefined);
       setPhase(newInitialState ? 'started' : 'new');
     }
-    return previousUpdate ? previousUpdate.game : undefined
+    return [previousUpdate ? previousUpdate.game : undefined, initialState, newHistory, settings, players];
   }, []);
 
   const reprocessHistoryCallback = useCallback(async () => {
     setReprocessing(true)
     try {
       if (initialState && settings) {
-        const newState = await reprocessHistory(history, settings, players)
+        const [newState] = await reprocessHistory(history, settings, players)
         if (newState) await updateUI({ game: newState });
       }
     } catch(e) {
-      console.log("error reprocessing history")
+      console.error("error reprocessing history")
     } finally {
       setReprocessing(false)
     }
@@ -283,7 +293,7 @@ function App() {
     })
     evtSource!.onerror = e => {
       toast.error(`Error from eventsource: ${(e as ErrorEvent).message}`)
-      console.log("eventsource error", e)
+      console.error("eventsource error", e)
     }
 
     return () => evtSource.close()
@@ -530,8 +540,8 @@ function App() {
     const response = await fetch(`/states/${encodeURIComponent(name)}`);
     const state = await response.json() as SaveStateData;
     try {
-      reprocessHistory(state.history, state.settings, state.players);
-      await saveCurrentState(name)
+      const [, initialState, history, settings, players] = await reprocessHistory(state.history, state.settings, state.players);
+      if (initialState) await saveCurrentState(name, initialState, history, settings, players)
     } catch(e) {
       toast.error(`Error reprocessing history: ${String(e)}`)
       console.error(e)
