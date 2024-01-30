@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@joshbuddy/go-npm@0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@joshbuddy/go-npm/-/go-npm-0.2.0.tgz#346332be64bed4870ecfb7d0e8fb362708aab1b5"
-  integrity sha512-2ljn3wX7MgGiDCRP7iAPOHFgy+sGXcq77GTQ2+Rbm0FVvMjOCaQnuJoOFbG62lrID8MkeEtMs3lEgQ76POlpoQ==
+"@joshbuddy/go-npm@0.2.2":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@joshbuddy/go-npm/-/go-npm-0.2.2.tgz#996c18b53505853f0e4d9c706450febb13621b5e"
+  integrity sha512-it1ux6Mf++Geukhq8kFq0ikt/ZzSTV5/7BrF9rKpkdh/IwJpnsiruzHfAcpZE4qjt67mFpqOwB0JIdSUtTEBzQ==
   dependencies:
     mkdirp "^1.0.4"
     request "^2.88.2"

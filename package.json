@@ -32,6 +32,6 @@
     "postinstall.js"
   ],
   "dependencies": {
-    "@joshbuddy/go-npm": "0.2.1"
+    "@joshbuddy/go-npm": "0.2.2"
   }
 }
