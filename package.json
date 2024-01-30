@@ -22,7 +22,7 @@
   "goBinary": {
     "name": "bz",
     "path": "./bin",
-    "url": "https://github.com/boardzilla/boardzilla-devtools/releases/download/v{{version}}/boardzilla-devtools_{{platform}}_{{arch}}.tar.gz"
+    "url": "https://github.com/boardzilla/boardzilla-devtools/releases/download/v{{version}}/boardzilla-devtools_{{platform}}_{{arch}}.{{package_ext}}"
   },
   "homepage": "https://github.com/boardzilla/boardzilla-devtools#readme",
   "files": [
