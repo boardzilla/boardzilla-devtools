@@ -58,10 +58,10 @@ export default function History({items, initialState, revertTo, view, players, c
                 </code>
               </div>
             ))}
-            {Object.entries(item.messages || []).map(([key, m]) => (
+            {Object.entries(item.state.messages || []).map(([key, m]) => (
               <div key={key} dangerouslySetInnerHTML={{ __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>') }}/>
             ))}
-            {item.state?.state.board && <JsonView value={item.state?.state.board} collapsed={0} />}
+            {item.state?.game.state.board && <JsonView value={item.state?.game.state.board} collapsed={0} />}
           </>
         </div>
       ))}

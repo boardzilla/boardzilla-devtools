@@ -10,7 +10,7 @@ import './App.css';
 
 import * as UI from './types/ui'
 import * as Game from './types/game'
-import { sendInitialState, processMove, getPlayerState, resolveGamePromise, rejectGamePromise } from './game';
+import { sendInitialState, processMove, resolveGamePromise, rejectGamePromise } from './game';
 
 const body = document.getElementsByTagName("body")[0];
 const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
@@ -60,7 +60,6 @@ type SaveStateData = {
 
 type MessageType = Game.InitialStateResultMessage |
   Game.ProcessMoveResultMessage |
-  Game.GetPlayerStateMessage |
   UI.UpdateSettingsMessage |
   UI.UpdatePlayersMessage |
   UI.StartMessage |
@@ -107,9 +106,9 @@ function App() {
     setSaveStates((states as {entries: SaveState[]}).entries)
   }, []);
 
-  const getCurrentState = useCallback((history?: HistoryItem[]): Game.GameState => {
+  const getCurrentState = useCallback((history?: HistoryItem[]): Game.GameUpdate => {
     const historyItem = historyPin ?? (history?.length ?? 0) - 1;
-    return history && historyItem >= 0  ? history[historyItem].state! : initialState?.state!
+    return history && historyItem >= 0 ? history[historyItem].state : initialState!.state
   }, [initialState, historyPin]);
 
   const sendToUI = useCallback((data: UI.UsersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent | UI.UserOnlineEvent) => {
@@ -157,13 +156,14 @@ function App() {
       host: currentUserID === possibleUsers[0].id,
       userID: currentUserID,
       minPlayers,
-      maxPlayers
+      maxPlayers,
+      dev: true
     })
   }, [currentUserID]);
 
-  const updateUI = useCallback(async (update: {game: Game.GameState, players?: Game.PlayerState[]}) => {
+  const updateUI = useCallback(async (update: {game: Game.GameState, players: Game.PlayerState[]}) => {
     if (reprocessing) return;
-    const playerState = update.players?.find(p => p.position === currentPlayer.position)?.state || await getPlayerState(update.game.state, currentPlayer.position);
+    const playerState = update.players.find(p => p.position === currentPlayer.position)?.state;
     switch(update.game.phase) {
       case 'finished':
         sendToUI({
@@ -204,7 +204,7 @@ function App() {
   }, [])
 
   const reprocessHistory = useCallback(async (history: HistoryItem[], settings: Game.GameSettings, players: UI.UserPlayer[]): Promise<[
-    Game.GameState | undefined, InitialStateHistoryItem | undefined, HistoryItem[], Game.GameSettings, Game.Player[]
+    Game.GameUpdate, InitialStateHistoryItem | undefined, HistoryItem[], Game.GameSettings, Game.Player[]
   ]> => {
     let newInitialState: Game.GameUpdate | undefined;
     let initialState: InitialStateHistoryItem | undefined = undefined;
@@ -219,7 +219,7 @@ function App() {
         const { move, position } = history[i]
         try {
           previousUpdate = await processMove(previousUpdate.game, {position, data: move});
-          newHistory.push({position, move, seq: i, state: previousUpdate.game, messages: previousUpdate.messages})
+          newHistory.push({position, move, seq: i, state: previousUpdate})
         } catch(e) {
           console.error("error while reprocessing history", e)
           break
@@ -234,21 +234,21 @@ function App() {
       setPlayers(players);
       setCurrentUserID(players[0].id!)
       setCurrentUserIDRequested(undefined)
-      initialState = newInitialState ? {state: newInitialState.game, players, settings} : undefined;
+      initialState = newInitialState ? {state: newInitialState, players, settings} : undefined;
       setInitialState(initialState)
       setHistory(newHistory);
       setHistoryPin(undefined);
       setPhase(newInitialState ? 'started' : 'new');
     }
-    return [previousUpdate ? previousUpdate.game : undefined, initialState, newHistory, settings, players];
+    return [previousUpdate, initialState, newHistory, settings, players];
   }, []);
 
   const reprocessHistoryCallback = useCallback(async () => {
     setReprocessing(true)
     try {
       if (initialState && settings) {
-        const [newState] = await reprocessHistory(history, settings, players)
-        if (newState) await updateUI({ game: newState });
+        const [update] = await reprocessHistory(history, settings, players)
+        await updateUI(update);
       }
     } catch(e) {
       console.error("error reprocessing history")
@@ -376,23 +376,19 @@ function App() {
             resolveGamePromise(evt.id, evt.state)
           }
           break
-        case 'getPlayerStateResult':
-          resolveGamePromise(evt.id, evt.state)
-          break
         case 'updateSettings':
           setSettings(evt.settings);
           sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
           break
         case 'move':
           const previousState = history.length === 0 ? initialState!.state : history[history.length - 1].state!;
-          if (previousState.phase === 'finished') break;
+          if (previousState.game.phase === 'finished') break;
           try {
-            const moveUpdate = await processMove(previousState, {position: currentPlayer.position, data: evt.data});
+            const moveUpdate = await processMove(previousState.game, {position: currentPlayer.position, data: evt.data});
             const newHistory = [...history, {
               position: currentPlayer.position,
               seq: history.length,
-              state: moveUpdate.game,
-              messages: moveUpdate.messages,
+              state: moveUpdate,
               move: evt.data,
             }];
             setHistory(newHistory);
@@ -412,7 +408,7 @@ function App() {
           try {
             const initialUpdate = await sendInitialState({ players, settings });
             const newInitialState = {
-              state: initialUpdate.game,
+              state: initialUpdate,
               players,
               settings,
             };
@@ -430,7 +426,7 @@ function App() {
             sendToUI({type: "settingsUpdate", settings});
             sendToUI({type: "users", users: generateUsers()});
           } else {
-            await updateUI({ game: getCurrentState(history) });
+            await updateUI(getCurrentState(history));
           }
           break
         case 'updatePlayers':
@@ -558,13 +554,13 @@ function App() {
 
   const viewHistory = useCallback((idx: number) => {
     setHistoryPin(() => idx === history.length -1 ? undefined : idx);
-    updateUI({ game: idx === -1 ? initialState!.state : history[idx].state })
+    updateUI(idx === -1 ? initialState!.state : history[idx].state)
   }, [updateUI, initialState, history])
 
   const revertTo = useCallback((idx: number) => {
     setHistory(history.slice(0, idx+1))
     setHistoryPin(undefined);
-    updateUI({ game: idx === -1 ? initialState!.state : history[idx].state })
+    updateUI(idx === -1 ? initialState!.state : history[idx].state)
   }, [updateUI, initialState, history])
 
   const resetRandomSeed = useCallback(() => {
