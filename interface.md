@@ -30,7 +30,6 @@ Must export an object `game` with two functions, `initialState` and `processMove
 ```ts
 initialState(setup: SetupState): GameUpdate
 processMove(previousState: GameStartedState, move: Move): GameUpdate
-getPlayerState(state: InternalGameState, position: number): InternalPlayerState
 
 type Player = {
   id: string
