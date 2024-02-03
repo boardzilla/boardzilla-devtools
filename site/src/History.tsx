@@ -1,12 +1,12 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { HistoryItem } from './types';
+import { HistoryItem, InitialStateHistoryItem } from './types';
 import * as Game from './types/game'
 import JsonView from '@uiw/react-json-view';
 import './History.css'
 
 type HistoryProps = {
   items: HistoryItem[]
-  initialState: any
+  initialState?: InitialStateHistoryItem
   revertTo: (n: number) => void
   view: (n: number) => void
   players: Game.Player[]
@@ -35,6 +35,9 @@ export default function History({items, initialState, revertTo, view, players, c
           Initial state
           <button onClick={() => view(-1)}>View</button>
           <button onClick={() => revertTo(-1)}>Revert</button>
+          {Object.entries(initialState.state.messages || []).map(([key, m]) => (
+            <div key={key} dangerouslySetInnerHTML={{ __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>') }}/>
+          ))}
           <JsonView value={initialState} collapsed={1} />
         </>
       )}
