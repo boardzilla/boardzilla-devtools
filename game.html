@@ -1,13 +1,14 @@
 <html>
   <script src="game.js"></script>
   <script>
-    const methods = ['debug', 'log', 'warn', 'error', 'info', 'trace']
+    const methods = ['log', 'warn', 'error', 'info', 'trace']
     methods.forEach(m => {
       const oldMethod = console[m]
       console[m] = function(...data) {
-        if (window.showDebug) oldMethod.apply(null, ["%c$game", "color: #aa4330"].concat(data))
+        oldMethod.apply(null, ["%c$game", "color: #aa4330"].concat(data))
       }
     })
+    console.debug = () => {} // disable debug to prevent doubled messages
 
     window.addEventListener('message', (event) => {
       switch (event.data.type) {
