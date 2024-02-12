@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
-	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -32,8 +31,11 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-//go:embed package.json
-var packageFS embed.FS
+var (
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
+)
 
 const debounceDurationMS = 500
 
@@ -196,15 +198,14 @@ func (b *bz) info() error {
 }
 
 func (b *bz) version() error {
-	f, err := packageFS.ReadFile("package.json")
-	if err != nil {
-		return err
-	}
-	data := make(map[string]any)
-	if err := json.Unmarshal(f, &data); err != nil {
-		return err
-	}
-	fmt.Printf("Version is %s\n", data["version"].(string))
+	version = "dev"
+	commit = "none"
+	date = "unknown"
+
+	fmt.Printf(
+		`Version: %s
+Commit:  %s
+Date     %s\n`, version, commit, date)
 	return nil
 }
 
