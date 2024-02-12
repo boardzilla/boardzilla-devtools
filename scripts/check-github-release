@@ -3,7 +3,7 @@
 set -e
 
 tag=$(jq '.version' package.json -r)
-url=$(curl -Ls -o /dev/null -w %{url_effective} "https://github.com/boardzilla/boardzilla-devtools/releases/latest?t=$(python3 -c 'import datetime; print(datetime.datetime.now().strftime("%s.%f"))')")
+url=$(curl -Ls -o /dev/null -w %{url_effective} "https://github.com/boardzilla/bz/releases/latest?t=$(python3 -c 'import datetime; print(datetime.datetime.now().strftime("%s.%f"))')")
 released_version=$(basename $url)
 if [ "v$tag" != "$released_version" ]; then
   echo "Released version $released_version does not match version in package.json v$tag"

@@ -418,7 +418,7 @@ func (s *Server) Serve() error {
 			cmd := exec.Command("npm", "run", "build:watch")
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
-			cmd.Dir = "site"
+			cmd.Dir = "internal/site"
 			if err := cmd.Run(); err != nil {
 				panic(err)
 			}

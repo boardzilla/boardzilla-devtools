@@ -50,7 +50,7 @@ changelog:
 release:
   github:
     owner: boardzilla
-    name: boardzilla-devtools
+    name: bz
   draft: true
   replace_existing_draft: true
   prerelease: auto

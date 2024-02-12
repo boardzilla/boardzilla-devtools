@@ -10,7 +10,7 @@ fi
 
 
 # build the frontend before checking if its in a clean state
-cd site
+cd internal/site
 yarn
 yarn run build
 cp node_modules/@fontsource-variable/dm-sans/index.css public/font.css
@@ -54,7 +54,7 @@ git push origin "v${version}"
 
 tag=$(jq '.version' package.json -r)
 
-url="https://github.com/boardzilla/boardzilla-devtools/releases"
+url="https://github.com/boardzilla/bz/releases"
 echo "Opening $url"
 open $url
 

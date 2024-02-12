@@ -12,8 +12,8 @@ if [ -z ${1+x} ]; then
   exit 1
 fi
 
-cd site
+cd internal/site
 yarn
 yarn run build
 cd -
-LIVE_DEV=1 go run cmd/main.go run -root "$1"
+LIVE_DEV=1 go run main.go run -root "$1"

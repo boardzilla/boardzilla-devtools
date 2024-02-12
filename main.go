@@ -1,4 +1,4 @@
-package bz
+package main
 
 import (
 	"bytes"
@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	devtools "github.com/boardzilla/boardzilla-devtools"
+	devtools "github.com/boardzilla/bz/internal"
 	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/gookit/color"
 	"github.com/rjeczalik/notify"
