@@ -1,4 +1,4 @@
-module github.com/boardzilla/bz
+module github.com/boardzilla/boardzilla-devtools
 
 go 1.21.5
 
