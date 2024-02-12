@@ -9,22 +9,22 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/boardzilla/bz.git"
+    "url": "git+https://github.com/boardzilla/boardzilla-devtools.git"
   },
   "contributors": [
-    "Joshua Hull <josh@fireflop.com>",
-    "Andrew Hull <aghull@gmail.com>"
+    "Andrew Hull <aghull@gmail.com>",
+    "Joshua Hull <josh@fireflop.com>"
   ],
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/boardzilla/bz/issues"
+    "url": "https://github.com/boardzilla/boardzilla-devtools/issues"
   },
   "goBinary": {
     "name": "bz",
     "path": "./bin",
-    "url": "https://github.com/boardzilla/bz/releases/download/v{{version}}/bz_{{platform}}_{{arch}}{{package_ext}}"
+    "url": "https://github.com/boardzilla/boardzilla-devtools/releases/download/v{{version}}/bz_{{platform}}_{{arch}}{{package_ext}}"
   },
-  "homepage": "https://github.com/boardzilla/bz#readme",
+  "homepage": "https://github.com/boardzilla/boardzilla-devtools#readme",
   "files": [
     "README.md",
     "LICENSE",
