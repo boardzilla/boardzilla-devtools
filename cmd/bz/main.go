@@ -209,7 +209,8 @@ func (b *bz) version() error {
 		fmt.Printf(
 			`Version: %s
 Commit:  %s
-Date     %s\n`, version, commit, date)
+Date     %s`, version, commit, date)
+		fmt.Println()
 	}
 	return nil
 }
