@@ -14,7 +14,7 @@ before:
 
 builds:
   - id: "bz"
-    main: ./cmd/
+    main: .
     binary: bz
     env:
       - CGO_ENABLED=0

@@ -1,4 +1,4 @@
-package devtools
+package internal
 
 type BuildCommand struct {
 	Dev        string `json:"dev"`
