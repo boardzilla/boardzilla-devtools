@@ -1,11 +1,16 @@
 #!/bin/bash
 
-
 if [ -z ${GITHUB_TOKEN+x} ]; then
   echo "You need to supply a GITHUB_TOKEN env variable before you can publish"
   echo
   exit 1
 fi
+
+# build the frontend before checking if its in a clean state
+cd site
+yarn
+yarn run build
+cd -
 
 # check if git is clean
 if ! $(git diff-index --quiet HEAD); then
@@ -31,10 +36,6 @@ if [ "$tag" = "$version" ]; then
   exit 1
 fi
 
-cd site
-yarn
-yarn run build
-cd -
 touch site/build/.gitkeep
 ./scripts/check
 echo $version
@@ -42,7 +43,6 @@ echo $version
 # update version
 echo "$( jq .version=\"${version}\" package.json )" > package-new.json
 mv package-new.json package.json
-cp package.json cmd/package.json
 git add package.json
 git commit -m"Bump to version v$version"
 git tag -a "v${version}" -m"Release version ${version}"
