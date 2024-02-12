@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	devtools "github.com/boardzilla/bz/internal"
+	devtools "github.com/boardzilla/boardzilla-devtools/internal"
 	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/gookit/color"
 	"github.com/rjeczalik/notify"
