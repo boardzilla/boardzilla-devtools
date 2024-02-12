@@ -13,6 +13,8 @@ fi
 cd site
 yarn
 yarn run build
+cp node_modules/@fontsource-variable/dm-sans/index.css public/font.css
+cp node_modules/@fontsource-variable/dm-sans/files/* public/
 cd -
 
 # check if git is clean

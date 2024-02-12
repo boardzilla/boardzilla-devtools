@@ -25,8 +25,6 @@ var liveDev = os.Getenv("LIVE_DEV") == "1"
 //go:embed *.html
 //go:embed *.jpg
 //go:embed site/build/*
-//go:embed site/node_modules/@fontsource-variable/dm-sans/index.css
-//go:embed site/node_modules/@fontsource-variable/dm-sans/files/*
 var site embed.FS
 
 type Server struct {
@@ -271,7 +269,7 @@ func (s *Server) Serve() error {
 	})
 
 	r.Get("/font.css", func(w http.ResponseWriter, r *http.Request) {
-		f, err := s.getFile("site/node_modules/@fontsource-variable/dm-sans/index.css")
+		f, err := s.getBuildFile("font.css")
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
@@ -285,7 +283,7 @@ func (s *Server) Serve() error {
 	})
 
 	r.Get("/files/dm-sans-latin-ext-wght-normal.woff2", func(w http.ResponseWriter, r *http.Request) {
-		f, err := s.getFile("site/node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-ext-wght-normal.woff2")
+		f, err := s.getBuildFile("dm-sans-latin-ext-wght-normal.woff2")
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
@@ -299,7 +297,7 @@ func (s *Server) Serve() error {
 	})
 
 	r.Get("/files/dm-sans-latin-wght-normal.woff2", func(w http.ResponseWriter, r *http.Request) {
-		f, err := s.getFile("site/node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2")
+		f, err := s.getBuildFile("dm-sans-latin-wght-normal.woff2")
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
