@@ -16,7 +16,7 @@ cd -
 set +e
 
 # check if git is clean
-if ! $(git diff-index --quiet HEAD); then
+if ! $(git diff-index --quiet -p HEAD); then
   echo "Aborting release due to git not being in a clean state"
   echo
   exit 1
