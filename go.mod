@@ -3,11 +3,15 @@ module github.com/boardzilla/boardzilla-devtools
 go 1.21.5
 
 require (
+	github.com/bmatcuk/doublestar/v4 v4.6.1
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/gookit/color v1.5.4
 	github.com/rjeczalik/notify v0.9.3
+	github.com/stoewer/go-strcase v1.3.0
 	github.com/tidwall/gjson v1.17.0
+	github.com/tidwall/sjson v1.2.5
+	golang.org/x/exp v0.0.0-20240205201215-2c58cdc269a3
 	golang.org/x/mod v0.14.0
 )
 

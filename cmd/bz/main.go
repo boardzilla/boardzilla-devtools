@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
@@ -18,17 +19,23 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/bmatcuk/doublestar/v4"
 	devtools "github.com/boardzilla/boardzilla-devtools/internal"
+	"github.com/erikgeiser/promptkit/selection"
 	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/gookit/color"
 	"github.com/rjeczalik/notify"
+	"github.com/stoewer/go-strcase"
 	"github.com/tidwall/gjson"
+	"github.com/tidwall/sjson"
+	"golang.org/x/exp/maps"
 	"golang.org/x/mod/semver"
 )
 
@@ -38,7 +45,41 @@ var (
 	date    = "unknown"
 )
 
+const noInstallOption = "I'll do it myself"
 const debounceDurationMS = 500
+
+func validateName(name string) error {
+	if len(strings.TrimSpace(name)) == 0 {
+		return fmt.Errorf("This value is required")
+	}
+	return nil
+}
+
+func validateShortName(name string) error {
+	m, err := regexp.MatchString("^[a-z0-9_-]+$", name)
+	if err != nil {
+		return err
+	}
+	if !m {
+		return fmt.Errorf("Can only contain lowercase letters, digits, _ and -")
+	}
+	return nil
+}
+
+func getTextInput(prompt, placeholder, errorText string, validator func(string) error) (string, error) {
+	input := textinput.New(prompt)
+	input.InitialValue = placeholder
+	input.Validate = validator
+	input.Template += `
+	{{- if .ValidationError -}}
+		{{- print " " (Foreground "1" .ValidationError.Error) -}}
+	{{- end -}}`
+	s, err := input.RunPrompt()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(s), nil
+}
 
 func printHelp() {
 	fmt.Println("usage: bz [command]")
@@ -46,6 +87,7 @@ func printHelp() {
 	fmt.Println("run -root <game root>                          Run the devtools for a game")
 	fmt.Println("info -root <game root>                         Get info about the game at root")
 	fmt.Println("submit -root <game root> -version <version>    Submit a game")
+	fmt.Println("new")
 	fmt.Println("version                                        Shows version installed")
 	fmt.Println("")
 }
@@ -136,6 +178,8 @@ func (b *bz) exec() error {
 		return b.info()
 	case "submit":
 		return b.submit()
+	case "new":
+		return b.new()
 	default:
 		fmt.Printf("Unrecognized command: %s\n\n", command)
 		printHelp()
@@ -634,6 +678,225 @@ func (b *bz) submit() error {
 		defer res.Body.Close()
 		return fmt.Errorf("publishing sent status: %d body; %s", res.StatusCode, body)
 	}
+}
+
+func (b *bz) new() error {
+	name, err := getTextInput("What is the name of your game?", "", "Name is required", validateName)
+	if err != nil {
+		return err
+	}
+	shortName, err := getTextInput("What would you like the short name to be?", strcase.KebabCase(name), "Short name is required", validateShortName)
+	if err != nil {
+		return err
+	}
+	dirName, err := getTextInput("What would you like the name of the directory to be?", strcase.KebabCase(name), "Directory name is required", validateShortName)
+	if err != nil {
+		return err
+	}
+	className, err := getTextInput("What would you like the class name to be?", strcase.UpperCamelCase(name), "Class name is required", validateName)
+	if err != nil {
+		return err
+	}
+
+	repoMap := map[string]string{
+		"Simple game": "boardzilla-starter-game",
+		"Empty game":  "boardzilla-empty-game",
+	}
+	repoSelect := selection.New("Which template would you like to use?", maps.Keys(repoMap))
+	repo, err := repoSelect.RunPrompt()
+	if err != nil {
+		return err
+	}
+	templateName := repoMap[repo]
+
+	installSelect := selection.New("Which template would you like to use?", []string{"yarn", "npm", "pnpm", noInstallOption})
+	installer, err := installSelect.RunPrompt()
+	if err != nil {
+		return err
+	}
+
+	releaseURL := fmt.Sprintf("https://github.com/boardzilla/%s/releases/latest/", templateName)
+	color.Printf("Getting latest release for <cyan>%s</> from <cyan>%s</>", templateName, releaseURL)
+
+	req, err := http.NewRequest("GET", releaseURL, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
+	resp, err := http.DefaultClient.Do(req)
+	body, err := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	if err != nil {
+		return err
+	}
+	tagName := gjson.Get(string(body), "tag_name")
+	if !tagName.Exists() {
+		return fmt.Errorf("cannot get current name from package.json")
+	}
+	color.Println(" ✅")
+	url := fmt.Sprintf("https://github.com/boardzilla/%s/archive/refs/tags/%s.zip", templateName, tagName.Str)
+	color.Printf("Downloading template from <cyan>%s</>", url)
+
+	zipResp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	out, err := os.CreateTemp("", "zip-*")
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, zipResp.Body); err != nil {
+		return err
+	}
+	color.Println(" ✅")
+	zipFile, err := zip.OpenReader(out.Name())
+	if err != nil {
+		return err
+	}
+	prefix := ""
+	color.Printf("Extracting to <cyan>%s</>", dirName)
+	// Iterate through the files in the archive,
+	for k, f := range zipFile.File {
+		rc, err := f.Open()
+		if err != nil {
+			log.Fatalf("impossible to open file n°%d in archine: %s", k, err)
+		}
+		defer rc.Close()
+		// define the new file path
+		if prefix == "" {
+			prefix = f.Name
+		}
+		newFilePath := filepath.Join(dirName, strings.TrimPrefix(f.Name, prefix))
+
+		// CASE 1 : we have a directory
+		if f.FileInfo().IsDir() {
+			// if we have a directory we have to create it
+			err = os.MkdirAll(newFilePath, 0777)
+			if err != nil {
+				log.Fatalf("impossible to MkdirAll: %s", err)
+			}
+			// we can go to next iteration
+			continue
+		}
+
+		// CASE 2 : we have a file
+		// create new uncompressed file
+		uncompressedFile, err := os.Create(newFilePath)
+		if err != nil {
+			log.Fatalf("impossible to create uncompressed: %s", err)
+		}
+		_, err = io.Copy(uncompressedFile, rc)
+		if err != nil {
+			log.Fatalf("impossible to copy file n°%d: %s", k, err)
+		}
+	}
+	color.Println(" ✅")
+
+	// munge package.json
+	packageJSONPath := filepath.Join(dirName, "package.json")
+	color.Printf("Modifying <cyan>%s</>", packageJSONPath)
+	packageJSONPathStat, err := os.Stat(packageJSONPath)
+	if err != nil {
+		return err
+	}
+	packageJSONBytes, err := os.ReadFile(packageJSONPath)
+	if err != nil {
+		return err
+	}
+	packageJSON, err := sjson.Set(string(packageJSONBytes), "name", shortName)
+	if err != nil {
+		return err
+	}
+	packageJSON, err = sjson.Set(packageJSON, "version", "1.0.0")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(packageJSONPath, []byte(packageJSON), packageJSONPathStat.Mode().Perm()); err != nil {
+		return err
+	}
+	color.Println(" ✅")
+
+	// munge game.v1.json
+	gameV1Path := filepath.Join(dirName, "game.v1.json")
+	color.Printf("Modifying <cyan>%s</>", gameV1Path)
+	gameV1PathStat, err := os.Stat(gameV1Path)
+	if err != nil {
+		return err
+	}
+	gameV1JSONBytes, err := os.ReadFile(gameV1Path)
+	if err != nil {
+		return err
+	}
+	gameV1JSON, err := sjson.Set(string(gameV1JSONBytes), "name", shortName)
+	if err != nil {
+		return err
+	}
+	gameV1JSON, err = sjson.Set(gameV1JSON, "friendlyName", name)
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(gameV1Path, []byte(gameV1JSON), gameV1PathStat.Mode().Perm()); err != nil {
+		return err
+	}
+	color.Println(" ✅")
+
+	// recurively fix any ts/tsx files
+	color.Printf("Updating player/game references in <cyan>%s</>", dirName)
+	files, err := doublestar.FilepathGlob(filepath.Join(dirName, "**"))
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		ext := filepath.Ext(f)
+		if ext != ".tsx" && ext != ".ts" {
+			continue
+		}
+		info, err := os.Stat(f)
+		if err != nil {
+			return err
+		}
+		reg, err := regexp.Compile("MyGame(Board|Player)")
+		if err != nil {
+			return err
+		}
+		contents, err := os.ReadFile(f)
+		if err != nil {
+			return err
+		}
+		contents = reg.ReplaceAll(contents, []byte(fmt.Sprintf("%s$1", className)))
+		if err := os.WriteFile(f, contents, info.Mode().Perm()); err != nil {
+			return err
+		}
+	}
+	color.Println(" ✅")
+
+	color.Printf("Updating <cyan>.gitignore</>")
+	// move gitignore
+	if err := os.Remove(filepath.Join(dirName, ".gitignore")); err != nil {
+		return err
+	}
+	if err := os.Rename(filepath.Join(dirName, "gitignore"), filepath.Join(dirName, ".gitignore")); err != nil {
+		return err
+	}
+	color.Println(" ✅")
+
+	// run installer
+	if installer != noInstallOption {
+		color.Printf("Running <cyan>%s install</>", installer)
+		cmd := exec.Command(installer, "install") // #nosec G204
+		cmd.Dir = dirName
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+		color.Println(" ✅")
+	} else {
+		installer = "npm"
+	}
+
+	color.Printf("\n🎉 Success!\n\nNow you can go to <cyan>%s</> and run <cyan>%s run dev</> to start developing\n", dirName, installer)
+
+	return nil
 }
 
 type preload struct {
