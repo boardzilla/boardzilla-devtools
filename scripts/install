@@ -48,7 +48,7 @@ get_os(){
 						echo "macos"
 				;;
         *)
-            echo ${NIL}
+            echo "$o"
         ;;
     esac
 }
