@@ -1,8 +1,3 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
-
-# The lines bellow are called `modelines`. See `:help modeline`
-# Feel free to remove those if you don't want/need to use them.
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
@@ -47,11 +42,23 @@ changelog:
       - "^docs:"
       - "^test:"
 
-release:
-  github:
+# release:
+#   github:
+#     owner: boardzilla
+#     name: boardzilla-devtools
+#   draft: true
+#   replace_existing_draft: true
+#   prerelease: auto
+#   mode: replace
+
+brews:
+  name: boardzilla-devtools
+  commit_author:
+    name: goreleaserbot
+    email: bot@goreleaser.com
+  homepage: "https://docs.boardzilla.io/"
+  license: "GPL-v3"
+  skip_upload: true
+  repository:
     owner: boardzilla
-    name: boardzilla-devtools
-  draft: true
-  replace_existing_draft: true
-  prerelease: auto
-  mode: replace
+    name: homebrew-tap

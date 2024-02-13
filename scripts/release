@@ -17,14 +17,14 @@ cp node_modules/@fontsource-variable/dm-sans/index.css public/font.css
 cp node_modules/@fontsource-variable/dm-sans/files/* public/
 cd -
 
-# check if git is clean
-if [[ $(git diff-index -p HEAD) ]]; then
-  echo "Aborting release due to git not being in a clean state"
-  echo
-  exit 1
-fi
+# # check if git is clean
+# if [[ $(git diff-index -p HEAD) ]]; then
+#   echo "Aborting release due to git not being in a clean state"
+#   echo
+#   exit 1
+# fi
 
-tag=$(jq '.version' package.json -r)
+tag=$(git describe --abbrev=0 --tags)
 
 echo "The current version is ${tag}, please enter a new version"
 version=""
@@ -43,16 +43,10 @@ fi
 echo $version
 
 # update version
-echo "$( jq .version=\"${version}\" package.json )" > package-new.json
-mv package-new.json package.json
-git add package.json
-git commit -m"Bump to version v$version"
 git tag -a "v${version}" -m"Release version ${version}"
 goreleaser release --clean
 git push
 git push origin "v${version}"
-
-tag=$(jq '.version' package.json -r)
 
 url="https://github.com/boardzilla/bz/releases"
 echo "Opening $url"
@@ -66,6 +60,3 @@ do
   echo -n "."
 done
 echo "Release is public, proceeding"
-
-set -e
-npm publish --access public
