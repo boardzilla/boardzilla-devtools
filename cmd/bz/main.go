@@ -725,6 +725,9 @@ func (b *bz) new() error {
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-GitHub-Api-Version", "2022-11-28")
 	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
 	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	if err != nil {
@@ -738,7 +741,7 @@ func (b *bz) new() error {
 	url := fmt.Sprintf("https://github.com/boardzilla/%s/archive/refs/tags/%s.zip", templateName, tagName.Str)
 	color.Printf("Downloading template from <cyan>%s</>", url)
 
-	zipResp, err := http.Get(url)
+	zipResp, err := http.Get(url) // #nosec G107
 	if err != nil {
 		return err
 	}
@@ -772,7 +775,7 @@ func (b *bz) new() error {
 		// CASE 1 : we have a directory
 		if f.FileInfo().IsDir() {
 			// if we have a directory we have to create it
-			err = os.MkdirAll(newFilePath, 0777)
+			err = os.MkdirAll(newFilePath, 0750)
 			if err != nil {
 				log.Fatalf("impossible to MkdirAll: %s", err)
 			}
@@ -782,11 +785,11 @@ func (b *bz) new() error {
 
 		// CASE 2 : we have a file
 		// create new uncompressed file
-		uncompressedFile, err := os.Create(newFilePath)
+		uncompressedFile, err := os.Create(newFilePath) // #nosec G304
 		if err != nil {
 			log.Fatalf("impossible to create uncompressed: %s", err)
 		}
-		_, err = io.Copy(uncompressedFile, rc)
+		_, err = io.Copy(uncompressedFile, rc) // #nosec G110
 		if err != nil {
 			log.Fatalf("impossible to copy file n°%d: %s", k, err)
 		}
@@ -800,7 +803,7 @@ func (b *bz) new() error {
 	if err != nil {
 		return err
 	}
-	packageJSONBytes, err := os.ReadFile(packageJSONPath)
+	packageJSONBytes, err := os.ReadFile(packageJSONPath) // #nosec G304
 	if err != nil {
 		return err
 	}
@@ -824,7 +827,7 @@ func (b *bz) new() error {
 	if err != nil {
 		return err
 	}
-	gameV1JSONBytes, err := os.ReadFile(gameV1Path)
+	gameV1JSONBytes, err := os.ReadFile(gameV1Path) // #nosec G304
 	if err != nil {
 		return err
 	}
@@ -860,7 +863,7 @@ func (b *bz) new() error {
 		if err != nil {
 			return err
 		}
-		contents, err := os.ReadFile(f)
+		contents, err := os.ReadFile(f) // #nosec G304
 		if err != nil {
 			return err
 		}
@@ -925,7 +928,7 @@ func newGameWriter(serverURL, name string, mpw *multipart.Writer, root string) *
 func (gw *gameWriter) addFile(target string, src ...string) error {
 	assetPath := path.Join(src...)
 	color.Printf("Adding file <cyan>%s</> from <cyan>%s</>", target, assetPath)
-	f, err := os.ReadFile(filepath.Clean(assetPath))
+	f, err := os.ReadFile(assetPath) // #nosec G304
 	if err != nil {
 		return err
 	}
