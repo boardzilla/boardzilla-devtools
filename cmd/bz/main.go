@@ -672,7 +672,8 @@ func (b *bz) submit() error {
 
 		url := fmt.Sprintf("%s/home/games/%s/%d", b.serverURL, url.PathEscape(name), submitResponse.ID)
 		fmt.Printf("Opening %s...\n\n", url)
-		return exec.Command("open", url).Start() // #nosec G204
+		// #nosec G204
+		return exec.Command("open", url).Start()
 	default:
 		body, _ := io.ReadAll(res.Body)
 		defer res.Body.Close()
