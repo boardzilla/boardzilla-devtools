@@ -54,7 +54,7 @@ open $url
 
 set +e
 echo "Waiting for release to become public"
-until ./scripts/check-github-release
+until ./scripts/check-github-release "$version"
 do
   sleep 5
   echo -n "."

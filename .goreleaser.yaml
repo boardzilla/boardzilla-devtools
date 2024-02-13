@@ -58,7 +58,6 @@ brews:
       email: bot@goreleaser.com
     homepage: "https://docs.boardzilla.io/"
     license: "GPL-v3"
-    skip_upload: true
     repository:
       owner: boardzilla
       name: homebrew-tap
