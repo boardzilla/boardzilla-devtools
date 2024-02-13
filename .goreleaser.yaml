@@ -42,23 +42,23 @@ changelog:
       - "^docs:"
       - "^test:"
 
-# release:
-#   github:
-#     owner: boardzilla
-#     name: boardzilla-devtools
-#   draft: true
-#   replace_existing_draft: true
-#   prerelease: auto
-#   mode: replace
+release:
+  github:
+    owner: boardzilla
+    name: boardzilla-devtools
+  draft: true
+  replace_existing_draft: true
+  prerelease: auto
+  mode: replace
 
 brews:
-  name: boardzilla-devtools
-  commit_author:
-    name: goreleaserbot
-    email: bot@goreleaser.com
-  homepage: "https://docs.boardzilla.io/"
-  license: "GPL-v3"
-  skip_upload: true
-  repository:
-    owner: boardzilla
-    name: homebrew-tap
+  - name: boardzilla-devtools
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    homepage: "https://docs.boardzilla.io/"
+    license: "GPL-v3"
+    skip_upload: true
+    repository:
+      owner: boardzilla
+      name: homebrew-tap

@@ -18,11 +18,11 @@ cp node_modules/@fontsource-variable/dm-sans/files/* public/
 cd -
 
 # # check if git is clean
-# if [[ $(git diff-index -p HEAD) ]]; then
-#   echo "Aborting release due to git not being in a clean state"
-#   echo
-#   exit 1
-# fi
+if [[ $(git diff-index -p HEAD) ]]; then
+  echo "Aborting release due to git not being in a clean state"
+  echo
+  exit 1
+fi
 
 tag=$(git describe --abbrev=0 --tags)
 
@@ -40,7 +40,7 @@ if [ "$tag" = "$version" ]; then
 fi
 
 ./scripts/check
-echo $version
+echo "Using version $version, releasing..."
 
 # update version
 git tag -a "v${version}" -m"Release version ${version}"
@@ -48,7 +48,7 @@ goreleaser release --clean
 git push
 git push origin "v${version}"
 
-url="https://github.com/boardzilla/bz/releases"
+url="https://github.com/boardzilla/boardzilla-devtools/releases"
 echo "Opening $url"
 open $url
 
