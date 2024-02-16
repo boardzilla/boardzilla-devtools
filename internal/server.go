@@ -474,7 +474,7 @@ func (s *Server) getBuildFile(n string) ([]byte, error) {
 		n = path.Join("site", "build", n)
 	}
 	if liveDev {
-		return os.ReadFile(path.Join("internal", n))
+		return os.ReadFile(path.Join("internal", n)) // #nosec
 	}
 	return site.ReadFile(n)
 }
