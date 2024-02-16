@@ -25,7 +25,7 @@
           const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data});
           window.top.postMessage({type: "processMoveResult", id: event.data.id, error: undefined, state: gameUpdate}, "*")
         } catch (e) {
-          window.top.postMessage({type: "processMoveResult", id: event.data.id, error: String(e), state: undefined}, "*")
+          window.top.postMessage({type: "processMoveResult", id: event.data.id, error: String(e.stack), state: undefined}, "*")
         }
         break;
       }
