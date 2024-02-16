@@ -16,4 +16,4 @@ cd internal/site
 yarn
 yarn run build
 cd -
-LIVE_DEV=1 go run main.go run -root "$1"
+LIVE_DEV=1 go run cmd/bz/main.go run -root "$1"
