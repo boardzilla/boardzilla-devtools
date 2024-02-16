@@ -471,10 +471,10 @@ func (s *Server) getBuildFile(n string) ([]byte, error) {
 	case "/game.html", "/ui.html", "0.jpg", "1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg", "7.jpg", "8.jpg", "9.jpg":
 		n = path.Join(".", n)
 	default:
-		n = path.Join("internal", "site", "build", n)
+		n = path.Join("site", "build", n)
 	}
 	if liveDev {
-		return os.ReadFile(filepath.Clean(n))
+		return os.ReadFile(path.Join("internal", n))
 	}
 	return site.ReadFile(n)
 }
