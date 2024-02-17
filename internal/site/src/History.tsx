@@ -2,6 +2,8 @@ import { useCallback, useRef, useEffect } from 'react';
 import { HistoryItem, InitialStateHistoryItem } from './types';
 import * as Game from './types/game'
 import JsonView from '@uiw/react-json-view';
+import { lightTheme } from '@uiw/react-json-view/light';
+import { darkTheme } from '@uiw/react-json-view/dark';
 import './History.css'
 
 type HistoryProps = {
@@ -11,9 +13,10 @@ type HistoryProps = {
   view: (n: number) => void
   players: Game.Player[]
   collapsed: boolean
+  darkMode: boolean
 }
 
-export default function History({items, initialState, revertTo, view, players, collapsed}: HistoryProps) {
+export default function History({items, initialState, revertTo, view, players, collapsed, darkMode}: HistoryProps) {
   const historyEndRef = useRef<HTMLDivElement>(null)
 
   const player = useCallback((pos: number): Game.Player => {
@@ -29,7 +32,7 @@ export default function History({items, initialState, revertTo, view, players, c
   }, [items, collapsed]);
 
   return (
-    <div style={{overflowY: "scroll"}}>
+    <div className="history-list" style={{overflowY: "scroll"}}>
       {initialState && !collapsed && (
         <>
           Initial state
@@ -38,7 +41,7 @@ export default function History({items, initialState, revertTo, view, players, c
           {Object.entries(initialState.state.messages || []).map(([key, m]) => (
             <div key={key} dangerouslySetInnerHTML={{ __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>') }}/>
           ))}
-          <JsonView value={initialState} collapsed={1} />
+          <JsonView value={initialState} style={darkMode ? darkTheme : lightTheme} collapsed={1} />
         </>
       )}
       {initialState && collapsed &&
@@ -47,7 +50,7 @@ export default function History({items, initialState, revertTo, view, players, c
       {items.map((item, i) => collapsed ? (
         <button key={item.seq} onClick={() => view(item.seq)} style={{background: player(item.position).color}}>{player(item.position).name.slice(0,1)}</button>
       ) : (
-        <div style={{backgroundColor: item.seq % 2 === 0 ? "#ccc" : "#fff"}} key={item.seq}>
+        <div key={item.seq}>
           <>
             {item.seq}
             <span style={{marginLeft: '3px', padding: '1px', border: `2px ${player(item.position).color} solid`}}>{player(item.position).name}</span>

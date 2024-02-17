@@ -1086,14 +1086,14 @@ function App() {
             xmlns: "http://www.w3.org/2000/svg",
             children: [/*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("path", {
               d: "M721.833102 597.433606l-60.943176 60.943176-211.189226-211.189225L510.643877 386.244381z",
-              fill: "#444444"
+              fill: darkMode ? "#bbb" : "#444"
             }, void 0, false, {
               fileName: _jsxFileName,
               lineNumber: 639,
               columnNumber: 13
             }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("path", {
               d: "M299.323503 597.30514l60.943176 60.943176 211.189226-211.189225L510.512728 386.115915z",
-              fill: "#444444"
+              fill: darkMode ? "#bbb" : "#444"
             }, void 0, false, {
               fileName: _jsxFileName,
               lineNumber: 640,
@@ -1127,7 +1127,8 @@ function App() {
           revertTo: n => revertTo(n),
           initialState: initialState,
           items: history,
-          collapsed: historyCollapsed
+          collapsed: historyCollapsed,
+          darkMode: darkMode
         }, void 0, false, {
           fileName: _jsxFileName,
           lineNumber: 644,
@@ -1182,13 +1183,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _uiw_react_json_view__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @uiw/react-json-view */ "./node_modules/@uiw/react-json-view/esm/index.js");
-/* harmony import */ var _History_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./History.css */ "./src/History.css");
-/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react/jsx-dev-runtime */ "./node_modules/react/jsx-dev-runtime.js");
+/* harmony import */ var _uiw_react_json_view_light__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @uiw/react-json-view/light */ "./node_modules/@uiw/react-json-view/esm/theme/light.js");
+/* harmony import */ var _uiw_react_json_view_dark__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @uiw/react-json-view/dark */ "./node_modules/@uiw/react-json-view/esm/theme/dark.js");
+/* harmony import */ var _History_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./History.css */ "./src/History.css");
+/* harmony import */ var react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-dev-runtime */ "./node_modules/react/jsx-dev-runtime.js");
 /* provided dependency */ var __react_refresh_utils__ = __webpack_require__(/*! ./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js */ "./node_modules/@pmmmwh/react-refresh-webpack-plugin/lib/runtime/RefreshUtils.js");
 __webpack_require__.$Refresh$.runtime = __webpack_require__(/*! ./node_modules/react-refresh/runtime.js */ "./node_modules/react-refresh/runtime.js");
 
 var _jsxFileName = "/Users/aghull/boardzilla-devtools/internal/site/src/History.tsx",
   _s = __webpack_require__.$Refresh$.signature();
+
+
 
 
 
@@ -1200,7 +1205,8 @@ function History({
   revertTo,
   view,
   players,
-  collapsed
+  collapsed,
+  darkMode
 }) {
   _s();
   const historyEndRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
@@ -1217,42 +1223,44 @@ function History({
       behavior: "smooth"
     });
   }, [items, collapsed]);
-  return /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
+  return /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("div", {
+    className: "history-list",
     style: {
       overflowY: "scroll"
     },
-    children: [initialState && !collapsed && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.Fragment, {
-      children: ["Initial state", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("button", {
+    children: [initialState && !collapsed && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.Fragment, {
+      children: ["Initial state", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("button", {
         onClick: () => view(-1),
         children: "View"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 36,
+        lineNumber: 39,
         columnNumber: 11
-      }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("button", {
+      }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("button", {
         onClick: () => revertTo(-1),
         children: "Revert"
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 37,
+        lineNumber: 40,
         columnNumber: 11
-      }, this), Object.entries(initialState.state.messages || []).map(([key, m]) => /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
+      }, this), Object.entries(initialState.state.messages || []).map(([key, m]) => /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("div", {
         dangerouslySetInnerHTML: {
           __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>')
         }
       }, key, false, {
         fileName: _jsxFileName,
-        lineNumber: 39,
+        lineNumber: 42,
         columnNumber: 13
-      }, this)), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(_uiw_react_json_view__WEBPACK_IMPORTED_MODULE_1__["default"], {
+      }, this)), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)(_uiw_react_json_view__WEBPACK_IMPORTED_MODULE_1__["default"], {
         value: initialState,
+        style: darkMode ? _uiw_react_json_view_dark__WEBPACK_IMPORTED_MODULE_3__.darkTheme : _uiw_react_json_view_light__WEBPACK_IMPORTED_MODULE_2__.lightTheme,
         collapsed: 1
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 41,
+        lineNumber: 44,
         columnNumber: 11
       }, this)]
-    }, void 0, true), initialState && collapsed && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("button", {
+    }, void 0, true), initialState && collapsed && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("button", {
       onClick: () => view(-1),
       style: {
         background: '#999'
@@ -1260,11 +1268,11 @@ function History({
       children: "-"
     }, "-1", false, {
       fileName: _jsxFileName,
-      lineNumber: 45,
+      lineNumber: 48,
       columnNumber: 9
     }, this), items.map((item, i) => {
       var _item$state, _item$state2;
-      return collapsed ? /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("button", {
+      return collapsed ? /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("button", {
         onClick: () => view(item.seq),
         style: {
           background: player(item.position).color
@@ -1272,14 +1280,11 @@ function History({
         children: player(item.position).name.slice(0, 1)
       }, item.seq, false, {
         fileName: _jsxFileName,
-        lineNumber: 48,
+        lineNumber: 51,
         columnNumber: 9
-      }, this) : /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
-        style: {
-          backgroundColor: item.seq % 2 === 0 ? "#ccc" : "#fff"
-        },
-        children: /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.Fragment, {
-          children: [item.seq, /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("span", {
+      }, this) : /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("div", {
+        children: /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.Fragment, {
+          children: [item.seq, /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("span", {
             style: {
               marginLeft: '3px',
               padding: '1px',
@@ -1288,66 +1293,66 @@ function History({
             children: player(item.position).name
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 53,
+            lineNumber: 56,
             columnNumber: 13
-          }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("button", {
+          }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("button", {
             onClick: () => view(item.seq),
             children: "View"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 54,
+            lineNumber: 57,
             columnNumber: 13
-          }, this), i !== items.length - 1 && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("button", {
+          }, this), i !== items.length - 1 && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("button", {
             onClick: () => revertTo(item.seq),
             children: "Revert"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 55,
+            lineNumber: 58,
             columnNumber: 42
-          }, this), (item.move instanceof Array ? item.move : [item.move]).filter(m => 'name' in m).map((move, i) => /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
-            children: /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("code", {
+          }, this), (item.move instanceof Array ? item.move : [item.move]).filter(m => 'name' in m).map((move, i) => /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("div", {
+            children: /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("code", {
               children: [move.name, "(", Object.entries(move.args).map(([k, v]) => `${k}: ${v}`).join(', '), ")"]
             }, void 0, true, {
               fileName: _jsxFileName,
-              lineNumber: 58,
+              lineNumber: 61,
               columnNumber: 17
             }, this)
           }, i, false, {
             fileName: _jsxFileName,
-            lineNumber: 57,
+            lineNumber: 60,
             columnNumber: 15
-          }, this)), Object.entries(item.state.messages || []).map(([key, m]) => /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
+          }, this)), Object.entries(item.state.messages || []).map(([key, m]) => /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("div", {
             dangerouslySetInnerHTML: {
               __html: m.body.replace(/\[\[[^|]*\|(.*?)\]\]/g, '<b>$1</b>')
             }
           }, key, false, {
             fileName: _jsxFileName,
-            lineNumber: 65,
+            lineNumber: 68,
             columnNumber: 15
-          }, this)), ((_item$state = item.state) === null || _item$state === void 0 ? void 0 : _item$state.game.state.board) && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)(_uiw_react_json_view__WEBPACK_IMPORTED_MODULE_1__["default"], {
+          }, this)), ((_item$state = item.state) === null || _item$state === void 0 ? void 0 : _item$state.game.state.board) && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)(_uiw_react_json_view__WEBPACK_IMPORTED_MODULE_1__["default"], {
             value: (_item$state2 = item.state) === null || _item$state2 === void 0 ? void 0 : _item$state2.game.state.board,
             collapsed: 0
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 67,
+            lineNumber: 70,
             columnNumber: 46
           }, this)]
         }, void 0, true)
       }, item.seq, false, {
         fileName: _jsxFileName,
-        lineNumber: 50,
+        lineNumber: 53,
         columnNumber: 9
       }, this);
-    }), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_3__.jsxDEV)("div", {
+    }), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxDEV)("div", {
       ref: historyEndRef
     }, void 0, false, {
       fileName: _jsxFileName,
-      lineNumber: 71,
+      lineNumber: 74,
       columnNumber: 7
     }, this)]
   }, void 0, true, {
     fileName: _jsxFileName,
-    lineNumber: 32,
+    lineNumber: 35,
     columnNumber: 5
   }, this);
 }
@@ -2639,6 +2644,83 @@ function useExpandsStatus() {
   var expands = (0,react__WEBPACK_IMPORTED_MODULE_1__.useSyncExternalStore)(subscribe, getSnapshot);
   return expands;
 }
+
+/***/ }),
+
+/***/ "./node_modules/@uiw/react-json-view/esm/theme/dark.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/@uiw/react-json-view/esm/theme/dark.js ***!
+  \*************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   darkTheme: () => (/* binding */ darkTheme)
+/* harmony export */ });
+var darkTheme = {
+  '--w-rjv-font-family': 'monospace',
+  '--w-rjv-color': '#0184a6',
+  '--w-rjv-background-color': '#202020',
+  '--w-rjv-line-color': '#323232',
+  '--w-rjv-arrow-color': 'var(--w-rjv-color)',
+  '--w-rjv-edit-color': 'var(--w-rjv-color)',
+  '--w-rjv-info-color': '#656565',
+  '--w-rjv-update-color': '#ebcb8b',
+  '--w-rjv-copied-color': '#0184a6',
+  '--w-rjv-copied-success-color': '#28a745',
+  '--w-rjv-curlybraces-color': '#1896b6',
+  '--w-rjv-brackets-color': '#1896b6',
+  '--w-rjv-type-string-color': '#cb4b16',
+  '--w-rjv-type-int-color': '#268bd2',
+  '--w-rjv-type-float-color': '#859900',
+  '--w-rjv-type-bigint-color': '#268bd2',
+  '--w-rjv-type-boolean-color': '#2aa198',
+  '--w-rjv-type-date-color': '#586e75',
+  '--w-rjv-type-url-color': '#649bd8',
+  '--w-rjv-type-null-color': '#d33682',
+  '--w-rjv-type-nan-color': '#076678',
+  '--w-rjv-type-undefined-color': '#586e75'
+};
+
+/***/ }),
+
+/***/ "./node_modules/@uiw/react-json-view/esm/theme/light.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/@uiw/react-json-view/esm/theme/light.js ***!
+  \**************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   lightTheme: () => (/* binding */ lightTheme)
+/* harmony export */ });
+var lightTheme = {
+  '--w-rjv-font-family': 'monospace',
+  '--w-rjv-color': '#002b36',
+  '--w-rjv-background-color': '#ffffff',
+  '--w-rjv-line-color': '#ebebeb',
+  '--w-rjv-arrow-color': 'var(--w-rjv-color)',
+  '--w-rjv-edit-color': 'var(--w-rjv-color)',
+  '--w-rjv-info-color': '#0000004d',
+  '--w-rjv-update-color': '#ebcb8b',
+  '--w-rjv-copied-color': '#002b36',
+  '--w-rjv-copied-success-color': '#28a745',
+  '--w-rjv-curlybraces-color': '#236a7c',
+  '--w-rjv-colon-color': '#002b36',
+  '--w-rjv-brackets-color': '#236a7c',
+  '--w-rjv-type-string-color': '#cb4b16',
+  '--w-rjv-type-int-color': '#268bd2',
+  '--w-rjv-type-float-color': '#859900',
+  '--w-rjv-type-bigint-color': '#268bd2',
+  '--w-rjv-type-boolean-color': '#2aa198',
+  '--w-rjv-type-date-color': '#586e75',
+  '--w-rjv-type-url-color': '#0969da',
+  '--w-rjv-type-null-color': '#d33682',
+  '--w-rjv-type-nan-color': '#859900',
+  '--w-rjv-type-undefined-color': '#586e75'
+};
 
 /***/ }),
 
@@ -38148,6 +38230,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `#history {
 
 html.dark #history {
   background: #333;
+  color: #eee;
   border-left: 1px solid #aaa;
 }
 
@@ -38186,7 +38269,23 @@ html.dark #history {
 #history.collapsed .arrow {
   transform: rotate(-90deg) scale(1.35) translate(.1em,-.05em);
 }
-`, "",{"version":3,"sources":["webpack://./src/History.css"],"names":[],"mappings":"AAAA;EACE,gBAAgB;EAChB,gBAAgB;EAChB,uBAAuB;EACvB,aAAa;EACb,aAAa;EACb,sBAAsB;EACtB,2BAA2B;EAC3B,iBAAiB;EACjB,kBAAkB;EAClB,UAAU;AACZ;;AAEA;EACE,mBAAmB;EACnB,iBAAiB;EACjB,eAAe;AACjB;;AAEA;EACE,gBAAgB;EAChB,2BAA2B;AAC7B;;AAEA;EACE,eAAe;EACf,gBAAgB;AAClB;;AAEA;EACE,YAAY;EACZ,sBAAsB;EACtB,kBAAkB;EAClB,iBAAiB;EACjB,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,eAAe;EACf,iBAAiB;EACjB,gBAAgB;AAClB;;AAEA;EACE,WAAW;AACb;;AAEA;EACE,WAAW;EACX,eAAe;EACf,sDAAsD;AACxD;;AAEA;EACE,gBAAgB;AAClB;;AAEA;EACE,4DAA4D;AAC9D","sourcesContent":["#history {\n  background: #eee;\n  overflow: hidden;\n  width: min(300px, 30vw);\n  height: 100vh;\n  display: flex;\n  flex-direction: column;\n  border-left: 1px solid #666;\n  padding-left: 1vw;\n  position: relative;\n  left: -1px;\n}\n\n.fullscreen #history {\n  width: 0 !important;\n  border-left: none;\n  padding-left: 0;\n}\n\nhtml.dark #history {\n  background: #333;\n  border-left: 1px solid #aaa;\n}\n\n#history button {\n  cursor: pointer;\n  margin-left: 1em;\n}\n\n#history.collapsed button {\n  color: white;\n  border: 1px solid #666;\n  border-radius: 15%;\n  margin: 0 0 10% 0;\n  width: 26px;\n  height: 26px;\n  text-align: center;\n  font-size: 140%;\n  font-weight: bold;\n  padding: 0.5px 0;\n}\n\n#history.collapsed {\n  width: 35px;\n}\n\n#history .arrow {\n  height: 1em;\n  cursor: pointer;\n  transform: rotate(90deg) scale(1.35) translate(.1em,0);\n}\n\n#history.collapsed h2 {\n  margin-bottom: 0;\n}\n\n#history.collapsed .arrow {\n  transform: rotate(-90deg) scale(1.35) translate(.1em,-.05em);\n}\n"],"sourceRoot":""}]);
+
+#history .history-list > div:nth-child(even) {
+  background: #ccc;
+}
+
+#history .history-list > div:nth-child(odd) {
+  background: #fff;
+}
+
+html.dark #history .history-list > div:nth-child(even) {
+  background: #333;
+}
+
+html.dark #history .history-list > div:nth-child(odd) {
+  background: #000;
+}
+`, "",{"version":3,"sources":["webpack://./src/History.css"],"names":[],"mappings":"AAAA;EACE,gBAAgB;EAChB,gBAAgB;EAChB,uBAAuB;EACvB,aAAa;EACb,aAAa;EACb,sBAAsB;EACtB,2BAA2B;EAC3B,iBAAiB;EACjB,kBAAkB;EAClB,UAAU;AACZ;;AAEA;EACE,mBAAmB;EACnB,iBAAiB;EACjB,eAAe;AACjB;;AAEA;EACE,gBAAgB;EAChB,WAAW;EACX,2BAA2B;AAC7B;;AAEA;EACE,eAAe;EACf,gBAAgB;AAClB;;AAEA;EACE,YAAY;EACZ,sBAAsB;EACtB,kBAAkB;EAClB,iBAAiB;EACjB,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,eAAe;EACf,iBAAiB;EACjB,gBAAgB;AAClB;;AAEA;EACE,WAAW;AACb;;AAEA;EACE,WAAW;EACX,eAAe;EACf,sDAAsD;AACxD;;AAEA;EACE,gBAAgB;AAClB;;AAEA;EACE,4DAA4D;AAC9D;;AAEA;EACE,gBAAgB;AAClB;;AAEA;EACE,gBAAgB;AAClB;;AAEA;EACE,gBAAgB;AAClB;;AAEA;EACE,gBAAgB;AAClB","sourcesContent":["#history {\n  background: #eee;\n  overflow: hidden;\n  width: min(300px, 30vw);\n  height: 100vh;\n  display: flex;\n  flex-direction: column;\n  border-left: 1px solid #666;\n  padding-left: 1vw;\n  position: relative;\n  left: -1px;\n}\n\n.fullscreen #history {\n  width: 0 !important;\n  border-left: none;\n  padding-left: 0;\n}\n\nhtml.dark #history {\n  background: #333;\n  color: #eee;\n  border-left: 1px solid #aaa;\n}\n\n#history button {\n  cursor: pointer;\n  margin-left: 1em;\n}\n\n#history.collapsed button {\n  color: white;\n  border: 1px solid #666;\n  border-radius: 15%;\n  margin: 0 0 10% 0;\n  width: 26px;\n  height: 26px;\n  text-align: center;\n  font-size: 140%;\n  font-weight: bold;\n  padding: 0.5px 0;\n}\n\n#history.collapsed {\n  width: 35px;\n}\n\n#history .arrow {\n  height: 1em;\n  cursor: pointer;\n  transform: rotate(90deg) scale(1.35) translate(.1em,0);\n}\n\n#history.collapsed h2 {\n  margin-bottom: 0;\n}\n\n#history.collapsed .arrow {\n  transform: rotate(-90deg) scale(1.35) translate(.1em,-.05em);\n}\n\n#history .history-list > div:nth-child(even) {\n  background: #ccc;\n}\n\n#history .history-list > div:nth-child(odd) {\n  background: #fff;\n}\n\nhtml.dark #history .history-list > div:nth-child(even) {\n  background: #333;\n}\n\nhtml.dark #history .history-list > div:nth-child(odd) {\n  background: #000;\n}\n"],"sourceRoot":""}]);
 // Exports
 ___CSS_LOADER_EXPORT___.locals = {};
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
