@@ -70,9 +70,10 @@
   },
   "scripts": {
     "start": "node scripts/start.js",
-    "build": "node scripts/build.js",
+    "build": "NODE_ENV=production PUBLIC_URL=/ node scripts/build.js",
     "build:watch": "nodemon --watch src -e 'ts,tsx,css,svg' --exec 'npm run build'",
-    "test": "node scripts/test.js"
+    "test": "node scripts/test.js",
+    "postbuild": "find build/static -type f | xargs -n1 -- sed -i.bak \"s|$PWD||g\" && find build -name '*.bak' | xargs rm"
   },
   "eslintConfig": {
     "extends": [
