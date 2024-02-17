@@ -19,6 +19,7 @@
 
 html.dark #history {
   background: #333;
+  color: #eee;
   border-left: 1px solid #aaa;
 }
 
@@ -56,4 +57,20 @@ html.dark #history {
 
 #history.collapsed .arrow {
   transform: rotate(-90deg) scale(1.35) translate(.1em,-.05em);
+}
+
+#history .history-list > div:nth-child(even) {
+  background: #ccc;
+}
+
+#history .history-list > div:nth-child(odd) {
+  background: #fff;
+}
+
+html.dark #history .history-list > div:nth-child(even) {
+  background: #333;
+}
+
+html.dark #history .history-list > div:nth-child(odd) {
+  background: #000;
 }

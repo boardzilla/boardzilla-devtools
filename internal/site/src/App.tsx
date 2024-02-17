@@ -636,8 +636,8 @@ function App() {
       <div id="history" className={historyCollapsed ? "collapsed" : ""}>
         <h2>
           <svg onClick={() => setHistoryCollapsed(!historyCollapsed)} className="arrow" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
-            <path d="M721.833102 597.433606l-60.943176 60.943176-211.189226-211.189225L510.643877 386.244381z" fill="#444444" />
-            <path d="M299.323503 597.30514l60.943176 60.943176 211.189226-211.189225L510.512728 386.115915z" fill="#444444" />
+            <path d="M721.833102 597.433606l-60.943176 60.943176-211.189226-211.189225L510.643877 386.244381z" fill={darkMode ? "#bbb" : "#444"} />
+            <path d="M299.323503 597.30514l60.943176 60.943176 211.189226-211.189225L510.512728 386.115915z" fill={darkMode ? "#bbb" : "#444"} />
           </svg>
           {historyCollapsed || <span>History <button onClick={() => resetGame()}>Reset game</button></span>}
         </h2>
@@ -648,6 +648,7 @@ function App() {
           initialState={initialState}
           items={history}
           collapsed={historyCollapsed}
+          darkMode={darkMode}
         />
       </div>
     </div>
