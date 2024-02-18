@@ -7,7 +7,7 @@ require (
 	github.com/erikgeiser/promptkit v0.9.0
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/gookit/color v1.5.4
-	github.com/rjeczalik/notify v0.9.3
+	github.com/radovskyb/watcher v1.0.7
 	github.com/stoewer/go-strcase v1.3.0
 	github.com/tidwall/gjson v1.17.0
 	github.com/tidwall/sjson v1.2.5

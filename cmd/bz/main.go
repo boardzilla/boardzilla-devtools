@@ -31,7 +31,7 @@ import (
 	"github.com/erikgeiser/promptkit/selection"
 	"github.com/erikgeiser/promptkit/textinput"
 	"github.com/gookit/color"
-	"github.com/rjeczalik/notify"
+	"github.com/radovskyb/watcher"
 	"github.com/stoewer/go-strcase"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -50,7 +50,7 @@ const debounceDurationMS = 500
 
 func validateName(name string) error {
 	if len(strings.TrimSpace(name)) == 0 {
-		return fmt.Errorf("This value is required")
+		return fmt.Errorf("this value is required")
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func validateShortName(name string) error {
 		return err
 	}
 	if !m {
-		return fmt.Errorf("Can only contain lowercase letters, digits, _ and -")
+		return fmt.Errorf("can only contain lowercase letters, digits, _ and -")
 	}
 	return nil
 }
@@ -129,7 +129,7 @@ type userGame struct {
 	LatestSubmitted   *userGameVersion
 }
 
-var gameNotFound = errors.New("no game found")
+var errGameNotFound = errors.New("no game found")
 
 func (n *notifier) notify() {
 	n.lock.Lock()
@@ -207,7 +207,7 @@ func (b *bz) info() error {
 	}
 	gi, err := b.getInfo(name)
 	if err != nil {
-		if err == gameNotFound {
+		if err == errGameNotFound {
 			fmt.Printf("No game exists for %s!\n\nBe the first to claim it by submitting a game here", name)
 			return nil
 		}
@@ -272,7 +272,7 @@ func (b *bz) run() error {
 		return err
 	}
 	if gameRoot == "" {
-		return fmt.Errorf("Requires -root <game root>")
+		return fmt.Errorf("requires -root <game root>")
 	}
 	b.root = gameRoot
 	devBuilder, err := devtools.NewBuilder(gameRoot)
@@ -299,62 +299,75 @@ func (b *bz) run() error {
 			log.Println("error during build:", err)
 		}
 
-		events := make(chan notify.EventInfo, 100)
+		w := watcher.New()
+		w.SetMaxEvents(1)
+
 		roots, err := devBuilder.WatchedFiles()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("error getting roots: %#v", err)
 		}
 		for _, root := range roots {
+			root = filepath.FromSlash(root)
 			info, err := os.Stat(root)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("error stating root: %#v", err)
 			}
+			fmt.Printf("root %s\n", root)
+			fmt.Printf("info %#v\n", info)
 			if info.IsDir() {
-				if err := notify.Watch(path.Join(root, "..."), events, notify.All); err != nil {
-					log.Fatal(err)
+				if err := w.AddRecursive(root); err != nil {
+					log.Fatalf("error watching dir %s: %#v", root, err)
 				}
 			} else {
-				if err := notify.Watch(root, events, notify.All); err != nil {
-					log.Fatal(err)
+				if err := w.Add(root); err != nil {
+					log.Fatalf("error watching path %s: %#v %s", root, err, err)
 				}
 			}
 		}
 
-		defer notify.Stop(events)
+		go func() {
+			if err := w.Start(time.Millisecond * 100); err != nil {
+				log.Fatalln(err)
+			}
+		}()
 
 		// Block until an event is received.
-		for e := range events {
-			if e.Event() != notify.Write {
-				continue
-			}
-			for _, p := range manifest.UI.WatchPaths {
-				p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
-				if err != nil {
-					log.Fatal(err)
+		for {
+			select {
+			case e := <-w.Event:
+				for _, p := range manifest.UI.WatchPaths {
+					p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
+					if err != nil {
+						log.Fatal(err)
+					}
+					r, err := filepath.Rel(p, e.Path)
+					if err != nil {
+						log.Fatal(err)
+					}
+					if !strings.HasPrefix(r, "..") {
+						uiNotifier.notify()
+						break
+					}
 				}
-				r, err := filepath.Rel(p, e.Path())
-				if err != nil {
-					log.Fatal(err)
-				}
-				if !strings.HasPrefix(r, "..") {
-					uiNotifier.notify()
-					break
-				}
-			}
 
-			for _, p := range manifest.Game.WatchPaths {
-				p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
-				if err != nil {
-					log.Fatal(err)
+				for _, p := range manifest.Game.WatchPaths {
+					p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
+					if err != nil {
+						log.Fatal(err)
+					}
+					r, err := filepath.Rel(p, e.Path)
+					if err != nil {
+						log.Fatal(err)
+					}
+					if !strings.HasPrefix(r, "..") {
+						gameNotifier.notify()
+						break
+					}
 				}
-				r, err := filepath.Rel(p, e.Path())
-				if err != nil {
-					log.Fatal(err)
-				}
-				if !strings.HasPrefix(r, "..") {
-					gameNotifier.notify()
-					break
-				}
+			case err := <-w.Error:
+				log.Fatalln(err)
+			case <-w.Closed:
+				return
 			}
 		}
 	}()
@@ -537,7 +550,7 @@ func (b *bz) submit() error {
 	// calculate next version
 	info, err := b.getInfo(name)
 	nextVersion := "v0.0.1"
-	if err != nil && err != gameNotFound {
+	if err != nil && err != errGameNotFound {
 		return err
 	}
 	if info != nil {
@@ -1096,7 +1109,7 @@ func (b *bz) getInfo(name string) (*userGame, error) {
 
 	switch res.StatusCode {
 	case http.StatusNotFound:
-		return nil, gameNotFound
+		return nil, errGameNotFound
 	case http.StatusOK:
 		if err := json.NewDecoder(res.Body).Decode(&gameInfo); err != nil {
 			return nil, err
