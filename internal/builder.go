@@ -74,7 +74,7 @@ func (b *Builder) buildUI(m *ManifestV1, prod bool) ([]byte, []byte, error) {
 	if prod {
 		buildCmd = m.UI.BuildCommand.Production
 	}
-	color.Printf("Buidling UI <grey>%s</>\n", buildCmd)
+	color.Printf("Building UI <grey>%s</>\n", buildCmd)
 	return b.run(path.Join(b.root, m.UI.Root), buildCmd)
 }
 
@@ -91,7 +91,7 @@ func (b *Builder) buildGame(m *ManifestV1, prod bool) ([]byte, []byte, error) {
 	if prod {
 		buildCmd = m.Game.BuildCommand.Production
 	}
-	color.Printf("Buidling Game <grey>%s</>\n", buildCmd)
+	color.Printf("Building Game <grey>%s</>\n", buildCmd)
 	return b.run(path.Join(b.root, m.Game.Root), buildCmd)
 }
 

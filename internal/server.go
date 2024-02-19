@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -391,11 +392,12 @@ func (s *Server) Serve() error {
 	})
 
 	r.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-		assetPath := chi.URLParam(r, "*")
+		assetPath := filepath.FromSlash(filepath.Clean(chi.URLParam(r, "*")))
 		ext := filepath.Ext(assetPath)
-		f, err := s.getBuildFile("/" + assetPath)
+		f, err := s.getBuildFile(assetPath)
 		if err != nil {
-			f, err = os.ReadFile(filepath.Clean(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, assetPath)))
+			// #nosec #G304
+			f, err = os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, assetPath))
 		}
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
@@ -408,6 +410,7 @@ func (s *Server) Serve() error {
 			fmt.Printf("error: %#v\n", err)
 		}
 	})
+
 	srv := &http.Server{
 		Handler:           r,
 		ReadHeaderTimeout: 200 * time.Millisecond,
@@ -471,7 +474,7 @@ func (s *Server) getBuildFile(n string) ([]byte, error) {
 	case "/game.html", "/ui.html", "0.jpg", "1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg", "6.jpg", "7.jpg", "8.jpg", "9.jpg":
 		n = path.Join(".", n)
 	default:
-		n = path.Join("site", "build", n)
+		n = path.Join("site", "build", strings.ReplaceAll(n, "\\", "/"))
 	}
 	if liveDev {
 		return os.ReadFile(path.Join("internal", n)) // #nosec
@@ -482,7 +485,8 @@ func (s *Server) getBuildFile(n string) ([]byte, error) {
 func (s *Server) getFile(n string) ([]byte, error) {
 	if liveDev {
 		n = path.Join("internal", n)
-		return os.ReadFile(filepath.Clean(n))
+		// #nosec G304
+		return os.ReadFile(n)
 	} else {
 		n = path.Join(".", n)
 		return site.ReadFile(n)
