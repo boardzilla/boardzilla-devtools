@@ -396,6 +396,7 @@ func (s *Server) Serve() error {
 		ext := filepath.Ext(assetPath)
 		f, err := s.getBuildFile(assetPath)
 		if err != nil {
+			// #nosec #G304
 			f, err = os.ReadFile(path.Join(s.gameRoot, s.manifest.UI.Root, s.manifest.UI.OutputDirectory, assetPath))
 		}
 		if err != nil {
@@ -484,6 +485,7 @@ func (s *Server) getBuildFile(n string) ([]byte, error) {
 func (s *Server) getFile(n string) ([]byte, error) {
 	if liveDev {
 		n = path.Join("internal", n)
+		// #nosec G304
 		return os.ReadFile(n)
 	} else {
 		n = path.Join(".", n)
