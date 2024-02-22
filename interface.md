@@ -134,7 +134,9 @@ type User = {
   playerDetails?: {
     color: string;
     position: number;
+    ready: boolean;
     settings?: any;
+    sessionURL?: string; // only exposed to host for reserved players
   };
 };
 
@@ -188,6 +190,7 @@ type UpdateSettingsMessage = {
   settings: GameSettings
 }
 
+// host only
 type SeatOperation = {
   type: 'seat'
   position: number
@@ -197,6 +200,7 @@ type SeatOperation = {
   settings?: any
 }
 
+// only host can specify any user id, rejected if non-host supplies other user id
 type UnseatOperation = {
   type: 'unseat'
   userID: string
@@ -236,8 +240,10 @@ type StartMessage = {
 type UpdateSelfPlayerMessage = {
   type: "updateSelfPlayer"
   id: string
-  name: string
-  color: string
+  name?: string
+  color?: string
+  position?: number
+  ready?: boolean
 }
 
 type ReadyMessage = {
