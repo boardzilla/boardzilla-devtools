@@ -7,9 +7,11 @@ export type User = {
   playerDetails?: {
     color: string
     position: number
+    ready: boolean
     settings?: any
-  }
-}
+    sessionURL?: string // only exposed to host for reserved players
+  };
+};
 
 export type UsersEvent = {
   type: "users"
@@ -102,8 +104,10 @@ export type StartMessage = {
 export type UpdateSelfPlayerMessage = {
   type: "updateSelfPlayer"
   id: string
-  name: string
-  color: string
+  name?: string
+  color?: string
+  position?: number
+  ready?: boolean
 }
 
 export type ReadyMessage = {

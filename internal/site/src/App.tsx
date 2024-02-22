@@ -30,13 +30,15 @@ const possibleUsers = [
 
 const avatarURL = (userID: string): string => `/_profile/${userID}.jpg`
 
-const playerDetailsForUser = (players: UI.UserPlayer[], userID: string): {color: string, position: number, settings?: any} | undefined => {
+const playerDetailsForUser = (isHost: boolean, players: UI.UserPlayer[], userID: string, ready: boolean): {color: string, position: number, settings?: any, ready: boolean, sessionURL?: string} | undefined => {
   const player = players.find(p => p.id === userID)
   if (!player) return undefined
   return {
     color: player.color,
     position: player.position,
-    settings: player.settings
+    settings: player.settings,
+    ready,
+    sessionURL: isHost ? "https://someone/somewhere" : undefined,
   }
 }
 
@@ -76,6 +78,7 @@ function App() {
   const [currentUserID, setCurrentUserID] = useState(possibleUsers[0].id);
   const [currentUserIDRequested, setCurrentUserIDRequested] = useState<string | undefined>(undefined);
   const [players, setPlayers] = useState<UI.UserPlayer[]>([]);
+  const [playerReadiness, setPlayerReadiness] = useState<Map<string, boolean>>(new Map());
   const [buildError, setBuildError] = useState<BuildError | undefined>();
   const [settings, setSettings] = useState<Game.GameSettings>({});
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -88,6 +91,8 @@ function App() {
   const [autoSwitch, setAutoSwitch] = useState(true);
   const [reprocessing, setReprocessing] = useState(true);
   const [darkMode, setDarkMode] = useState(localStorage.getItem("dark") === "true");
+
+  const host = currentUserID === possibleUsers[0].id
 
   useEffect(() => {
     localStorage.setItem("dark", darkMode ? "true" : "false")
@@ -306,7 +311,7 @@ function App() {
         id: u.id,
         name: player?.name ?? u.name,
         avatar: avatarURL(u.id),
-        playerDetails: playerDetailsForUser(players, u.id),
+        playerDetails: playerDetailsForUser(host, players, u.id, true),
       })
     })
 
@@ -321,12 +326,13 @@ function App() {
           color: p.color,
           position: p.position,
           settings: p.settings,
+          ready: true,
         }
       })
     })
 
     return users
-  }, [numberOfUsers, players])
+  }, [host, numberOfUsers, players])
 
   const processKey = useCallback((code: string): boolean => {
     const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
@@ -478,13 +484,18 @@ function App() {
           sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
           break
         case 'updateSelfPlayer':
-          const {name, color} = evt
+          const {name, color, position, ready} = evt
           setPlayers(players.map(p => {
             if (p.id !== currentUserID) return p
+            if (ready !== undefined) {
+              setPlayerReadiness(new Map([...playerReadiness, [p.id, ready]]))
+            }
+
             return {
               ...p,
-              name,
-              color,
+              name: name || p.name,
+              color: color || p.color,
+              position: position === undefined ? p.position : position,
             }
           }))
         break
@@ -503,7 +514,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch, currentUserID, generateUsers]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch, currentUserID, generateUsers, playerReadiness]);
 
   useEffect(() => {
     const l = (e: globalThis.KeyboardEvent):any => {
