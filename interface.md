@@ -131,11 +131,12 @@ type User = {
   id: string;
   name: string;
   avatar: string;
-  sessionURL?: string;
   playerDetails?: {
     color: string;
     position: number;
+    ready: boolean;
     settings?: any;
+    sessionURL?: string; // only exposed to host for reserved players
   };
 };
 
