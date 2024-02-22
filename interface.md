@@ -131,6 +131,7 @@ type User = {
   id: string;
   name: string;
   avatar: string;
+  sessionURL?: string;
   playerDetails?: {
     color: string;
     position: number;
