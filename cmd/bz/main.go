@@ -325,6 +325,13 @@ func (b *bz) run() error {
 			}
 		}
 
+		w.AddFilterHook(func(info os.FileInfo, fullPath string) error {
+			if path.Ext(fullPath) == ".bak" {
+				return watcher.ErrSkip
+			}
+			return nil
+		})
+
 		go func() {
 			if err := w.Start(time.Millisecond * 100); err != nil {
 				log.Fatalln(err)
