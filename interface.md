@@ -6,7 +6,7 @@
 {
   "minPlayers": 2,
   "maxPlayers": 2,
-  "recommendedPlayers": 2 // optional, implied if min == max, default min
+  "defaultPlayers": 2 // optional, implied if min == max, default min
   "ui": {
     "root": "ui",
     "build": "npm run build",
