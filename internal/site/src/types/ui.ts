@@ -18,6 +18,11 @@ export type UsersEvent = {
   users: User[]
 }
 
+export type OpenSeatsEvent = {
+  type: "openSeats";
+  openSeats: boolean[];
+};
+
 // an update to the setup state
 export type SettingsUpdateEvent = {
   type: "settingsUpdate"
@@ -70,6 +75,12 @@ type UnseatOperation = {
   userID: string
 }
 
+type OpenSeatOperation = {
+  type: 'openSeat'
+  position: number
+  open: boolean
+}
+
 type UpdateOperation = {
   type: 'update'
   userID: string
@@ -86,7 +97,7 @@ type ReserveOperation = {
   settings?: any
 }
 
-type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
+type PlayerOperation = SeatOperation | UnseatOperation | OpenSeatOperation | UpdateOperation | ReserveOperation
 
 // host only
 export type UpdatePlayersMessage = {

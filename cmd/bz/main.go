@@ -326,7 +326,8 @@ func (b *bz) run() error {
 		}
 
 		w.AddFilterHook(func(info os.FileInfo, fullPath string) error {
-			if path.Ext(fullPath) == ".bak" {
+			name := info.Name()
+			if info.IsDir() || path.Ext(name) == ".bak" || strings.HasPrefix(name, ".#") || strings.HasPrefix(name, "#") || strings.HasSuffix(name, "~") {
 				return watcher.ErrSkip
 			}
 			return nil

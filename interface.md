@@ -100,6 +100,7 @@ During "new", it will recv the following messages.
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
   UsersEvent |
+  OpenSeatsEvent |
   SettingsUpdateEvent |
   GameUpdateEvent |
   GameFinishedEvent |
@@ -144,6 +145,11 @@ type User = {
 type UsersEvent = {
   type: "users";
   users: User[];
+};
+
+type OpenSeatsEvent = {
+  type: "openSeats";
+  openSeats: boolean[];
 };
 
 type UserOnlineEvent = {

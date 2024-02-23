@@ -15,6 +15,7 @@ import { sendInitialState, processMove, resolveGamePromise, rejectGamePromise } 
 const body = document.getElementsByTagName("body")[0];
 const maxPlayers = parseInt(body.getAttribute("maxPlayers")!);
 const minPlayers = parseInt(body.getAttribute("minPlayers")!);
+const defaultPlayers = parseInt(body.getAttribute("defaultPlayers")!);
 const possibleUsers = [
   {id: "0", name: "Evelyn"},
   {id: "1", name: "Jennifer"},
@@ -79,6 +80,7 @@ function App() {
   const [currentUserIDRequested, setCurrentUserIDRequested] = useState<string | undefined>(undefined);
   const [players, setPlayers] = useState<UI.UserPlayer[]>([]);
   const [playerReadiness, setPlayerReadiness] = useState<Map<string, boolean>>(new Map());
+  const [openSeats, setOpenSeats] = useState<boolean[]>(Array.from(Array(defaultPlayers)).map(() => true));
   const [buildError, setBuildError] = useState<BuildError | undefined>();
   const [settings, setSettings] = useState<Game.GameSettings>({});
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -116,7 +118,7 @@ function App() {
     return history && historyItem >= 0 ? history[historyItem].state : initialState!.state
   }, [initialState, historyPin]);
 
-  const sendToUI = useCallback((data: UI.UsersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent | UI.UserOnlineEvent) => {
+  const sendToUI = useCallback((data: UI.UsersEvent | UI.OpenSeatsEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent | UI.UserOnlineEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(JSON.parse(JSON.stringify(data)))
   }, []);
 
@@ -162,6 +164,7 @@ function App() {
       userID: currentUserID,
       minPlayers,
       maxPlayers,
+      defaultPlayers,
       dev: true
     })
   }, [currentUserID]);
@@ -304,14 +307,14 @@ function App() {
     return () => evtSource.close()
   }, [])
 
-  const generateUsers = useCallback((): UI.User[] => {
+  const users = useMemo((): UI.User[] => {
     const users = possibleUsers.slice(0, numberOfUsers).map(u => {
       const player = players.find(p => u.id === p.id);
       return ({
         id: u.id,
         name: player?.name ?? u.name,
         avatar: avatarURL(u.id),
-        playerDetails: playerDetailsForUser(host, players, u.id, playerReadiness.get(u.id) || false),
+        playerDetails: playerDetailsForUser(host, players, u.id, playerReadiness.get(u.id) ?? true),
       })
     })
 
@@ -430,7 +433,8 @@ function App() {
         case 'ready':
           if (!initialState) {
             sendToUI({type: "settingsUpdate", settings});
-            sendToUI({type: "users", users: generateUsers()});
+            sendToUI({type: "openSeats", openSeats});
+            sendToUI({type: "users", users});
           } else {
             await updateUI(getCurrentState(history));
           }
@@ -463,6 +467,11 @@ function App() {
               case 'unseat':
                 const unseatOp = op
                 newPlayers = newPlayers.filter(p => p.id !== unseatOp.userID)
+                break
+              case 'openSeat':
+                const newOpenSeats = [...openSeats];
+                newOpenSeats[op.position - 1] = op.open;
+                setOpenSeats(newOpenSeats);
                 break
               case 'update':
                 const updateOp = op
@@ -514,7 +523,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch, currentUserID, generateUsers, playerReadiness]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch, currentUserID, users, playerReadiness, openSeats]);
 
   useEffect(() => {
     const l = (e: globalThis.KeyboardEvent):any => {
@@ -535,8 +544,12 @@ function App() {
   }, [players, sendToUI])
 
   useEffect(() => {
-    sendToUI({type: "users", users: generateUsers()});
-  }, [generateUsers, sendToUI])
+    sendToUI({type: "users", users});
+  }, [users, sendToUI])
+
+  useEffect(() => {
+    sendToUI({type: "openSeats", openSeats});
+  }, [openSeats, sendToUI])
 
   useEffect(() => {
     sendToUI({ type: 'darkSetting', dark: darkMode !== false })
@@ -623,9 +636,20 @@ function App() {
         <div className="header">
           <span style={{marginRight: '0.5em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /></span> <span style={{marginRight: '3em'}}>Autoswitch players</span>
           {phase === "new" && <span><input style={{width: '3em', marginRight: '0.5em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/> Number of players</span>}
-          <span style={{flexGrow: 1}}>{players.map(p =>
-            <button className="player" onClick={() => {setCurrentUserIDRequested(p.id!); setCurrentUserID(p.id!)}} key={p.position} style={{backgroundColor: p.color, opacity: phase === 'started' && (currentPlayer.id !== p.id) ? 0.4 : 1, border: phase === 'started' && (currentPlayer.id !== p.id) ? '2px transparent solid' : '2px black solid'}}>{p.name}</button>
-          )}</span>
+          <span style={{flexGrow: 1}}>
+            {users.filter(u => phase === 'new' || u.playerDetails).map(u => (
+              <button
+                className="player"
+                onClick={() => {setCurrentUserIDRequested(u.id!); setCurrentUserID(u.id!)}}
+                key={u.id}
+                style={{
+                  backgroundColor: u.playerDetails?.color || '#666',
+                  opacity: phase === 'started' && (currentPlayer.id !== u.id) ? 0.4 : 1,
+                  border: phase === 'started' && (currentPlayer.id !== u.id) ? '2px transparent solid' : '2px black solid'}}>
+                {u.name}
+              </button>
+            ))}
+          </span>
           <span style={{marginRight: '0.5em'}}>🌞</span>
           <Switch onChange={(v) => setDarkMode(v)} checked={darkMode} uncheckedIcon={false} checkedIcon={false} />
           <span style={{marginLeft: '0.5em'}}>🌚</span>

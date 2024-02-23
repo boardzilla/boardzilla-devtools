@@ -327,9 +327,15 @@ func (s *Server) Serve() error {
 		var data struct {
 			MinimumPlayers int
 			MaximumPlayers int
+			DefaultPlayers int
 		}
 		data.MinimumPlayers = s.manifest.MinimumPlayers
 		data.MaximumPlayers = s.manifest.MaximumPlayers
+		if s.manifest.DefaultPlayers == 0 {
+			data.DefaultPlayers = s.manifest.MinimumPlayers
+		} else {
+			data.DefaultPlayers = s.manifest.DefaultPlayers
+		}
 		w.Header().Add("Content-type", "text/html")
 		w.Header().Add("Cache-control", "no-store")
 		if err := t.Execute(w, data); err != nil {
