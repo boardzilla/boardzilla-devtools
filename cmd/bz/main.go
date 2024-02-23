@@ -336,7 +336,7 @@ func (b *bz) run() error {
 			select {
 			case e := <-w.Event:
 				for _, p := range manifest.UI.WatchPaths {
-					p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
+					p := path.Join(gameRoot, p)
 					if err != nil {
 						log.Fatal(err)
 					}
@@ -351,7 +351,7 @@ func (b *bz) run() error {
 				}
 
 				for _, p := range manifest.Game.WatchPaths {
-					p, err := filepath.EvalSymlinks(path.Join(gameRoot, p))
+					p := path.Join(gameRoot, p)
 					if err != nil {
 						log.Fatal(err)
 					}
