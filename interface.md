@@ -206,6 +206,13 @@ type UnseatOperation = {
   userID: string
 }
 
+// host only
+type OpenSeatOperation = {
+  type: 'unseat'
+  position: number
+  open: boolean
+}
+
 type UpdateOperation = {
   type: 'update'
   userID: string
@@ -222,7 +229,7 @@ type ReserveOperation = {
   settings?: any
 }
 
-type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
+type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation | OpenSeatOperation
 
 // host only
 type UpdatePlayersMessage = {
