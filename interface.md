@@ -208,7 +208,7 @@ type UnseatOperation = {
 
 // host only
 type OpenSeatOperation = {
-  type: 'unseat'
+  type: 'openSeat'
   position: number
   open: boolean
 }
