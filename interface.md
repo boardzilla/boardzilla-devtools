@@ -142,14 +142,10 @@ type User = {
   };
 };
 
-type UsersEvent = {
-  type: "users";
+type PlayerSetupEvent = {
+  type: "playerSetup";
   users: User[];
-};
-
-type OpenSeatsEvent = {
-  type: "openSeats";
-  openSeats: boolean[];
+  seats: "normal" | "closed" | "reserved"
 };
 
 type UserOnlineEvent = {
@@ -214,8 +210,8 @@ type UnseatOperation = {
 }
 
 // host only
-type OpenSeatOperation = {
-  type: 'openSeat'
+type SetSeatOperation = {
+  type: 'setSeat'
   position: number
   open: boolean
 }
