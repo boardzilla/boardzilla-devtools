@@ -80,9 +80,9 @@ function App() {
   const [currentUserIDRequested, setCurrentUserIDRequested] = useState<string | undefined>(undefined);
   const [players, setPlayers] = useState<UI.UserPlayer[]>([]);
   const [playerReadiness, setPlayerReadiness] = useState<Map<string, boolean>>(new Map());
-  const [openSeats, setOpenSeats] = useState<boolean[]>(Array.from(Array(defaultPlayers)).map(() => true));
   const [buildError, setBuildError] = useState<BuildError | undefined>();
   const [settings, setSettings] = useState<Game.GameSettings>({});
+  const [seatCount, setSeatCount] = useState(defaultPlayers);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyPin, setHistoryPin] = useState<number | undefined>(undefined);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -118,7 +118,7 @@ function App() {
     return history && historyItem >= 0 ? history[historyItem].state : initialState!.state
   }, [initialState, historyPin]);
 
-  const sendToUI = useCallback((data: UI.UsersEvent | UI.OpenSeatsEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent | UI.UserOnlineEvent) => {
+  const sendToUI = useCallback((data: UI.UsersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent | UI.UserOnlineEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(JSON.parse(JSON.stringify(data)))
   }, []);
 
@@ -128,9 +128,9 @@ function App() {
 
   useEffect(() => {
     if (phase === 'new') {
-      sendToUI({type: "settingsUpdate", settings});
+      sendToUI({type: "settingsUpdate", settings, seatCount});
     }
-  }, [phase, sendToUI, settings])
+  }, [phase, sendToUI, settings, seatCount])
 
   const saveCurrentState = useCallback(async (
     name: string,
@@ -387,6 +387,7 @@ function App() {
           break
         case 'updateSettings':
           setSettings(evt.settings);
+          setSeatCount(evt.seatCount);
           sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
           break
         case 'move':
@@ -432,8 +433,7 @@ function App() {
           break
         case 'ready':
           if (!initialState) {
-            sendToUI({type: "settingsUpdate", settings});
-            sendToUI({type: "openSeats", openSeats});
+            sendToUI({type: "settingsUpdate", settings, seatCount});
             sendToUI({type: "users", users});
           } else {
             await updateUI(getCurrentState(history));
@@ -467,11 +467,6 @@ function App() {
               case 'unseat':
                 const unseatOp = op
                 newPlayers = newPlayers.filter(p => p.id !== unseatOp.userID)
-                break
-              case 'openSeat':
-                const newOpenSeats = [...openSeats];
-                newOpenSeats[op.position - 1] = op.open;
-                setOpenSeats(newOpenSeats);
                 break
               case 'update':
                 const updateOp = op
@@ -523,7 +518,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, getCurrentState, processKey, autoSwitch, currentUserID, users, playerReadiness, openSeats]);
+  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, seatCount, getCurrentState, processKey, autoSwitch, currentUserID, users, playerReadiness]);
 
   useEffect(() => {
     const l = (e: globalThis.KeyboardEvent):any => {
@@ -546,10 +541,6 @@ function App() {
   useEffect(() => {
     sendToUI({type: "users", users});
   }, [users, sendToUI])
-
-  useEffect(() => {
-    sendToUI({type: "openSeats", openSeats});
-  }, [openSeats, sendToUI])
 
   useEffect(() => {
     sendToUI({ type: 'darkSetting', dark: darkMode !== false })

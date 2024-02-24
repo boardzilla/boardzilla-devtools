@@ -27,6 +27,7 @@ export type OpenSeatsEvent = {
 export type SettingsUpdateEvent = {
   type: "settingsUpdate"
   settings: Game.GameSettings
+  seatCount: number
 }
 
 export type GameUpdateEvent = {
@@ -58,6 +59,7 @@ export type UpdateSettingsMessage = {
   type: "updateSettings"
   id: string
   settings: Game.GameSettings
+  seatCount: number
 }
 
 // host only

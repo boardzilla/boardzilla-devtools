@@ -100,7 +100,6 @@ During "new", it will recv the following messages.
 ```ts
 window.addEventListener('message', (evt: MessageEvent<
   UsersEvent |
-  OpenSeatsEvent |
   SettingsUpdateEvent |
   GameUpdateEvent |
   GameFinishedEvent |
@@ -145,7 +144,6 @@ type User = {
 type PlayerSetupEvent = {
   type: "playerSetup";
   users: User[];
-  seats: "normal" | "closed" | "reserved"
 };
 
 type UserOnlineEvent = {
@@ -158,6 +156,7 @@ type UserOnlineEvent = {
 type SettingsUpdateEvent = {
   type: "settingsUpdate";
   settings: GameSettings;
+  seatCount: number;
 };
 
 type GameUpdateEvent = {
@@ -191,6 +190,7 @@ type UpdateSettingsMessage = {
   type: "updateSettings"
   id: string
   settings: GameSettings
+  seatCount: number
 }
 
 // host only
@@ -209,13 +209,6 @@ type UnseatOperation = {
   userID: string
 }
 
-// host only
-type SetSeatOperation = {
-  type: 'setSeat'
-  position: number
-  open: boolean
-}
-
 type UpdateOperation = {
   type: 'update'
   userID: string
@@ -232,7 +225,7 @@ type ReserveOperation = {
   settings?: any
 }
 
-type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation | OpenSeatOperation
+type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
 
 // host only
 type UpdatePlayersMessage = {
