@@ -28,13 +28,22 @@ const possibleUsers = [
   {id: "8", name: "Guadalupe"},
   {id: "9", name: "Zvezdelina"},
 ];
+const colors = [
+  '#d50000', '#00695c', '#304ffe', '#ff6f00', '#7c4dff',
+  '#ffa825', '#f2d330', '#43a047', '#004d40', '#795a4f',
+  '#00838f', '#408074', '#448aff', '#1a237e', '#ff4081',
+  '#bf360c', '#4a148c', '#aa00ff', '#455a64', '#600020'];
+
+const isReserved = (userID: string): boolean => !!userID.match(/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i)
 
 const avatarURL = (userID: string): string => `/_profile/${userID}.jpg`
 
-const playerDetailsForUser = (isHost: boolean, players: UI.UserPlayer[], userID: string, ready: boolean): {color: string, position: number, settings?: any, ready: boolean, sessionURL?: string} | undefined => {
+const playerDetailsForUser = (isHost: boolean, players: UI.UserPlayer[], userID: string, ready: boolean): {color: string, position: number, settings?: any, ready: boolean, sessionURL?: string, reserved: boolean} | undefined => {
   const player = players.find(p => p.id === userID)
   if (!player) return undefined
   return {
+    // hack based on use of uuid for reserved players
+    reserved: isReserved(userID),
     color: player.color,
     position: player.position,
     settings: player.settings,
@@ -131,6 +140,18 @@ function App() {
       sendToUI({type: "settingsUpdate", settings, seatCount});
     }
   }, [phase, sendToUI, settings, seatCount])
+
+  const setNumberAndSeat = useCallback((n: number) => {
+    setPlayers(possibleUsers.slice(0, n).map((u, i) => ({
+      id: u.id,
+      name: u.name,
+      avatar: avatarURL(u.id),
+      color: colors[i],
+      position: i+1,
+      host: i === 0,
+    })))
+    setNumberOfUsers(n)
+  }, [])
 
   const saveCurrentState = useCallback(async (
     name: string,
@@ -326,6 +347,7 @@ function App() {
         name: p.name,
         avatar: avatarURL(p.id),
         playerDetails: {
+          reserved: isReserved(p.id),
           color: p.color,
           position: p.position,
           settings: p.settings,
@@ -626,7 +648,7 @@ function App() {
       <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1}}>
         <div className="header">
           <span style={{marginRight: '0.5em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /></span> <span style={{marginRight: '3em'}}>Autoswitch players</span>
-          {phase === "new" && <span><input style={{width: '3em', marginRight: '0.5em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberOfUsers(parseInt(v.currentTarget.value))}/> Number of players</span>}
+          {phase === "new" && <span><input style={{width: '3em', marginRight: '0.5em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberAndSeat(parseInt(v.currentTarget.value))}/> Number of players</span>}
           <span style={{flexGrow: 1}}>
             {users.filter(u => phase === 'new' || u.playerDetails).map(u => (
               <button

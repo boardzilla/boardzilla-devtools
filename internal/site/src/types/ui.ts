@@ -5,6 +5,7 @@ export type User = {
   name: string
   avatar: string
   playerDetails?: {
+    reserved: boolean;
     color: string
     position: number
     ready: boolean
