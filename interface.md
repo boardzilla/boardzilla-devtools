@@ -106,7 +106,7 @@ window.addEventListener('message', (evt: MessageEvent<
   MessageProcessedEvent
   UserOnlineEvent
 >))
-window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
+window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | UpdateSelfPlayerMessage | ReadyMessage)
 ```
 
 Only the host is permitted to send `UpdatePlayerMessage`.
@@ -216,6 +216,7 @@ type UpdateOperation = {
   userID: string
   color?: string
   name?: string
+  ready?: boolean
   settings?: any
 }
 
@@ -234,12 +235,6 @@ type UpdatePlayersMessage = {
   type: "updatePlayers"
   id: string
   operations: PlayerOperation[]
-}
-
-// host only
-type StartMessage = {
-  type: "start"
-  id: string
 }
 
 type ReadyMessage = {

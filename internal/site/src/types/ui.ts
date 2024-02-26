@@ -89,6 +89,7 @@ type UpdateOperation = {
   userID: string
   color?: string
   name?: string
+  ready?: boolean
   settings?: any
 }
 
@@ -107,12 +108,6 @@ export type UpdatePlayersMessage = {
   type: "updatePlayers"
   id: string
   operations: PlayerOperation[]
-}
-
-// host only
-export type StartMessage = {
-  type: "start"
-  id: string
 }
 
 export type UpdateSelfPlayerMessage = {

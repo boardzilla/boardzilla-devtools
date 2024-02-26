@@ -36,7 +36,7 @@ const colors = [
 
 const isReserved = (userID: string): boolean => !!userID.match(/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i)
 
-const avatarURL = (userID: string): string => `/_profile/${userID}.jpg`
+const avatarURL = (userID: string): string => `/_profile/${isReserved(userID) ? '9' : userID}.jpg`
 
 const playerDetailsForUser = (isHost: boolean, players: UI.UserPlayer[], userID: string, ready: boolean): {color: string, position: number, settings?: any, ready: boolean, sessionURL?: string, reserved: boolean} | undefined => {
   const player = players.find(p => p.id === userID)
@@ -74,8 +74,6 @@ type MessageType = Game.InitialStateResultMessage |
   Game.ProcessMoveResultMessage |
   UI.UpdateSettingsMessage |
   UI.UpdatePlayersMessage |
-  UI.StartMessage |
-  UI.UpdateSelfPlayerMessage |
   UI.ReadyMessage |
   UI.MoveMessage |
   UI.KeyMessage |
@@ -91,7 +89,7 @@ function App() {
   const [playerReadiness, setPlayerReadiness] = useState<Map<string, boolean>>(new Map());
   const [buildError, setBuildError] = useState<BuildError | undefined>();
   const [settings, setSettings] = useState<Game.GameSettings>({});
-  const [seatCount, setSeatCount] = useState(defaultPlayers);
+  const [seatCount, setSeatCount] = useState(0);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyPin, setHistoryPin] = useState<number | undefined>(undefined);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -142,17 +140,28 @@ function App() {
   }, [phase, sendToUI, settings, seatCount])
 
   const setNumberAndSeat = useCallback((n: number) => {
-    if (seatCount < n) setSeatCount(n);
-    setPlayers(possibleUsers.slice(0, n).map((u, i) => ({
-      id: u.id,
-      name: u.name,
-      avatar: avatarURL(u.id),
-      color: colors[i],
-      position: i+1,
-      host: i === 0,
-    })))
-    setNumberOfUsers(n)
-  }, [seatCount])
+    setSeatCount(n)
+    setNumberOfUsers(Math.max(n, numberOfUsers))
+    if (n > players.length) {
+      setPlayers(
+        players.concat(
+          possibleUsers.slice(players.length, n).map((u, i) => ({
+            id: u.id,
+            name: u.name,
+            avatar: avatarURL(u.id),
+            color: colors[players.length + i],
+            position: players.length + i + 1,
+            host: players.length + i === 0,
+          }))
+        )
+      )
+      setPlayerReadiness(new Map([
+        ...playerReadiness,
+        ...possibleUsers.slice(numberOfUsers).map(p => [p.id, p.id !== '0'] as [string, boolean])
+      ]))
+      sendToUI({type: "settingsUpdate", settings, seatCount: n});
+    }
+  }, [numberOfUsers, playerReadiness, settings, sendToUI, players])
 
   useEffect(() => {
     if (numberOfUsers === 0) setNumberAndSeat(minPlayers);
@@ -224,6 +233,22 @@ function App() {
         break
     }
   }, [sendToUI, reprocessing, autoSwitch, players, currentPlayer, currentUserIDRequested, historyPin]);
+
+  const start = useCallback(async () => {
+    const initialUpdate = await sendInitialState({ players, settings });
+    const newInitialState = {
+      state: initialUpdate,
+      players,
+      settings,
+    };
+    setInitialState(newInitialState);
+    setPhase("started");
+    await updateUI(initialUpdate);
+  }, [players, settings, updateUI])
+
+  useEffect(() => {
+    if (players.length >= minPlayers && players.every(p => playerReadiness.get(p.id))) start();
+  }, [players, playerReadiness, start]);
 
   const resetGame = useCallback(() => {
     setPhase("new");
@@ -415,7 +440,7 @@ function App() {
         case 'updateSettings':
           if (!host) return;
           setSettings(evt.settings);
-          setSeatCount(evt.seatCount);
+          setNumberAndSeat(evt.seatCount);
           sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
           break
         case 'move':
@@ -442,23 +467,6 @@ function App() {
             sendToUI({type: "messageProcessed", id: evt.id, error: String(err)})
           }
           break
-        case 'start':
-          try {
-            const initialUpdate = await sendInitialState({ players, settings });
-            const newInitialState = {
-              state: initialUpdate,
-              players,
-              settings,
-            };
-            setInitialState(newInitialState);
-            setPhase("started");
-            sendToUI({type: "messageProcessed", id: evt.id, error: undefined});
-            await updateUI(initialUpdate);
-          } catch(err) {
-            console.error('error during start', err);
-            sendToUI({type: "messageProcessed", id: evt.id, error: String(err)})
-          }
-          break
         case 'ready':
           if (!initialState) {
             sendToUI({type: "settingsUpdate", settings, seatCount});
@@ -473,17 +481,18 @@ function App() {
           for (let op of evt.operations) {
             switch (op.type) {
               case 'reserve':
-                newPlayers.push({
+                const reservedID = crypto.randomUUID();
+                if (host) newPlayers.push({
                   color: op.color,
                   name: op.name,
-                  avatar: avatarURL("reserved"),
+                  avatar: avatarURL(reservedID),
                   host: false,
                   position: op.position,
-                  id: crypto.randomUUID(),
+                  id: reservedID,
                 })
                 break
               case 'seat':
-                newPlayers.push({
+                if (host || op.userID === currentUserID) newPlayers.push({
                   color: op.color,
                   name: op.name,
                   avatar: avatarURL(op.userID),
@@ -494,17 +503,23 @@ function App() {
                 break
               case 'unseat':
                 const unseatOp = op
-                newPlayers = newPlayers.filter(p => p.id !== unseatOp.userID)
+                if (host || op.userID === currentUserID) {
+                  newPlayers = newPlayers.filter(p => p.id !== unseatOp.userID)
+                  setPlayerReadiness(new Map([...playerReadiness, [unseatOp.userID, false]]));
+                }
                 break
               case 'update':
                 const updateOp = op
                 p = newPlayers.find(p => p.id === updateOp.userID)
-                if (!p) continue
+                if (!p || (!host && op.userID !== currentUserID)) continue
                 if (op.color) {
                   p.color = op.color
                 }
                 if (op.name) {
                   p.name = op.name
+                }
+                if (op.ready !== undefined) {
+                  setPlayerReadiness(new Map([...playerReadiness, [p.id, op.ready]]));
                 }
                 if (op.settings) {
                   p.settings = op.settings
@@ -530,7 +545,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, host, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, seatCount, getCurrentState, processKey, autoSwitch, currentUserID, users, playerReadiness]);
+  }, [currentPlayer, host, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, seatCount, getCurrentState, processKey, autoSwitch, currentUserID, users, playerReadiness, setNumberAndSeat]);
 
   useEffect(() => {
     const l = (e: globalThis.KeyboardEvent):any => {
@@ -638,7 +653,6 @@ function App() {
       <div style={{display: 'flex', flexDirection: 'column', flexGrow: 1}}>
         <div className="header">
           <span style={{marginRight: '0.5em'}}><Switch onChange={(v) => setAutoSwitch(v)} checked={autoSwitch} uncheckedIcon={false} checkedIcon={false} /></span> <span style={{marginRight: '3em'}}>Autoswitch players</span>
-          {phase === "new" && <span><input style={{width: '3em', marginRight: '0.5em'}} type="number" value={numberOfUsers} min={minPlayers} max={maxPlayers} onChange={v => setNumberAndSeat(parseInt(v.currentTarget.value))}/> Number of players</span>}
           <span style={{flexGrow: 1}}>
             {users.filter(u => phase === 'new' || u.playerDetails).map(u => (
               <button
@@ -647,8 +661,8 @@ function App() {
                 key={u.id}
                 style={{
                   backgroundColor: u.playerDetails?.color || '#666',
-                  opacity: phase === 'started' && (currentPlayer.id !== u.id) ? 0.4 : 1,
-                  border: phase === 'started' && (currentPlayer.id !== u.id) ? '2px transparent solid' : '2px black solid'}}>
+                  opacity: (currentUserID !== u.id) ? 0.4 : 1,
+                  border: (currentUserID !== u.id) ? '2px transparent solid' : '2px black solid'}}>
                 {u.name}
               </button>
             ))}
