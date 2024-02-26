@@ -194,7 +194,7 @@ type UpdateSettingsMessage = {
   seatCount: number
 }
 
-// host only
+// only host can specify any user id, rejected if non-host supplies other user id
 type SeatOperation = {
   type: 'seat'
   position: number
@@ -210,6 +210,7 @@ type UnseatOperation = {
   userID: string
 }
 
+// only host can specify any user id, rejected if non-host supplies other user id
 type UpdateOperation = {
   type: 'update'
   userID: string
@@ -218,6 +219,7 @@ type UpdateOperation = {
   settings?: any
 }
 
+// host only
 type ReserveOperation = {
   type: 'reserve'
   position: number
@@ -228,7 +230,6 @@ type ReserveOperation = {
 
 type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
 
-// host only
 type UpdatePlayersMessage = {
   type: "updatePlayers"
   id: string
@@ -239,15 +240,6 @@ type UpdatePlayersMessage = {
 type StartMessage = {
   type: "start"
   id: string
-}
-
-type UpdateSelfPlayerMessage = {
-  type: "updateSelfPlayer"
-  id: string
-  name?: string
-  color?: string
-  position?: number
-  ready?: boolean
 }
 
 type ReadyMessage = {
