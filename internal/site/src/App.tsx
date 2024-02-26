@@ -83,7 +83,7 @@ type MessageType = Game.InitialStateResultMessage |
 
 function App() {
   const [initialState, setInitialState] = useState<InitialStateHistoryItem | undefined>();
-  const [numberOfUsers, setNumberOfUsers] = useState(minPlayers);
+  const [numberOfUsers, setNumberOfUsers] = useState(0);
   const [phase, setPhase] = useState<"new" | "started">("new");
   const [currentUserID, setCurrentUserID] = useState(possibleUsers[0].id);
   const [currentUserIDRequested, setCurrentUserIDRequested] = useState<string | undefined>(undefined);
@@ -142,6 +142,7 @@ function App() {
   }, [phase, sendToUI, settings, seatCount])
 
   const setNumberAndSeat = useCallback((n: number) => {
+    if (seatCount < n) setSeatCount(n);
     setPlayers(possibleUsers.slice(0, n).map((u, i) => ({
       id: u.id,
       name: u.name,
@@ -151,7 +152,11 @@ function App() {
       host: i === 0,
     })))
     setNumberOfUsers(n)
-  }, [])
+  }, [seatCount])
+
+  useEffect(() => {
+    if (numberOfUsers === 0) setNumberAndSeat(minPlayers);
+  }, [numberOfUsers, setNumberAndSeat]);
 
   const saveCurrentState = useCallback(async (
     name: string,
@@ -408,6 +413,7 @@ function App() {
           }
           break
         case 'updateSettings':
+          if (!host) return;
           setSettings(evt.settings);
           setSeatCount(evt.seatCount);
           sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
@@ -509,22 +515,6 @@ function App() {
           }
           sendToUI({type: "messageProcessed", id: evt.id, error: undefined})
           break
-        case 'updateSelfPlayer':
-          const {name, color, position, ready} = evt
-          setPlayers(players.map(p => {
-            if (p.id !== currentUserID) return p
-            if (ready !== undefined) {
-              setPlayerReadiness(new Map([...playerReadiness, [p.id, ready]]))
-            }
-
-            return {
-              ...p,
-              name: name || p.name,
-              color: color || p.color,
-              position: position === undefined ? p.position : position,
-            }
-          }))
-        break
         // special event for player switching
         case 'key':
           processKey(evt.code)
@@ -540,7 +530,7 @@ function App() {
 
     window.addEventListener('message', listener);
     return () => window.removeEventListener('message', listener);
-  }, [currentPlayer, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, seatCount, getCurrentState, processKey, autoSwitch, currentUserID, users, playerReadiness]);
+  }, [currentPlayer, host, history, initialState, numberOfUsers, phase, players, sendToUI, updateUI, settings, seatCount, getCurrentState, processKey, autoSwitch, currentUserID, users, playerReadiness]);
 
   useEffect(() => {
     const l = (e: globalThis.KeyboardEvent):any => {
