@@ -246,8 +246,8 @@ function App() {
   }, [players, settings, updateUI])
 
   useEffect(() => {
-    if (players.length >= minPlayers && players.length === seatCount && players.every(p => playerReadiness.get(p.id))) start();
-  }, [players, playerReadiness, seatCount, start]);
+    if (phase === "new" && players.length >= minPlayers && players.length === seatCount && players.every(p => playerReadiness.get(p.id))) start();
+  }, [players, playerReadiness, seatCount, start, phase]);
 
   const resetGame = useCallback(() => {
     setPhase("new");
