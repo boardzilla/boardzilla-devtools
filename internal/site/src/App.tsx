@@ -38,20 +38,6 @@ const isReserved = (userID: string): boolean => !!userID.match(/^[0-9A-F]{8}-[0-
 
 const avatarURL = (userID: string): string => `/_profile/${isReserved(userID) ? '9' : userID}.jpg`
 
-const playerDetailsForUser = (isHost: boolean, players: UI.UserPlayer[], userID: string, ready: boolean): {color: string, position: number, settings?: any, ready: boolean, sessionURL?: string, reserved: boolean} | undefined => {
-  const player = players.find(p => p.id === userID)
-  if (!player) return undefined
-  return {
-    // hack based on use of uuid for reserved players
-    reserved: isReserved(userID),
-    color: player.color,
-    position: player.position,
-    settings: player.settings,
-    ready,
-    sessionURL: isHost ? "https://someone/somewhere" : undefined,
-  }
-}
-
 type BuildError = {
   type: "ui" | "game"
   out: string
@@ -128,6 +114,22 @@ function App() {
   const sendToUI = useCallback((data: UI.UsersEvent | UI.GameUpdateEvent | UI.GameFinishedEvent | UI.SettingsUpdateEvent | UI.MessageProcessedEvent | UI.DarkSettingEvent | UI.UserOnlineEvent) => {
     (document.getElementById("ui") as HTMLIFrameElement)?.contentWindow!.postMessage(JSON.parse(JSON.stringify(data)))
   }, []);
+
+  const userWithPlayerDetails = useCallback((user: {id: string, name: string}, player?: Game.Player) => {
+    return ({
+      id: user.id,
+      name: player?.name ?? user.name,
+      avatar: avatarURL(user.id),
+      playerDetails: player ? {
+        reserved: isReserved(user.id),
+        color: player.color,
+        position: player.position,
+        settings: player.settings,
+        ready: playerReadiness.get(user.id) ?? true,
+        sessionURL: host ? document.location.href : undefined,
+      } : undefined
+    });
+  }, [host, playerReadiness])
 
   useEffect(() => {
     loadSaveStates()
@@ -247,8 +249,8 @@ function App() {
   }, [players, settings, updateUI])
 
   useEffect(() => {
-    if (players.length >= minPlayers && players.every(p => playerReadiness.get(p.id))) start();
-  }, [players, playerReadiness, start]);
+    if (players.length >= minPlayers && players.length === seatCount && players.every(p => isReserved(p.id) || playerReadiness.get(p.id))) start();
+  }, [players, playerReadiness, seatCount, start]);
 
   const resetGame = useCallback(() => {
     setPhase("new");
@@ -359,35 +361,16 @@ function App() {
   }, [])
 
   const users = useMemo((): UI.User[] => {
-    const users = possibleUsers.slice(0, numberOfUsers).map(u => {
-      const player = players.find(p => u.id === p.id);
-      return ({
-        id: u.id,
-        name: player?.name ?? u.name,
-        avatar: avatarURL(u.id),
-        playerDetails: playerDetailsForUser(host, players, u.id, playerReadiness.get(u.id) ?? true),
-      })
-    })
+    const users = possibleUsers.slice(0, numberOfUsers).map(u => userWithPlayerDetails(u, players.find(p => u.id === p.id)))
 
     players.forEach(p => {
       if (users.find(u => u.id === p.id)) return
 
-      users.push({
-        id: p.id,
-        name: p.name,
-        avatar: avatarURL(p.id),
-        playerDetails: {
-          reserved: isReserved(p.id),
-          color: p.color,
-          position: p.position,
-          settings: p.settings,
-          ready: true,
-        }
-      })
+      users.push(userWithPlayerDetails(p, p))
     })
 
     return users
-  }, [host, numberOfUsers, playerReadiness, players])
+  }, [userWithPlayerDetails, numberOfUsers, players])
 
   const processKey = useCallback((code: string): boolean => {
     const keys = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'Digit0']
@@ -505,7 +488,7 @@ function App() {
                 const unseatOp = op
                 if (host || op.userID === currentUserID) {
                   newPlayers = newPlayers.filter(p => p.id !== unseatOp.userID)
-                  setPlayerReadiness(new Map([...playerReadiness, [unseatOp.userID, false]]));
+                  // setPlayerReadiness(new Map([...playerReadiness, [unseatOp.userID, false]])); // normal behaviour but undesirable in dev
                 }
                 break
               case 'update':
