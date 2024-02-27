@@ -106,7 +106,7 @@ window.addEventListener('message', (evt: MessageEvent<
   MessageProcessedEvent
   UserOnlineEvent
 >))
-window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | UpdateSelfPlayerMessage | ReadyMessage)
+window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | ReadyMessage)
 ```
 
 Only the host is permitted to send `UpdatePlayerMessage`.
