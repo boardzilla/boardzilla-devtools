@@ -133,12 +133,11 @@ type User = {
   name: string;
   avatar: string;
   playerDetails?: {
-    reserved: boolean;
     color: string;
     position: number;
     ready: boolean;
     settings?: any;
-    sessionURL?: string; // only exposed to host for reserved players
+    sessionURL?: string; // only exposed to host
   };
 };
 
@@ -220,16 +219,7 @@ type UpdateOperation = {
   settings?: any
 }
 
-// host only
-type ReserveOperation = {
-  type: 'reserve'
-  position: number
-  color: string
-  name: string
-  settings?: any
-}
-
-type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation
+type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation
 
 type UpdatePlayersMessage = {
   type: "updatePlayers"

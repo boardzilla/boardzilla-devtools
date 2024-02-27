@@ -34,9 +34,7 @@ const colors = [
   '#00838f', '#408074', '#448aff', '#1a237e', '#ff4081',
   '#bf360c', '#4a148c', '#aa00ff', '#455a64', '#600020'];
 
-const isReserved = (userID: string): boolean => !!userID.match(/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i)
-
-const avatarURL = (userID: string): string => `/_profile/${isReserved(userID) ? '9' : userID}.jpg`
+const avatarURL = (userID: string): string => `/_profile/${userID}.jpg`
 
 type BuildError = {
   type: "ui" | "game"
@@ -121,7 +119,6 @@ function App() {
       name: player?.name ?? user.name,
       avatar: avatarURL(user.id),
       playerDetails: player ? {
-        reserved: isReserved(user.id),
         color: player.color,
         position: player.position,
         settings: player.settings,
@@ -249,7 +246,7 @@ function App() {
   }, [players, settings, updateUI])
 
   useEffect(() => {
-    if (players.length >= minPlayers && players.length === seatCount && players.every(p => isReserved(p.id) || playerReadiness.get(p.id))) start();
+    if (players.length >= minPlayers && players.length === seatCount && players.every(p => playerReadiness.get(p.id))) start();
   }, [players, playerReadiness, seatCount, start]);
 
   const resetGame = useCallback(() => {
@@ -463,17 +460,6 @@ function App() {
           let p: Game.Player | undefined
           for (let op of evt.operations) {
             switch (op.type) {
-              case 'reserve':
-                const reservedID = crypto.randomUUID();
-                if (host) newPlayers.push({
-                  color: op.color,
-                  name: op.name,
-                  avatar: avatarURL(reservedID),
-                  host: false,
-                  position: op.position,
-                  id: reservedID,
-                })
-                break
               case 'seat':
                 if (host || op.userID === currentUserID) newPlayers.push({
                   color: op.color,
@@ -488,7 +474,6 @@ function App() {
                 const unseatOp = op
                 if (host || op.userID === currentUserID) {
                   newPlayers = newPlayers.filter(p => p.id !== unseatOp.userID)
-                  // setPlayerReadiness(new Map([...playerReadiness, [unseatOp.userID, false]])); // normal behaviour but undesirable in dev
                 }
                 break
               case 'update':
