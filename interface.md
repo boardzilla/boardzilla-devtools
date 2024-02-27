@@ -106,7 +106,7 @@ window.addEventListener('message', (evt: MessageEvent<
   MessageProcessedEvent
   UserOnlineEvent
 >))
-window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | StartMessage | UpdateSelfPlayerMessage | ReadyMessage)
+window.top.postMessage(m: UpdateSettingsMessage | UpdatePlayersMessage | ReadyMessage)
 ```
 
 Only the host is permitted to send `UpdatePlayerMessage`.
@@ -137,12 +137,12 @@ type User = {
     position: number;
     ready: boolean;
     settings?: any;
-    sessionURL?: string; // only exposed to host for reserved players
+    sessionURL?: string; // only exposed to host
   };
 };
 
-type UsersEvent = {
-  type: "users";
+type PlayerSetupEvent = {
+  type: "playerSetup";
   users: User[];
 };
 
@@ -156,6 +156,7 @@ type UserOnlineEvent = {
 type SettingsUpdateEvent = {
   type: "settingsUpdate";
   settings: GameSettings;
+  seatCount: number;
 };
 
 type GameUpdateEvent = {
@@ -189,9 +190,10 @@ type UpdateSettingsMessage = {
   type: "updateSettings"
   id: string
   settings: GameSettings
+  seatCount: number
 }
 
-// host only
+// only host can specify any user id, rejected if non-host supplies other user id
 type SeatOperation = {
   type: 'seat'
   position: number
@@ -207,51 +209,22 @@ type UnseatOperation = {
   userID: string
 }
 
-// host only
-type OpenSeatOperation = {
-  type: 'openSeat'
-  position: number
-  open: boolean
-}
-
+// only host can specify any user id, rejected if non-host supplies other user id
 type UpdateOperation = {
   type: 'update'
   userID: string
   color?: string
   name?: string
+  ready?: boolean
   settings?: any
 }
 
-type ReserveOperation = {
-  type: 'reserve'
-  position: number
-  color: string
-  name: string
-  settings?: any
-}
+type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation
 
-type PlayerOperation = SeatOperation | UnseatOperation | UpdateOperation | ReserveOperation | OpenSeatOperation
-
-// host only
 type UpdatePlayersMessage = {
   type: "updatePlayers"
   id: string
   operations: PlayerOperation[]
-}
-
-// host only
-type StartMessage = {
-  type: "start"
-  id: string
-}
-
-type UpdateSelfPlayerMessage = {
-  type: "updateSelfPlayer"
-  id: string
-  name?: string
-  color?: string
-  position?: number
-  ready?: boolean
 }
 
 type ReadyMessage = {

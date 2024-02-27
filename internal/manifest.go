@@ -22,6 +22,7 @@ type GameConfig struct {
 type ManifestV1 struct {
 	MinimumPlayers int        `json:"minPlayers"`
 	MaximumPlayers int        `json:"maxPlayers"`
+	DefaultPlayers int        `json:"defaultPlayers,omitempty"`
 	UI             UIConfig   `json:"ui"`
 	Game           GameConfig `json:"game"`
 }

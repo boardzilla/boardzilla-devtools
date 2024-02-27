@@ -326,7 +326,8 @@ func (b *bz) run() error {
 		}
 
 		w.AddFilterHook(func(info os.FileInfo, fullPath string) error {
-			if path.Ext(fullPath) == ".bak" {
+			name := info.Name()
+			if info.IsDir() || path.Ext(name) == ".bak" || strings.HasPrefix(name, ".#") || strings.HasPrefix(name, "#") || strings.HasSuffix(name, "~") {
 				return watcher.ErrSkip
 			}
 			return nil
@@ -652,7 +653,7 @@ func (b *bz) submit() error {
 		}
 	}()
 
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d", b.serverURL, url.PathEscape(name), version, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers), pipeReader)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d&default=%d", b.serverURL, url.PathEscape(name), version, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers, manifest.DefaultPlayers), pipeReader)
 	if err != nil {
 		return err
 	}

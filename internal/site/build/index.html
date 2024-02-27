@@ -32,7 +32,11 @@
     -->
     <title>Boardzilla devtools</title>
   <script defer src="/static/js/bundle.js"></script></head>
-  <body minPlayers="{{.MinimumPlayers}}" maxPlayers="{{.MaximumPlayers}}">
+  <body
+    minPlayers="{{.MinimumPlayers}}"
+    maxPlayers="{{.MaximumPlayers}}"
+    defaultPlayers="{{.DefaultPlayers}}"
+  >
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--
