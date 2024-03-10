@@ -164,11 +164,21 @@ func (b *Builder) BuildProd() error {
 	if err != nil {
 		return err
 	}
-	if _, _, err := b.buildUI(manifest, true); err != nil {
-		return err
-	}
-	if _, _, err := b.buildGame(manifest, true); err != nil {
-		return err
+	errs := make(chan error, 2)
+	go func() {
+		_, _, err := b.buildUI(manifest, true)
+		errs <- err
+	}()
+
+	go func() {
+		_, _, err := b.buildGame(manifest, true)
+		errs <- err
+	}()
+
+	for i := 0; i != 2; i++ {
+		if err := <-errs; err != nil {
+			return err
+		}
 	}
 	return nil
 }

@@ -402,7 +402,6 @@ func (b *bz) run() error {
 					continue
 				}
 				log.Printf("Game reloaded due to change\n")
-
 			}
 			server.Reload(i)
 		}
