@@ -10,6 +10,8 @@ import (
 	"github.com/muesli/termenv"
 )
 
+const tabWidthDefault = 4
+
 // Property for a key.
 type propKey int
 
@@ -68,8 +70,11 @@ const (
 	inlineKey
 	maxWidthKey
 	maxHeightKey
+	tabWidthKey
 	underlineSpacesKey
 	strikethroughSpacesKey
+
+	transformKey
 )
 
 // A set of properties.
@@ -148,7 +153,7 @@ func (s Style) Inherit(i Style) Style {
 	s.init()
 
 	for k, v := range i.rules {
-		switch k {
+		switch k { //nolint:exhaustive
 		case marginTopKey, marginRightKey, marginBottomKey, marginLeftKey:
 			// Margins are not inherited
 			continue
@@ -182,9 +187,10 @@ func (s Style) Render(strs ...string) string {
 	var (
 		str = joinString(strs...)
 
-		te           = s.r.ColorProfile().String()
-		teSpace      = s.r.ColorProfile().String()
-		teWhitespace = s.r.ColorProfile().String()
+		p            = s.r.ColorProfile()
+		te           = p.String()
+		teSpace      = p.String()
+		teWhitespace = p.String()
 
 		bold          = s.getAsBool(boldKey, false)
 		italic        = s.getAsBool(italicKey, false)
@@ -221,10 +227,12 @@ func (s Style) Render(strs ...string) string {
 
 		// Do we need to style spaces separately?
 		useSpaceStyler = underlineSpaces || strikethroughSpaces
+
+		transform = s.getAsTransform(transformKey)
 	)
 
 	if len(s.rules) == 0 {
-		return str
+		return s.maybeConvertTabs(str)
 	}
 
 	// Enable support for ANSI on the legacy Windows cmd.exe console. This is a
@@ -286,6 +294,9 @@ func (s Style) Render(strs ...string) string {
 	if strikethroughSpaces {
 		teSpace = teSpace.CrossOut()
 	}
+
+	// Potentially convert tabs to spaces
+	str = s.maybeConvertTabs(str)
 
 	// Strip newlines in single line mode
 	if inline {
@@ -394,7 +405,26 @@ func (s Style) Render(strs ...string) string {
 		str = strings.Join(lines[:min(maxHeight, len(lines))], "\n")
 	}
 
+	if transform != nil {
+		return transform(str)
+	}
+
 	return str
+}
+
+func (s Style) maybeConvertTabs(str string) string {
+	tw := tabWidthDefault
+	if s.isSet(tabWidthKey) {
+		tw = s.getAsInt(tabWidthKey)
+	}
+	switch tw {
+	case -1:
+		return str
+	case 0:
+		return strings.ReplaceAll(str, "\t", "")
+	default:
+		return strings.ReplaceAll(str, "\t", strings.Repeat(" ", tw))
+	}
 }
 
 func (s Style) applyMargins(str string, inline bool) string {
@@ -434,36 +464,23 @@ func (s Style) applyMargins(str string, inline bool) string {
 
 // Apply left padding.
 func padLeft(str string, n int, style *termenv.Style) string {
-	if n == 0 {
-		return str
-	}
-
-	sp := strings.Repeat(" ", n)
-	if style != nil {
-		sp = style.Styled(sp)
-	}
-
-	b := strings.Builder{}
-	l := strings.Split(str, "\n")
-
-	for i := range l {
-		b.WriteString(sp)
-		b.WriteString(l[i])
-		if i != len(l)-1 {
-			b.WriteRune('\n')
-		}
-	}
-
-	return b.String()
+	return pad(str, -n, style)
 }
 
 // Apply right padding.
 func padRight(str string, n int, style *termenv.Style) string {
-	if n == 0 || str == "" {
+	return pad(str, n, style)
+}
+
+// pad adds padding to either the left or right side of a string.
+// Positive values add to the right side while negative values
+// add to the left side.
+func pad(str string, n int, style *termenv.Style) string {
+	if n == 0 {
 		return str
 	}
 
-	sp := strings.Repeat(" ", n)
+	sp := strings.Repeat(" ", abs(n))
 	if style != nil {
 		sp = style.Styled(sp)
 	}
@@ -472,8 +489,17 @@ func padRight(str string, n int, style *termenv.Style) string {
 	l := strings.Split(str, "\n")
 
 	for i := range l {
-		b.WriteString(l[i])
-		b.WriteString(sp)
+		switch {
+		// pad right
+		case n > 0:
+			b.WriteString(l[i])
+			b.WriteString(sp)
+		// pad left
+		default:
+			b.WriteString(sp)
+			b.WriteString(l[i])
+		}
+
 		if i != len(l)-1 {
 			b.WriteRune('\n')
 		}
@@ -494,4 +520,12 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func abs(a int) int {
+	if a < 0 {
+		return -a
+	}
+
+	return a
 }

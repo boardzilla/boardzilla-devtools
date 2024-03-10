@@ -30,7 +30,7 @@ func (s Style) UnsetReverse() Style {
 	return s
 }
 
-// UnsetBlink removes the bold style rule, if set.
+// UnsetBlink removes the blink style rule, if set.
 func (s Style) UnsetBlink() Style {
 	delete(s.rules, blinkKey)
 	return s
@@ -112,7 +112,7 @@ func (s Style) UnsetPaddingTop() Style {
 	return s
 }
 
-// UnsetPaddingBottom removes the bottom style rule, if set.
+// UnsetPaddingBottom removes the bottom padding style rule, if set.
 func (s Style) UnsetPaddingBottom() Style {
 	delete(s.rules, paddingBottomKey)
 	return s
@@ -287,6 +287,12 @@ func (s Style) UnsetMaxHeight() Style {
 	return s
 }
 
+// UnsetTabWidth removes the tab width style rule, if set.
+func (s Style) UnsetTabWidth() Style {
+	delete(s.rules, tabWidthKey)
+	return s
+}
+
 // UnsetUnderlineSpaces removes the value set by UnderlineSpaces.
 func (s Style) UnsetUnderlineSpaces() Style {
 	delete(s.rules, underlineSpacesKey)
@@ -296,6 +302,12 @@ func (s Style) UnsetUnderlineSpaces() Style {
 // UnsetStrikethroughSpaces removes the value set by StrikethroughSpaces.
 func (s Style) UnsetStrikethroughSpaces() Style {
 	delete(s.rules, strikethroughSpacesKey)
+	return s
+}
+
+// UnsetTransform removes the value set by Transform.
+func (s Style) UnsetTransform() Style {
+	delete(s.rules, transformKey)
 	return s
 }
 

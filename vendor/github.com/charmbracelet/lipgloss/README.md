@@ -220,7 +220,7 @@ pattern to the margin and padding shorthand functions.
 lipgloss.NewStyle().
     Border(lipgloss.ThickBorder(), true, false)
 
-// Add a thick border to the right and bottom sides. Rules are set clockwise
+// Add a double border to the top and left sides. Rules are set clockwise
 // from top.
 lipgloss.NewStyle().
     Border(lipgloss.DoubleBorder(), true, false, false, true)
@@ -292,6 +292,20 @@ someStyle.Inline(true).MaxWidth(5).Render("yadda yadda")
 
 // Limit rendering to a 5x5 cell block
 someStyle.MaxWidth(5).MaxHeight(5).Render("yadda yadda")
+```
+
+## Tabs
+
+The tab character (`\t`) is rendered differently in different terminals (often
+as 8 spaces, sometimes 4). Because of this inconsistency, Lip Gloss converts
+tabs to 4 spaces at render time. This behavior can be changed on a per-style
+basis, however:
+
+```go
+style := lipgloss.NewStyle() // tabs will render as 4 spaces, the default
+style = style.TabWidth(2)    // render tabs as 2 spaces
+style = style.TabWidth(0)    // remove tabs entirely
+style = style.TabWidth(lipgloss.NoTabConversion) // leave tabs intact
 ```
 
 ## Rendering
@@ -377,7 +391,6 @@ height := lipgloss.Height(block)
 w, h := lipgloss.Size(block)
 ```
 
-
 ### Placing Text in Whitespace
 
 Sometimes you’ll simply want to place a block of text in whitespace.
@@ -397,9 +410,100 @@ block := lipgloss.Place(30, 80, lipgloss.Right, lipgloss.Bottom, fancyStyledPara
 
 You can also style the whitespace. For details, see [the docs][docs].
 
+### Rendering Tables
+
+Lip Gloss ships with a table rendering sub-package.
+
+```go
+import "github.com/charmbracelet/lipgloss/table"
+```
+
+Define some rows of data.
+
+```go
+rows := [][]string{
+    {"Chinese", "您好", "你好"},
+    {"Japanese", "こんにちは", "やあ"},
+    {"Arabic", "أهلين", "أهلا"},
+    {"Russian", "Здравствуйте", "Привет"},
+    {"Spanish", "Hola", "¿Qué tal?"},
+}
+```
+
+Use the table package to style and render the table.
+
+```go
+t := table.New().
+    Border(lipgloss.NormalBorder()).
+    BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("99"))).
+    StyleFunc(func(row, col int) lipgloss.Style {
+        switch {
+        case row == 0:
+            return HeaderStyle
+        case row%2 == 0:
+            return EvenRowStyle
+        default:
+            return OddRowStyle
+        }
+    }).
+    Headers("LANGUAGE", "FORMAL", "INFORMAL").
+    Rows(rows...)
+
+// You can also add tables row-by-row
+t.Row("English", "You look absolutely fabulous.", "How's it going?")
+```
+
+Print the table.
+
+```go
+fmt.Println(t)
+```
+
+![Table Example](https://github.com/charmbracelet/lipgloss/assets/42545625/6e4b70c4-f494-45da-a467-bdd27df30d5d)
+
+For more on tables see [the docs](https://pkg.go.dev/github.com/charmbracelet/lipgloss?tab=doc) and [examples](https://github.com/charmbracelet/lipgloss/tree/master/examples/table).
 
 ***
 
+## FAQ
+
+<details>
+<summary>
+Why are things misaligning? Why are borders at the wrong widths?
+</summary>
+<p>This is most likely due to your locale and encoding, particularly with
+regard to Chinese, Japanese, and Korean (for example, <code>zh_CN.UTF-8</code>
+or <code>ja_JP.UTF-8</code>). The most direct way to fix this is to set
+<code>RUNEWIDTH_EASTASIAN=0</code> in your environment.</p>
+
+<p>For details see <a href="https://github.com/charmbracelet/lipgloss/issues/40">https://github.com/charmbracelet/lipgloss/issues/40.</a></p>
+</details>
+
+<details>
+<summary>
+Why isn't Lip Gloss displaying colors?
+</summary>
+<p>Lip Gloss automatically degrades colors to the best available option in the
+given terminal, and if output's not a TTY it will remove color output entirely.
+This is common when running tests, CI, or when piping output elsewhere.</p>
+
+<p>If necessary, you can force a color profile in your tests with
+<a href="https://pkg.go.dev/github.com/charmbracelet/lipgloss#SetColorProfile"><code>SetColorProfile</code></a>.</p>
+
+```go
+import (
+    "github.com/charmbracelet/lipgloss"
+    "github.com/muesli/termenv"
+)
+
+lipgloss.SetColorProfile(termenv.TrueColor)
+```
+
+*Note:* this option limits the flexibility of your application and can cause
+ANSI escape codes to be output in cases where that might not be desired. Take
+careful note of your use case and environment before choosing to force a color
+profile.
+</details>
 
 ## What about [Bubble Tea][tea]?
 
