@@ -285,13 +285,13 @@ func (b *bz) run() error {
 		log.Fatal(err)
 	}
 
-	rebuilt := make(chan int, 10)
-
+	rebuildUI := make(chan int, 10)
+	rebuildGame := make(chan int, 10)
 	uiNotifier := &notifier{out: func() {
-		rebuilt <- devtools.UI
+		rebuildUI <- devtools.UI
 	}, notified: false}
 	gameNotifier := &notifier{out: func() {
-		rebuilt <- devtools.Game
+		rebuildGame <- devtools.Game
 	}, notified: false}
 
 	go func() {
@@ -301,6 +301,7 @@ func (b *bz) run() error {
 
 		w := watcher.New()
 		w.SetMaxEvents(1)
+		w.FilterOps(watcher.Rename, watcher.Move, watcher.Create, watcher.Write)
 
 		roots, err := devBuilder.WatchedFiles()
 		if err != nil {
@@ -312,8 +313,6 @@ func (b *bz) run() error {
 			if err != nil {
 				log.Fatalf("error stating root: %#v", err)
 			}
-			fmt.Printf("root %s\n", root)
-			fmt.Printf("info %#v\n", info)
 			if info.IsDir() {
 				if err := w.AddRecursive(root); err != nil {
 					log.Fatalf("error watching dir %s: %#v", root, err)
@@ -353,6 +352,7 @@ func (b *bz) run() error {
 						log.Fatal(err)
 					}
 					if !strings.HasPrefix(r, "..") {
+						color.Printf("Reloading UI due to changes in <bold>%s</>: <bold>%s</>\n", e.Path, e.Op)
 						uiNotifier.notify()
 						break
 					}
@@ -368,6 +368,7 @@ func (b *bz) run() error {
 						log.Fatal(err)
 					}
 					if !strings.HasPrefix(r, "..") {
+						color.Printf("Reloading Game due to changes in <bold>%s</>: <bold>%s</>\n", e.Path, e.Op)
 						gameNotifier.notify()
 						break
 					}
@@ -386,26 +387,29 @@ func (b *bz) run() error {
 	}
 	color.Printf("Running dev builder on port <bold>%d</> at game root <bold>%s</>\n", *port, gameRoot)
 	go func() {
-		for i := range rebuilt {
-			switch i {
-			case devtools.UI:
-				if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
-					log.Println("error during rebuild:", err)
-					server.BuildError(devtools.UI, string(outbuf), string(errbuf))
-					continue
-				}
-				log.Printf("UI reloaded due to change\n")
-			case devtools.Game:
-				if outbuf, errbuf, err := devBuilder.BuildGame(); err != nil {
-					log.Println("error during rebuild:", err)
-					server.BuildError(devtools.Game, string(outbuf), string(errbuf))
-					continue
-				}
-				log.Printf("Game reloaded due to change\n")
+		for i := range rebuildUI {
+			if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
+				log.Println("error during rebuild:", err)
+				server.BuildError(devtools.UI, string(outbuf), string(errbuf))
+				continue
 			}
+			log.Printf("UI reloaded due to change\n")
 			server.Reload(i)
 		}
 	}()
+
+	go func() {
+		for i := range rebuildGame {
+			if outbuf, errbuf, err := devBuilder.BuildGame(); err != nil {
+				log.Println("error during rebuild:", err)
+				server.BuildError(devtools.Game, string(outbuf), string(errbuf))
+				continue
+			}
+			log.Printf("Game reloaded due to change\n")
+			server.Reload(i)
+		}
+	}()
+
 	// Block main goroutine forever.
 	color.Printf("🦖 Ready on <bold>:%d</>\n", *port)
 	if err := server.Serve(); err != nil {
