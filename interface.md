@@ -31,7 +31,7 @@ Must export an object `game` with two functions, `initialState` and `processMove
 ```ts
 initialState(setup: SetupState): GameUpdate
 processMove(previousState: GameStartedState, move: Move): GameUpdate
-reprocessHistory(setup: SetupState, moves: Move[]): {updates: GameUpdate[], movesCompleted: number}
+reprocessHistory(setup: SetupState, moves: Move[]): ReprocessHistoryResult
 
 type Player = {
   id: string
@@ -91,6 +91,14 @@ type Move = {
   position: number
   data: any
 }
+
+type ReprocessHistoryResult = {
+  initialState: GameUpdate
+  updates: GameUpdate[]
+  movesCompleted: number
+  error?: string
+}
+
 ```
 
 ### UI
