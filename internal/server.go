@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"rogchap.com/v8go"
 )
 
 var liveDev = os.Getenv("LIVE_DEV") == "1"
@@ -27,6 +28,59 @@ var liveDev = os.Getenv("LIVE_DEV") == "1"
 //go:embed *.jpg
 //go:embed site/build/*
 var site embed.FS
+
+type Move struct {
+	Position int             `json:"position"`
+	Data     json.RawMessage `json:"data"`
+}
+
+type ReprocessRequest struct {
+	Setup *SetupState `json:"setup"`
+	Moves []*Move     `json:"moves"`
+}
+
+type ReprocessResponse struct {
+	InitialState json.RawMessage   `json:"initialState"`
+	Updates      []json.RawMessage `json:"updates"`
+	Error        string            `json:"error,omitempty"`
+}
+
+type HistoryItem struct {
+	Seq      int             `json:"seq"`
+	State    json.RawMessage `json:"state"`
+	Data     json.RawMessage `json:"data"`
+	Position int             `json:"position"`
+}
+
+type Player struct {
+	ID       string           `json:"id"`
+	Color    string           `json:"color"`
+	Name     string           `json:"name"`
+	Position int              `json:"position"`
+	Avatar   string           `json:"avatar"`
+	Host     bool             `json:"host"`
+	Settings *json.RawMessage `json:"settings,omitempty"`
+}
+
+type InitialStateHistoryItem struct {
+	State    json.RawMessage `json:"state"`
+	Players  []*Player       `json:"players"`
+	Settings json.RawMessage `json:"settings"`
+}
+
+type SaveStateData struct {
+	RandomSeed   string                  `json:"randomSeed"`
+	Settings     json.RawMessage         `json:"settings"`
+	Players      []*Player               `json:"players"`
+	History      []*HistoryItem          `json:"history"`
+	InitialState InitialStateHistoryItem `json:"initialState"`
+}
+
+type SetupState struct {
+	RandomSeed string          `json:"randomSeed"`
+	Players    []*Player       `json:"players"`
+	Settings   json.RawMessage `json:"settings"`
+}
 
 type Server struct {
 	gameRoot string
@@ -127,6 +181,28 @@ func (s *Server) Serve() error {
 		}
 	})
 
+	r.Post("/reprocess", func(w http.ResponseWriter, r *http.Request) {
+		ssd := &SaveStateData{}
+		if err := json.NewDecoder(r.Body).Decode(ssd); err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		newSaveState, err := s.reprocessHistoryFromSaveState(ssd)
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		if err := json.NewEncoder(w).Encode(newSaveState); err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+	})
+
 	r.Get("/states", func(w http.ResponseWriter, r *http.Request) {
 		entries, err := os.ReadDir(saveStatesPath)
 		if err != nil {
@@ -173,7 +249,7 @@ func (s *Server) Serve() error {
 			w.WriteHeader(500)
 			return
 		}
-		data, err := os.ReadFile(filepath.Clean(target))
+		f, err := os.Open(filepath.Clean(target))
 		if err != nil {
 			fmt.Printf("error: %#v\n", err)
 			w.WriteHeader(500)
@@ -182,7 +258,21 @@ func (s *Server) Serve() error {
 		w.Header().Add("Content-type", "application/json")
 		w.Header().Add("Cache-control", "no-store")
 		w.WriteHeader(200)
-		if _, err := w.Write(data); err != nil {
+		saveStateData := &SaveStateData{}
+		if err := json.NewDecoder(f).Decode(saveStateData); err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+		saveStateData, err = s.reprocessHistoryFromSaveState(saveStateData)
+		if err != nil {
+			fmt.Printf("error: %#v\n", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.WriteHeader(200)
+		if err := json.NewEncoder(w).Encode(saveStateData); err != nil {
 			fmt.Printf("error: %#v\n", err)
 		}
 	})
@@ -496,5 +586,98 @@ func (s *Server) getFile(n string) ([]byte, error) {
 	} else {
 		n = path.Join(".", n)
 		return site.ReadFile(n)
+	}
+}
+
+func (s *Server) reprocessHistoryFromSaveState(ss *SaveStateData) (*SaveStateData, error) {
+	moves := make([]*Move, len(ss.History))
+	setup := &SetupState{
+		RandomSeed: ss.RandomSeed,
+		Players:    ss.Players,
+		Settings:   ss.Settings,
+	}
+	for i, hi := range ss.History {
+		moves[i] = &Move{
+			Position: hi.Position,
+			Data:     hi.Data,
+		}
+	}
+	req := &ReprocessRequest{Moves: moves, Setup: setup}
+	resp, err := s.reprocessHistory(req)
+	if err != nil {
+		return nil, err
+	}
+	history := make([]*HistoryItem, len(resp.Updates))
+	for i, update := range resp.Updates {
+		history[i] = &HistoryItem{
+			Seq:      i,
+			State:    update,
+			Data:     moves[i].Data,
+			Position: moves[i].Position,
+		}
+	}
+	return &SaveStateData{
+		RandomSeed: ss.RandomSeed,
+		Settings:   ss.Settings,
+		Players:    ss.Players,
+		History:    history,
+		InitialState: InitialStateHistoryItem{
+			State:    resp.InitialState,
+			Players:  ss.Players,
+			Settings: ss.Settings,
+		},
+	}, nil
+}
+
+func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, error) {
+	iso := v8go.NewIsolate()
+	defer func() {
+		iso.Dispose()
+	}()
+	ctx := v8go.NewContext(iso) // new context within the VM
+	gameJS, err := os.ReadFile(path.Join(s.gameRoot, s.manifest.Game.Root, s.manifest.Game.OutputFile))
+	if err != nil {
+		return nil, err
+	}
+	setup, err := json.Marshal(req.Setup)
+	if err != nil {
+		return nil, err
+	}
+	moves, err := json.Marshal(req.Moves)
+	if err != nil {
+		return nil, err
+	}
+	errs := make(chan error)
+	vals := make(chan *v8go.Value)
+	go func() {
+		start := time.Now()
+		if _, err := ctx.RunScript(string(gameJS), "game.js"); err != nil {
+			errs <- fmt.Errorf("error loading game: %w", err)
+			return
+		}
+		script := fmt.Sprintf("JSON.stringify(game.reprocessHistory(%s, %s))", string(setup), string(moves))
+		fmt.Printf("running script %s\n", script)
+		val, err := ctx.RunScript(script, "reprocessHistory.js")
+		if err != nil {
+			errs <- fmt.Errorf("error running reprocess: %w", err)
+			return
+		}
+		duration := time.Since(start)
+		fmt.Printf("re-process history took %s", duration)
+		vals <- val
+	}()
+
+	select {
+	case val := <-vals:
+		response := &ReprocessResponse{}
+		if err := json.Unmarshal([]byte(val.String()), response); err != nil {
+			return nil, err
+		}
+		return response, nil
+	case err := <-errs:
+		return nil, err
+	case <-time.After(30000 * time.Millisecond):
+		iso.TerminateExecution() // terminate the execution
+		return nil, fmt.Errorf("took too long")
 	}
 }

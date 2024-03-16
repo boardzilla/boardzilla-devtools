@@ -13,6 +13,7 @@ require (
 	github.com/tidwall/sjson v1.2.5
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225
 	golang.org/x/mod v0.16.0
+	rogchap.com/v8go v0.9.0
 )
 
 require (
