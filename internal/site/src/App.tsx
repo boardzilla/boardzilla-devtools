@@ -381,7 +381,6 @@ function App() {
     setHistory([]);
     setPlayers([]);
     setCurrentUserID(possibleUsers[0].id);
-    setReprocessing(true);
     (
       document.getElementById("ui") as HTMLIFrameElement
     )?.contentWindow?.location.reload();
@@ -405,7 +404,6 @@ function App() {
               toast.success("UI Reloaded!");
               break;
             case "game":
-              setReprocessing(true);
               (
                 document.getElementById("game") as HTMLIFrameElement
               )?.contentWindow?.location.reload();
@@ -476,7 +474,6 @@ function App() {
           setFullScreen((s) => !s);
           return true;
         case "KeyR":
-          setReprocessing(true);
           (
             document.getElementById("ui") as HTMLIFrameElement
           )?.contentWindow?.location.reload();
@@ -695,7 +692,6 @@ function App() {
 
   const loadState = useCallback(
     async (name: string) => {
-      setReprocessing(true);
       const response = await fetch(`/states/${encodeURIComponent(name)}`);
       const state = (await response.json()) as SaveStateData;
       setRandomSeed(state.randomSeed);
@@ -703,7 +699,6 @@ function App() {
       setHistory(state.history);
       setSettings(state.settings);
       setPlayers(state.players);
-      setSaveStatesOpen(false);
       (
         document.getElementById("game") as HTMLIFrameElement
       )?.contentWindow?.location.reload();

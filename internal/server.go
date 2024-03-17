@@ -656,7 +656,6 @@ func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, er
 			return
 		}
 		script := fmt.Sprintf("JSON.stringify(game.reprocessHistory(%s, %s))", string(setup), string(moves))
-		fmt.Printf("running script %s\n", script)
 		val, err := ctx.RunScript(script, "reprocessHistory.js")
 		if err != nil {
 			errs <- fmt.Errorf("error running reprocess: %w", err)
