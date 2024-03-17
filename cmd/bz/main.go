@@ -845,13 +845,21 @@ func (b *bz) new() error {
 	}
 	color.Println(" ✅")
 
-	// munge game.v1.json
+	// munge game.v1.json or game.json
 	gameV1Path := filepath.Join(dirName, "game.v1.json")
-	color.Printf("Modifying <cyan>%s</>", gameV1Path)
 	gameV1PathStat, err := os.Stat(gameV1Path)
 	if err != nil {
-		return err
+		if err == os.ErrNotExist {
+			gameV1Path = filepath.Join(dirName, "game.json")
+			gameV1PathStat, err = os.Stat(gameV1Path)
+			if err != nil {
+				return err
+			}
+		} else {
+			return err
+		}
 	}
+	color.Printf("Modifying <cyan>%s</>", gameV1Path)
 	gameV1JSONBytes, err := os.ReadFile(gameV1Path) // #nosec G304
 	if err != nil {
 		return err
