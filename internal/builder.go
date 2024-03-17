@@ -98,7 +98,14 @@ func (b *Builder) buildGame(m *ManifestV1, prod bool) ([]byte, []byte, error) {
 func (b *Builder) Manifest() (*ManifestV1, error) {
 	f, err := os.Open(path.Join(b.root, "game.v1.json"))
 	if err != nil {
-		return nil, err
+		if err == os.ErrNotExist {
+			f, err = os.Open(path.Join(b.root, "game.json"))
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 	defer f.Close()
 	manifest := &ManifestV1{}
