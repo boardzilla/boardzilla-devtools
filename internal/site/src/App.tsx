@@ -737,6 +737,7 @@ function App() {
   }, [resetGame]);
 
   const reprocessCurrentHistory = useCallback(async () => {
+    if (!initialState) return
     setReprocessing(true);
     const randomSeed = getRandomSeed();
     const response = await fetch(`/reprocess`, {

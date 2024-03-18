@@ -559,6 +559,7 @@ function App() {
     resetGame();
   }, [resetGame]);
   const reprocessCurrentHistory = (0,react__WEBPACK_IMPORTED_MODULE_1__.useCallback)(async () => {
+    if (!initialState) return;
     setReprocessing(true);
     const randomSeed = getRandomSeed();
     const response = await fetch(`/reprocess`, {
@@ -587,7 +588,7 @@ function App() {
   return /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)(react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)(react_hot_toast__WEBPACK_IMPORTED_MODULE_4__.Toaster, {}, void 0, false, {
       fileName: _jsxFileName,
-      lineNumber: 768,
+      lineNumber: 769,
       columnNumber: 7
     }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
       className: fullScreen || navigator.userAgent.match(/Mobi/) ? "fullscreen" : "",
@@ -603,42 +604,42 @@ function App() {
           children: "BUILD ERROR!"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 780,
+          lineNumber: 781,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("h3", {
           children: buildError === null || buildError === void 0 ? void 0 : buildError.type
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 781,
+          lineNumber: 782,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("h4", {
           children: "OUT"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 782,
+          lineNumber: 783,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("pre", {
           children: buildError === null || buildError === void 0 ? void 0 : buildError.out
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 783,
+          lineNumber: 784,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("h4", {
           children: "ERR"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 784,
+          lineNumber: 785,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("pre", {
           children: buildError === null || buildError === void 0 ? void 0 : buildError.err
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 785,
+          lineNumber: 786,
           columnNumber: 11
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 775,
+        lineNumber: 776,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)(react_responsive_modal__WEBPACK_IMPORTED_MODULE_3__.Modal, {
         open: helpOpen,
@@ -648,7 +649,7 @@ function App() {
           children: "Help"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 789,
+          lineNumber: 790,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("dl", {
           children: [/*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("dt", {
@@ -656,118 +657,118 @@ function App() {
               children: "Shift"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 792,
+              lineNumber: 793,
               columnNumber: 15
             }, this), " + ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("kbd", {
               children: "1"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 792,
+              lineNumber: 793,
               columnNumber: 34
             }, this), ", ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("kbd", {
               children: "Shift"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 792,
+              lineNumber: 793,
               columnNumber: 48
             }, this), " + ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("kbd", {
               children: "2"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 792,
+              lineNumber: 793,
               columnNumber: 67
             }, this)]
           }, void 0, true, {
             fileName: _jsxFileName,
-            lineNumber: 791,
+            lineNumber: 792,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("dd", {
             children: "Switch between users"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 794,
+            lineNumber: 795,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("dt", {
             children: [/*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("kbd", {
               children: "Shift"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 796,
+              lineNumber: 797,
               columnNumber: 15
             }, this), " + ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("kbd", {
               children: "R"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 796,
+              lineNumber: 797,
               columnNumber: 34
             }, this)]
           }, void 0, true, {
             fileName: _jsxFileName,
-            lineNumber: 795,
+            lineNumber: 796,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("dd", {
             children: "Manually reload UI/Game iframes"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 798,
+            lineNumber: 799,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("dt", {
             children: [/*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("kbd", {
               children: "Shift"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 800,
+              lineNumber: 801,
               columnNumber: 15
             }, this), " + ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("kbd", {
               children: "F"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 800,
+              lineNumber: 801,
               columnNumber: 34
             }, this)]
           }, void 0, true, {
             fileName: _jsxFileName,
-            lineNumber: 799,
+            lineNumber: 800,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("dd", {
             children: "Toggle full screen"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 802,
+            lineNumber: 803,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("dt", {
             children: [/*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("kbd", {
               children: "Shift"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 804,
+              lineNumber: 805,
               columnNumber: 15
             }, this), " + ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("kbd", {
               children: "S"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 804,
+              lineNumber: 805,
               columnNumber: 34
             }, this)]
           }, void 0, true, {
             fileName: _jsxFileName,
-            lineNumber: 803,
+            lineNumber: 804,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("dd", {
             children: "Toggle save state model open"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 806,
+            lineNumber: 807,
             columnNumber: 13
           }, this)]
         }, void 0, true, {
           fileName: _jsxFileName,
-          lineNumber: 790,
+          lineNumber: 791,
           columnNumber: 11
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 788,
+        lineNumber: 789,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)(react_responsive_modal__WEBPACK_IMPORTED_MODULE_3__.Modal, {
         open: saveStatesOpen,
@@ -778,7 +779,7 @@ function App() {
             children: "Save states"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 816,
+            lineNumber: 817,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
             style: {
@@ -789,31 +790,31 @@ function App() {
             children: saveStates.map(s => /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
               children: [s.name, /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("br", {}, void 0, false, {
                 fileName: _jsxFileName,
-                lineNumber: 821,
+                lineNumber: 822,
                 columnNumber: 19
               }, this), new Date(s.ctime).toString(), " ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("button", {
                 onClick: () => loadState(s.name),
                 children: "Open"
               }, void 0, false, {
                 fileName: _jsxFileName,
-                lineNumber: 823,
+                lineNumber: 824,
                 columnNumber: 19
               }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("button", {
                 onClick: () => deleteState(s.name),
                 children: "Delete"
               }, void 0, false, {
                 fileName: _jsxFileName,
-                lineNumber: 824,
+                lineNumber: 825,
                 columnNumber: 19
               }, this)]
             }, s.name, true, {
               fileName: _jsxFileName,
-              lineNumber: 819,
+              lineNumber: 820,
               columnNumber: 17
             }, this))
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 817,
+            lineNumber: 818,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("form", {
             onSubmit: e => saveCurrentStateCallback(e),
@@ -825,11 +826,11 @@ function App() {
               }
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 830,
+              lineNumber: 831,
               columnNumber: 15
             }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("br", {}, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 837,
+              lineNumber: 838,
               columnNumber: 15
             }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("input", {
               type: "submit",
@@ -837,22 +838,22 @@ function App() {
               value: "Save new state"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 838,
+              lineNumber: 839,
               columnNumber: 15
             }, this)]
           }, void 0, true, {
             fileName: _jsxFileName,
-            lineNumber: 828,
+            lineNumber: 829,
             columnNumber: 13
           }, this)]
         }, void 0, true, {
           fileName: _jsxFileName,
-          lineNumber: 815,
+          lineNumber: 816,
           columnNumber: 11
         }, this)
       }, void 0, false, {
         fileName: _jsxFileName,
-        lineNumber: 810,
+        lineNumber: 811,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
         style: {
@@ -873,12 +874,12 @@ function App() {
               checkedIcon: false
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 850,
+              lineNumber: 851,
               columnNumber: 15
             }, this)
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 849,
+            lineNumber: 850,
             columnNumber: 13
           }, this), " ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("span", {
             style: {
@@ -887,7 +888,7 @@ function App() {
             children: "Autoswitch players"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 857,
+            lineNumber: 858,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("span", {
             style: {
@@ -909,13 +910,13 @@ function App() {
                 children: u.name
               }, u.id, false, {
                 fileName: _jsxFileName,
-                lineNumber: 862,
+                lineNumber: 863,
                 columnNumber: 19
               }, this);
             })
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 858,
+            lineNumber: 859,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("span", {
             style: {
@@ -924,7 +925,7 @@ function App() {
             children: "\uD83C\uDF1E"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 882,
+            lineNumber: 883,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)(react_switch__WEBPACK_IMPORTED_MODULE_5__["default"], {
             onChange: v => setDarkMode(v),
@@ -933,7 +934,7 @@ function App() {
             checkedIcon: false
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 883,
+            lineNumber: 884,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("span", {
             style: {
@@ -942,7 +943,7 @@ function App() {
             children: "\uD83C\uDF1A"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 889,
+            lineNumber: 890,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("button", {
             style: {
@@ -952,7 +953,7 @@ function App() {
             children: "Reset seed"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 890,
+            lineNumber: 891,
             columnNumber: 13
           }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("button", {
             style: {
@@ -964,12 +965,12 @@ function App() {
             children: "\u24D8"
           }, void 0, false, {
             fileName: _jsxFileName,
-            lineNumber: 896,
+            lineNumber: 897,
             columnNumber: 13
           }, this)]
         }, void 0, true, {
           fileName: _jsxFileName,
-          lineNumber: 848,
+          lineNumber: 849,
           columnNumber: 11
         }, this), reprocessing && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
           style: {
@@ -979,7 +980,7 @@ function App() {
           children: "REPROCESSING HISTORY"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 905,
+          lineNumber: 906,
           columnNumber: 13
         }, this), !reprocessing && /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("iframe", {
           seamless: true,
@@ -992,7 +993,7 @@ function App() {
           src: `/ui.html?bootstrap=${encodeURIComponent(bootstrap())}`
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 910,
+          lineNumber: 911,
           columnNumber: 13
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("iframe", {
           onLoad: () => reprocessCurrentHistory(),
@@ -1005,12 +1006,12 @@ function App() {
           src: "/game.html"
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 918,
+          lineNumber: 919,
           columnNumber: 11
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 847,
+        lineNumber: 848,
         columnNumber: 9
       }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("div", {
         id: "history",
@@ -1027,19 +1028,19 @@ function App() {
               fill: darkMode ? "#bbb" : "#444"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 935,
+              lineNumber: 936,
               columnNumber: 15
             }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("path", {
               d: "M299.323503 597.30514l60.943176 60.943176 211.189226-211.189225L510.512728 386.115915z",
               fill: darkMode ? "#bbb" : "#444"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 939,
+              lineNumber: 940,
               columnNumber: 15
             }, this)]
           }, void 0, true, {
             fileName: _jsxFileName,
-            lineNumber: 928,
+            lineNumber: 929,
             columnNumber: 13
           }, this), historyCollapsed || /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("span", {
             children: ["History ", /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)("button", {
@@ -1047,17 +1048,17 @@ function App() {
               children: "Reset game"
             }, void 0, false, {
               fileName: _jsxFileName,
-              lineNumber: 946,
+              lineNumber: 947,
               columnNumber: 25
             }, this)]
           }, void 0, true, {
             fileName: _jsxFileName,
-            lineNumber: 945,
+            lineNumber: 946,
             columnNumber: 15
           }, this)]
         }, void 0, true, {
           fileName: _jsxFileName,
-          lineNumber: 927,
+          lineNumber: 928,
           columnNumber: 11
         }, this), /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_9__.jsxDEV)(_History__WEBPACK_IMPORTED_MODULE_2__["default"], {
           players: players,
@@ -1069,17 +1070,17 @@ function App() {
           darkMode: darkMode
         }, void 0, false, {
           fileName: _jsxFileName,
-          lineNumber: 950,
+          lineNumber: 951,
           columnNumber: 11
         }, this)]
       }, void 0, true, {
         fileName: _jsxFileName,
-        lineNumber: 926,
+        lineNumber: 927,
         columnNumber: 9
       }, this)]
     }, void 0, true, {
       fileName: _jsxFileName,
-      lineNumber: 769,
+      lineNumber: 770,
       columnNumber: 7
     }, this)]
   }, void 0, true);
