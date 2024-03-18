@@ -112,7 +112,7 @@ function App() {
   const [historyCollapsed, setHistoryCollapsed] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
   const [autoSwitch, setAutoSwitch] = useState(true);
-  const [reprocessing, setReprocessing] = useState(true);
+  const [reprocessing, setReprocessing] = useState(false);
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("dark") === "true"
   );
@@ -738,7 +738,6 @@ function App() {
 
   const reprocessCurrentHistory = useCallback(async () => {
     if (!initialState) {
-      setReprocessing(false);
       return;
     }
     setReprocessing(true);
