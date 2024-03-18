@@ -634,7 +634,6 @@ func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, er
 	defer func() {
 		iso.Dispose()
 	}()
-	ctx := v8go.NewContext(iso) // new context within the VM
 	gameJS, err := os.ReadFile(path.Join(s.gameRoot, s.manifest.Game.Root, s.manifest.Game.OutputFile))
 	if err != nil {
 		return nil, err
@@ -651,6 +650,29 @@ func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, er
 	vals := make(chan *v8go.Value)
 	go func() {
 		start := time.Now()
+		log := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
+			fmt.Printf("♦️  ")
+			args := info.Args()
+			for i, arg := range args {
+				fmt.Printf("%v", arg) // when the JS function is called this Go callback will execute
+				if i != len(args)-1 {
+					fmt.Printf(" ")
+				} else {
+					fmt.Printf("\n")
+				}
+			}
+			return nil // you can return a value back to the JS caller if required
+		})
+		// console := v8go.NewObjectTemplate(iso) // a template that represents a JS Object
+		// console.Set("log", log)
+		// console.Set("error", log)
+		global := v8go.NewObjectTemplate(iso) // a template that represents a JS Object
+		global.Set("log", log)                // sets the "print" property of the Object to our function
+		ctx := v8go.NewContext(iso, global)   // new Context with the global Object set to our object template
+		if _, err := ctx.RunScript("console.log = log; console.error = log;", "load.js"); err != nil {
+			errs <- fmt.Errorf("error loading game: %w", err)
+			return
+		}
 		if _, err := ctx.RunScript(string(gameJS), "game.js"); err != nil {
 			errs <- fmt.Errorf("error loading game: %w", err)
 			return
