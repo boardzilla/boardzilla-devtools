@@ -13,16 +13,16 @@
     window.addEventListener('message', (event) => {
       switch (event.data.type) {
       case 'initialState':
-        const initialState = game.initialState(event.data.setup);
+        const initialState = (game.default ?? game).initialState(event.data.setup);
         window.top.postMessage({type: "initialStateResult", id: event.data.id, state: initialState}, "*")
         break;
       case 'getPlayerState':
-        const state = game.getPlayerState(event.data.state, event.data.position);
+        const state = (game.default ?? game).getPlayerState(event.data.state, event.data.position);
         window.top.postMessage({type: "getPlayerStateResult", id: event.data.id, state}, "*")
         break;
       case 'processMove':
         try {
-          const gameUpdate = game.processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data});
+          const gameUpdate = (game.default ?? game).processMove(event.data.previousState, {position: event.data.move.position, data: event.data.move.data});
           window.top.postMessage({type: "processMoveResult", id: event.data.id, error: undefined, state: gameUpdate}, "*")
         } catch (e) {
           window.top.postMessage({type: "processMoveResult", id: event.data.id, error: String(e.stack), state: undefined}, "*")
