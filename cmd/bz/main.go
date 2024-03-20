@@ -282,7 +282,7 @@ func (b *bz) run() error {
 	// Add a path.
 	manifest, err := devBuilder.Manifest()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(fmt.Errorf("error getting manifest: %w", err))
 	}
 
 	rebuildUI := make(chan int, 10)
@@ -345,11 +345,11 @@ func (b *bz) run() error {
 				for _, p := range manifest.UI.WatchPaths {
 					p := path.Join(gameRoot, p)
 					if err != nil {
-						log.Fatal(err)
+						log.Fatal(fmt.Errorf("error watching %s: %w", p, err))
 					}
 					r, err := filepath.Rel(p, e.Path)
 					if err != nil {
-						log.Fatal(err)
+						log.Fatal(fmt.Errorf("error rel %s: %w", p, err))
 					}
 					if !strings.HasPrefix(r, "..") {
 						color.Printf("Reloading UI due to changes in <bold>%s</>: <bold>%s</>\n", e.Path, e.Op)
@@ -361,11 +361,11 @@ func (b *bz) run() error {
 				for _, p := range manifest.Game.WatchPaths {
 					p := path.Join(gameRoot, p)
 					if err != nil {
-						log.Fatal(err)
+						log.Fatal(fmt.Errorf("error watching %s: %w", p, err))
 					}
 					r, err := filepath.Rel(p, e.Path)
 					if err != nil {
-						log.Fatal(err)
+						log.Fatal(fmt.Errorf("error rel %s: %w", p, err))
 					}
 					if !strings.HasPrefix(r, "..") {
 						color.Printf("Reloading Game due to changes in <bold>%s</>: <bold>%s</>\n", e.Path, e.Op)
@@ -849,7 +849,7 @@ func (b *bz) new() error {
 	gameV1Path := filepath.Join(dirName, "game.v1.json")
 	gameV1PathStat, err := os.Stat(gameV1Path)
 	if err != nil {
-		if err == os.ErrNotExist {
+		if os.IsNotExist(err) {
 			gameV1Path = filepath.Join(dirName, "game.json")
 			gameV1PathStat, err = os.Stat(gameV1Path)
 			if err != nil {

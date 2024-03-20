@@ -51,7 +51,20 @@ func (b *Builder) WatchedFiles() ([]string, error) {
 		return nil, err
 	}
 	paths := make([]string, 0, len(manifest.UI.WatchPaths)+len(manifest.Game.WatchPaths)+1)
-	paths = append(paths, path.Join(b.root, "game.v1.json"))
+	if _, err := os.Stat(path.Join(b.root, "game.v1.json")); err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	} else {
+		paths = append(paths, path.Join(b.root, "game.v1.json"))
+	}
+	if _, err := os.Stat(path.Join(b.root, "game.json")); err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	} else {
+		paths = append(paths, path.Join(b.root, "game.json"))
+	}
 	for _, p := range manifest.UI.WatchPaths {
 		paths = append(paths, path.Join(b.root, p))
 	}
@@ -98,7 +111,7 @@ func (b *Builder) buildGame(m *ManifestV1, prod bool) ([]byte, []byte, error) {
 func (b *Builder) Manifest() (*ManifestV1, error) {
 	f, err := os.Open(path.Join(b.root, "game.v1.json"))
 	if err != nil {
-		if err == os.ErrNotExist {
+		if os.IsNotExist(err) {
 			f, err = os.Open(path.Join(b.root, "game.json"))
 			if err != nil {
 				return nil, err
