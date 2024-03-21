@@ -677,6 +677,12 @@ func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, er
 			errs <- fmt.Errorf("error loading game: %w", err)
 			return
 		}
+		if _, err := ctx.RunScript(`if (game.default) {
+			game = game.default
+		}`, "game.js"); err != nil {
+			errs <- fmt.Errorf("error flattening game structure: %w", err)
+			return
+		}
 		script := fmt.Sprintf("JSON.stringify(game.reprocessHistory(%s, %s))", string(setup), string(moves))
 		val, err := ctx.RunScript(script, "reprocessHistory.js")
 		if err != nil {
