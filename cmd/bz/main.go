@@ -724,7 +724,8 @@ func (b *bz) new() error {
 	}
 
 	repoMap := map[string]string{
-		"Simple game": "boardzilla-starter-game",
+		"Simple Token game": "boardzilla-starter-game",
+		"Simple Tiles game": "boardzilla-tiles-starter-game",
 		"Empty game":  "boardzilla-empty-game",
 	}
 	repoSelect := selection.New("Which template would you like to use?", maps.Keys(repoMap))
