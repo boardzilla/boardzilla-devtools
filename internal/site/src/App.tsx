@@ -412,14 +412,7 @@ function App() {
           }
           break;
         case "buildError":
-          switch (e.target) {
-            case "ui":
-              setBuildError({ out: e.out, err: e.err });
-              break;
-            case "game":
-              setBuildError({ out: e.out, err: e.err });
-              break;
-          }
+          setBuildError({ out: e.out, err: e.err });
           break;
         case "ping":
           break;

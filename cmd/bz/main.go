@@ -275,7 +275,8 @@ func (b *bz) run() error {
 
 	go func() {
 		if stdout, stderr, err := devBuilder.Build(devtools.Dev, devtools.UI|devtools.Game); err != nil {
-			log.Println("error during build: %s\n\nout: %s\n\nerr: %s\n", err, stdout, stderr)
+			log.Printf("error during build: %s\n\nout: %s\n\nerr: %s\n", err, stdout, stderr)
+			server.BuildError(string(stdout), string(stderr))
 		}
 
 		w := watcher.New()
@@ -358,6 +359,7 @@ func (b *bz) run() error {
 				}
 				stdout, stderr, err := devBuilder.Build(devtools.Dev, buildType)
 				if err != nil {
+					log.Printf("error during build: %s\n\nout: %s\n\nerr: %s\n", err, stdout, stderr)
 					server.BuildError(string(stdout), string(stderr))
 				}
 				if buildType&devtools.Game != 0 {

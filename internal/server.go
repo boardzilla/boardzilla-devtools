@@ -106,8 +106,9 @@ type reloadEvent struct {
 }
 
 type buildErrorEvent struct {
-	Out string `json:"out"`
-	Err string `json:"err"`
+	Type string `json:"type"`
+	Out  string `json:"out"`
+	Err  string `json:"err"`
 }
 
 type pingEvent struct {
@@ -548,8 +549,9 @@ func (s *Server) BuildError(o, e string) {
 	defer s.lock.Unlock()
 	for _, sender := range s.senders {
 		sender <- &buildErrorEvent{
-			Out: o,
-			Err: e,
+			Type: "buildError",
+			Out:  o,
+			Err:  e,
 		}
 	}
 }
