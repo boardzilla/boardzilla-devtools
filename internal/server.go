@@ -107,7 +107,6 @@ type reloadEvent struct {
 
 type buildErrorEvent struct {
 	Type   string `json:"type"`
-	Target string `json:"target"`
 	Out    string `json:"out"`
 	Err    string `json:"err"`
 }
@@ -526,7 +525,7 @@ func (s *Server) Serve() error {
 	return srv.ListenAndServe()
 }
 
-func (s *Server) Reload(t int) {
+func (s *Server) Reload(t BuildType) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	for _, sender := range s.senders {
@@ -544,21 +543,13 @@ func (s *Server) Reload(t int) {
 	}
 }
 
-func (s *Server) BuildError(t int, o, e string) {
+func (s *Server) BuildError(o, e string) {
 	fmt.Printf("sending build error!")
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	for _, sender := range s.senders {
-		var reloadTarget string
-		switch t {
-		case Game:
-			reloadTarget = "game"
-		case UI:
-			reloadTarget = "ui"
-		}
 		sender <- &buildErrorEvent{
 			Type:   "buildError",
-			Target: reloadTarget,
 			Out:    o,
 			Err:    e,
 		}
@@ -663,12 +654,12 @@ func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, er
 			}
 			return nil // you can return a value back to the JS caller if required
 		})
-		// console := v8go.NewObjectTemplate(iso) // a template that represents a JS Object
-		// console.Set("log", log)
-		// console.Set("error", log)
-		global := v8go.NewObjectTemplate(iso) // a template that represents a JS Object
-		global.Set("log", log)                // sets the "print" property of the Object to our function
-		ctx := v8go.NewContext(iso, global)   // new Context with the global Object set to our object template
+		console := v8go.NewObjectTemplate(iso)
+		console.Set("log", log)
+		console.Set("error", log)
+		global := v8go.NewObjectTemplate(iso)
+		global.Set("log", log)
+		ctx := v8go.NewContext(iso, global)
 		if _, err := ctx.RunScript("console.log = log; console.error = log;", "load.js"); err != nil {
 			errs <- fmt.Errorf("error loading game: %w", err)
 			return

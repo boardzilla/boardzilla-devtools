@@ -131,21 +131,6 @@ type userGame struct {
 
 var errGameNotFound = errors.New("no game found")
 
-func (n *notifier) notify() {
-	n.lock.Lock()
-	defer n.lock.Unlock()
-	if !n.notified {
-		n.notified = true
-		go func() {
-			time.Sleep(debounceDurationMS * time.Millisecond)
-			n.out()
-			n.lock.Lock()
-			n.notified = false
-			defer n.lock.Unlock()
-		}()
-	}
-}
-
 type bz struct {
 	serverURL string
 	root      string
@@ -185,7 +170,6 @@ func (b *bz) exec() error {
 		printHelp()
 		os.Exit(1)
 	}
-
 	return nil
 }
 
@@ -284,19 +268,14 @@ func (b *bz) run() error {
 	if err != nil {
 		log.Fatal(fmt.Errorf("error getting manifest: %w", err))
 	}
-
-	rebuildUI := make(chan int, 10)
-	rebuildGame := make(chan int, 10)
-	uiNotifier := &notifier{out: func() {
-		rebuildUI <- devtools.UI
-	}, notified: false}
-	gameNotifier := &notifier{out: func() {
-		rebuildGame <- devtools.Game
-	}, notified: false}
+	server, err := devtools.NewServer(gameRoot, manifest, *port)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	go func() {
-		if err := devBuilder.Build(); err != nil {
-			log.Println("error during build:", err)
+		if stdout, stderr, err := devBuilder.Build(devtools.Dev, devtools.UI|devtools.Game); err != nil {
+			log.Println("error during build: %s\n\nout: %s\n\nerr: %s\n", err, stdout, stderr)
 		}
 
 		w := watcher.New()
@@ -338,10 +317,14 @@ func (b *bz) run() error {
 			}
 		}()
 
+		server.Reload(devtools.UI)
+		server.Reload(devtools.Game)
+
 		// Block until an event is received.
 		for {
 			select {
 			case e := <-w.Event:
+				var buildType devtools.BuildType
 				for _, p := range manifest.UI.WatchPaths {
 					p := path.Join(gameRoot, p)
 					if err != nil {
@@ -353,7 +336,7 @@ func (b *bz) run() error {
 					}
 					if !strings.HasPrefix(r, "..") {
 						color.Printf("Reloading UI due to changes in <bold>%s</>: <bold>%s</>\n", e.Path, e.Op)
-						uiNotifier.notify()
+						buildType |= devtools.UI
 						break
 					}
 				}
@@ -369,9 +352,19 @@ func (b *bz) run() error {
 					}
 					if !strings.HasPrefix(r, "..") {
 						color.Printf("Reloading Game due to changes in <bold>%s</>: <bold>%s</>\n", e.Path, e.Op)
-						gameNotifier.notify()
+						buildType |= devtools.Game
 						break
 					}
+				}
+				stdout, stderr, err := devBuilder.Build(devtools.Dev, buildType)
+				if err != nil {
+					server.BuildError(string(stdout), string(stderr))
+				}
+				if buildType&devtools.Game != 0 {
+					server.Reload(devtools.Game)
+				}
+				if buildType&devtools.UI != 0 {
+					server.Reload(devtools.UI)
 				}
 			case err := <-w.Error:
 				log.Fatalln(err)
@@ -381,34 +374,7 @@ func (b *bz) run() error {
 		}
 	}()
 
-	server, err := devtools.NewServer(gameRoot, manifest, *port)
-	if err != nil {
-		log.Fatal(err)
-	}
 	color.Printf("Running dev builder on port <bold>%d</> at game root <bold>%s</>\n", *port, gameRoot)
-	go func() {
-		for i := range rebuildUI {
-			if outbuf, errbuf, err := devBuilder.BuildUI(); err != nil {
-				log.Println("error during rebuild:", err)
-				server.BuildError(devtools.UI, string(outbuf), string(errbuf))
-				continue
-			}
-			log.Printf("UI reloaded due to change\n")
-			server.Reload(i)
-		}
-	}()
-
-	go func() {
-		for i := range rebuildGame {
-			if outbuf, errbuf, err := devBuilder.BuildGame(); err != nil {
-				log.Println("error during rebuild:", err)
-				server.BuildError(devtools.Game, string(outbuf), string(errbuf))
-				continue
-			}
-			log.Printf("Game reloaded due to change\n")
-			server.Reload(i)
-		}
-	}()
 
 	// Block main goroutine forever.
 	color.Printf("🦖 Ready on <bold>:%d</>\n", *port)
@@ -632,7 +598,7 @@ func (b *bz) submit() error {
 	}
 	fmt.Println("✅ Done cleaning")
 	fmt.Printf("🛠️ Building")
-	if err := builder.BuildProd(); err != nil {
+	if _, _, err := builder.Build(devtools.Prod, devtools.UI|devtools.Game); err != nil {
 		return err
 	}
 	fmt.Println("✅ Done building")
@@ -726,7 +692,7 @@ func (b *bz) new() error {
 	repoMap := map[string]string{
 		"Simple Token game": "boardzilla-starter-game",
 		"Simple Tiles game": "boardzilla-tiles-starter-game",
-		"Empty game":  "boardzilla-empty-game",
+		"Empty game":        "boardzilla-empty-game",
 	}
 	repoSelect := selection.New("Which template would you like to use?", maps.Keys(repoMap))
 	repo, err := repoSelect.RunPrompt()

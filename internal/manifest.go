@@ -1,22 +1,22 @@
 package internal
 
 type BuildCommand struct {
-	Dev        string `json:"dev"`
-	Production string `json:"prod"`
+	Dev        []string `json:"dev"`
+	Production []string `json:"prod"`
 }
 
 type UIConfig struct {
 	Root            string       `json:"root"`
-	BuildCommand    BuildCommand `json:"build"`
+	BuildCommands   BuildCommand `json:"build"`
 	WatchPaths      []string     `json:"watchPaths"`
 	OutputDirectory string       `json:"outDir"`
 }
 
 type GameConfig struct {
-	Root         string       `json:"root"`
-	BuildCommand BuildCommand `json:"build"`
-	WatchPaths   []string     `json:"watchPaths"`
-	OutputFile   string       `json:"out"`
+	Root          string       `json:"root"`
+	BuildCommands BuildCommand `json:"build"`
+	WatchPaths    []string     `json:"watchPaths"`
+	OutputFile    string       `json:"out"`
 }
 
 type ManifestV1 struct {

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,14 +10,33 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/gookit/color"
 )
 
+type BuildType int
+type BuildMode int
+
 const (
-	UI = iota
+	UI BuildType = 1 << iota
 	Game
 )
+const (
+	Prod BuildMode = iota
+	Dev
+)
+
+type cmd struct {
+	root string
+	cmd  string
+}
+
+type result struct {
+	stdout []byte
+	stderr []byte
+	err    error
+}
 
 type Builder struct {
 	root string
@@ -28,21 +48,57 @@ func NewBuilder(root string) (*Builder, error) {
 	}, nil
 }
 
-func (b *Builder) Build() error {
+func (b *Builder) Build(mode BuildMode, types BuildType) ([]byte, []byte, error) {
 	// load json manifest
 	manifest, err := b.Manifest()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	// run game/ui build
-	if _, _, err := b.buildUI(manifest, false); err != nil {
-		return err
+	buildSteps := make(map[cmd]bool)
+	if types&UI != 0 {
+		color.Printf("Building UI\n")
+		switch mode {
+		case Prod:
+			for _, c := range manifest.UI.BuildCommands.Production {
+				buildSteps[cmd{path.Join(b.root, manifest.UI.Root), c}] = true
+			}
+		case Dev:
+			for _, c := range manifest.UI.BuildCommands.Dev {
+				buildSteps[cmd{path.Join(b.root, manifest.UI.Root), c}] = true
+			}
+		}
 	}
-	if _, _, err := b.buildGame(manifest, false); err != nil {
-		return err
+	if types&Game != 0 {
+		color.Printf("Building Game\n")
+		switch mode {
+		case Prod:
+			for _, c := range manifest.Game.BuildCommands.Production {
+				buildSteps[cmd{path.Join(b.root, manifest.Game.Root), c}] = true
+			}
+		case Dev:
+			for _, c := range manifest.Game.BuildCommands.Dev {
+				buildSteps[cmd{path.Join(b.root, manifest.Game.Root), c}] = true
+			}
+		}
 	}
-	return nil
+
+	results := make(chan result, len(buildSteps))
+	ctx, cancelFn := context.WithCancel(context.Background())
+	for c := range buildSteps {
+		go func(c cmd) {
+			results <- b.run(ctx, c.root, c.cmd)
+		}(c)
+	}
+	var res result
+	for range buildSteps {
+		res = <-results
+		if res.err != nil {
+			cancelFn()
+			return res.stdout, res.stderr, res.err
+		}
+	}
+	return res.stdout, res.stderr, res.err
 }
 
 func (b *Builder) WatchedFiles() ([]string, error) {
@@ -72,40 +128,6 @@ func (b *Builder) WatchedFiles() ([]string, error) {
 		paths = append(paths, path.Join(b.root, p))
 	}
 	return paths, nil
-}
-
-func (b *Builder) BuildUI() ([]byte, []byte, error) {
-	manifest, err := b.Manifest()
-	if err != nil {
-		return nil, nil, err
-	}
-	return b.buildUI(manifest, false)
-}
-
-func (b *Builder) buildUI(m *ManifestV1, prod bool) ([]byte, []byte, error) {
-	buildCmd := m.UI.BuildCommand.Dev
-	if prod {
-		buildCmd = m.UI.BuildCommand.Production
-	}
-	color.Printf("Building UI <grey>%s</>\n", buildCmd)
-	return b.run(path.Join(b.root, m.UI.Root), buildCmd)
-}
-
-func (b *Builder) BuildGame() ([]byte, []byte, error) {
-	manifest, err := b.Manifest()
-	if err != nil {
-		return nil, nil, err
-	}
-	return b.buildGame(manifest, false)
-}
-
-func (b *Builder) buildGame(m *ManifestV1, prod bool) ([]byte, []byte, error) {
-	buildCmd := m.Game.BuildCommand.Dev
-	if prod {
-		buildCmd = m.Game.BuildCommand.Production
-	}
-	color.Printf("Building Game <grey>%s</>\n", buildCmd)
-	return b.run(path.Join(b.root, m.Game.Root), buildCmd)
 }
 
 func (b *Builder) Manifest() (*ManifestV1, error) {
@@ -179,33 +201,13 @@ func (b *Builder) cleanGame(manifest *ManifestV1) error {
 	return os.RemoveAll(gameOutPath)
 }
 
-func (b *Builder) BuildProd() error {
-	manifest, err := b.Manifest()
-	if err != nil {
-		return err
-	}
-	errs := make(chan error, 2)
-	go func() {
-		_, _, err := b.buildUI(manifest, true)
-		errs <- err
-	}()
-
-	go func() {
-		_, _, err := b.buildGame(manifest, true)
-		errs <- err
-	}()
-
-	for i := 0; i != 2; i++ {
-		if err := <-errs; err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (b *Builder) run(dir, cmdStr string) ([]byte, []byte, error) {
+func (b *Builder) run(ctx context.Context, dir, cmdStr string) result {
+	color.Printf("Running cmd <grey>%s</>\n", cmdStr)
+	startTime := time.Now()
 	args := strings.Fields(cmdStr)
-	cmd := exec.Command(args[0], args[1:]...) // #nosec G204
+	ctx, cancelFn := context.WithTimeout(ctx, 10*time.Second)
+	defer cancelFn()
+	cmd := exec.CommandContext(ctx, args[0], args[1:]...) // #nosec G204
 
 	outbuf := bytes.NewBuffer(make([]byte, 1024*1024*5))
 	errbuf := bytes.NewBuffer(make([]byte, 1024*1024*5))
@@ -220,7 +222,9 @@ func (b *Builder) run(dir, cmdStr string) ([]byte, []byte, error) {
 		fmt.Printf("%s encountered an error: %s\n", cmdStr, err.Error())
 	}
 
-	return outbuf.Bytes(), errbuf.Bytes(), err
+	color.Printf("Running cmd <grey>%s</> finished in %s\n", cmdStr, time.Now().Sub(startTime))
+
+	return result{outbuf.Bytes(), errbuf.Bytes(), err}
 }
 
 // clean
