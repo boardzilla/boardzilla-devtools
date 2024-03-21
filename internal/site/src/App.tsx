@@ -59,7 +59,6 @@ const colors = [
 const avatarURL = (userID: string): string => `/_profile/${userID}.jpg`;
 
 type BuildError = {
-  type: "ui" | "game";
   out: string;
   err: string;
 };
@@ -415,10 +414,10 @@ function App() {
         case "buildError":
           switch (e.target) {
             case "ui":
-              setBuildError({ type: "ui", out: e.out, err: e.err });
+              setBuildError({ out: e.out, err: e.err });
               break;
             case "game":
-              setBuildError({ type: "game", out: e.out, err: e.err });
+              setBuildError({ out: e.out, err: e.err });
               break;
           }
           break;
@@ -781,7 +780,6 @@ function App() {
           center
         >
           <h2>BUILD ERROR!</h2>
-          <h3>{buildError?.type}</h3>
           <h4>OUT</h4>
           <pre>{buildError?.out}</pre>
           <h4>ERR</h4>

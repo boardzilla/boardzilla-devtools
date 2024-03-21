@@ -222,7 +222,7 @@ func (b *Builder) run(ctx context.Context, dir, cmdStr string) result {
 		fmt.Printf("%s encountered an error: %s\n", cmdStr, err.Error())
 	}
 
-	color.Printf("Running cmd <grey>%s</> finished in %s\n", cmdStr, time.Now().Sub(startTime))
+	color.Printf("Running cmd <grey>%s</> finished in %s\n", cmdStr, time.Since(startTime))
 
 	return result{outbuf.Bytes(), errbuf.Bytes(), err}
 }

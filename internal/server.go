@@ -106,9 +106,8 @@ type reloadEvent struct {
 }
 
 type buildErrorEvent struct {
-	Type   string `json:"type"`
-	Out    string `json:"out"`
-	Err    string `json:"err"`
+	Out string `json:"out"`
+	Err string `json:"err"`
 }
 
 type pingEvent struct {
@@ -549,9 +548,8 @@ func (s *Server) BuildError(o, e string) {
 	defer s.lock.Unlock()
 	for _, sender := range s.senders {
 		sender <- &buildErrorEvent{
-			Type:   "buildError",
-			Out:    o,
-			Err:    e,
+			Out: o,
+			Err: e,
 		}
 	}
 }
@@ -680,8 +678,7 @@ func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, er
 			errs <- fmt.Errorf("error running reprocess: %w", err)
 			return
 		}
-		duration := time.Since(start)
-		fmt.Printf("re-process history took %s", duration)
+		fmt.Printf("re-process history took %s\n", time.Since(start))
 		vals <- val
 	}()
 
