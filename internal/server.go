@@ -642,21 +642,18 @@ func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, er
 	go func() {
 		start := time.Now()
 		log := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			fmt.Printf("♦️  ")
+			fmt.Printf("[reprocess history] >>> ")
 			args := info.Args()
 			for i, arg := range args {
-				fmt.Printf("%v", arg) // when the JS function is called this Go callback will execute
+				fmt.Printf("%v", arg)
 				if i != len(args)-1 {
 					fmt.Printf(" ")
 				} else {
 					fmt.Printf("\n")
 				}
 			}
-			return nil // you can return a value back to the JS caller if required
+			return nil
 		})
-		console := v8go.NewObjectTemplate(iso)
-		console.Set("log", log)
-		console.Set("error", log)
 		global := v8go.NewObjectTemplate(iso)
 		global.Set("log", log)
 		ctx := v8go.NewContext(iso, global)

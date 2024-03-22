@@ -361,6 +361,7 @@ func (b *bz) run() error {
 				if err != nil {
 					log.Printf("error during build: %s\n\nout: %s\n\nerr: %s\n", err, stdout, stderr)
 					server.BuildError(string(stdout), string(stderr))
+					break
 				}
 				if buildType&devtools.Game != 0 {
 					server.Reload(devtools.Game)
