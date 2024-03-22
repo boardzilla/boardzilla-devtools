@@ -2,7 +2,7 @@
 
 set -Eeuo pipefail
 
-trap "pkill -P $$" EXIT
+trap "pkill -9 -P $$" EXIT
 
 if [ -z ${1+x} ]; then
   echo "Usage: scripts/dev <game-path>"
