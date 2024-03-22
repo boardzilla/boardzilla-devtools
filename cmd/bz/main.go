@@ -266,7 +266,7 @@ func (b *bz) run() error {
 	// Add a path.
 	manifest, err := devBuilder.Manifest()
 	if err != nil {
-		log.Fatal(fmt.Errorf("error getting manifest: %w", err))
+		log.Fatal(fmt.Errorf("Error getting manifest json\n\n%w", err))
 	}
 	server, err := devtools.NewServer(gameRoot, manifest, *port)
 	if err != nil {
