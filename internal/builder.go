@@ -131,12 +131,14 @@ func (b *Builder) WatchedFiles() ([]string, error) {
 }
 
 func (b *Builder) Manifest() (*ManifestV1, error) {
-	f, err := os.Open(path.Join(b.root, "game.v1.json"))
+	manifestFile := "game.v1.json"
+	f, err := os.Open(path.Join(b.root, manifestFile))
 	if err != nil {
 		if os.IsNotExist(err) {
-			f, err = os.Open(path.Join(b.root, "game.json"))
+			manifestFile := "game.json"
+			f, err = os.Open(path.Join(b.root, manifestFile))
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("Cound not find game.json or game.v1.json")
 			}
 		} else {
 			return nil, err
@@ -145,7 +147,7 @@ func (b *Builder) Manifest() (*ManifestV1, error) {
 	defer f.Close()
 	manifest := &ManifestV1{}
 	if err := json.NewDecoder(f).Decode(manifest); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Unable to parse %s. See example at https://github.com/boardzilla/boardzilla-empty-game/blob/main/game.json\n  %s", manifestFile, err)
 	}
 	return manifest, nil
 }
