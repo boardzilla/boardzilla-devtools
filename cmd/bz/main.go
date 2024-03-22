@@ -23,7 +23,6 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -46,7 +45,6 @@ var (
 )
 
 const noInstallOption = "I'll do it myself"
-const debounceDurationMS = 500
 
 func validateName(name string) error {
 	if len(strings.TrimSpace(name)) == 0 {
@@ -98,12 +96,6 @@ func main() {
 		color.Grayf("error: %s\n", err.Error())
 		os.Exit(1)
 	}
-}
-
-type notifier struct {
-	out      func()
-	notified bool
-	lock     sync.Mutex
 }
 
 type userGameVersion struct {

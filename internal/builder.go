@@ -85,6 +85,7 @@ func (b *Builder) Build(mode BuildMode, types BuildType) ([]byte, []byte, error)
 
 	results := make(chan result, len(buildSteps))
 	ctx, cancelFn := context.WithCancel(context.Background())
+	defer cancelFn()
 	for c := range buildSteps {
 		go func(c cmd) {
 			results <- b.run(ctx, c.root, c.cmd)
@@ -94,7 +95,6 @@ func (b *Builder) Build(mode BuildMode, types BuildType) ([]byte, []byte, error)
 	for range buildSteps {
 		res = <-results
 		if res.err != nil {
-			cancelFn()
 			return res.stdout, res.stderr, res.err
 		}
 	}

@@ -655,7 +655,10 @@ func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, er
 			return nil
 		})
 		global := v8go.NewObjectTemplate(iso)
-		global.Set("log", log)
+		if err := global.Set("log", log); err != nil {
+			errs <- fmt.Errorf("error setting log: %w", err)
+			return
+		}
 		ctx := v8go.NewContext(iso, global)
 		if _, err := ctx.RunScript("console.log = log; console.error = log;", "load.js"); err != nil {
 			errs <- fmt.Errorf("error loading game: %w", err)
