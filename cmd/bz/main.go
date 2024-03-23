@@ -20,7 +20,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -39,9 +38,7 @@ import (
 )
 
 var (
-	version = "dev"
-	commit  = "none"
-	date    = "unknown"
+	version = "0.2"
 )
 
 const noInstallOption = "I'll do it myself"
@@ -219,19 +216,7 @@ func (b *bz) info() error {
 }
 
 func (b *bz) version() error {
-	version = "dev"
-	commit = "none"
-	date = "unknown"
-	info, ok := debug.ReadBuildInfo()
-	if ok {
-		fmt.Printf("Installed version: %s\n", info.Main.Version)
-	} else {
-		fmt.Printf(
-			`Version: %s
-Commit:  %s
-Date     %s`, version, commit, date)
-		fmt.Println()
-	}
+	fmt.Printf("Installed version: %s\n", version)
 	return nil
 }
 
