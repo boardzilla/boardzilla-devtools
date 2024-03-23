@@ -19,7 +19,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"rogchap.com/v8go"
 )
 
 var liveDev = os.Getenv("LIVE_DEV") == "1"
@@ -180,28 +179,6 @@ func (s *Server) Serve() error {
 		}
 	})
 
-	r.Post("/reprocess", func(w http.ResponseWriter, r *http.Request) {
-		ssd := &SaveStateData{}
-		if err := json.NewDecoder(r.Body).Decode(ssd); err != nil {
-			fmt.Printf("error: %#v\n", err)
-			w.WriteHeader(500)
-			return
-		}
-
-		newSaveState, err := s.reprocessHistoryFromSaveState(ssd)
-		if err != nil {
-			fmt.Printf("error: %#v\n", err)
-			w.WriteHeader(500)
-			return
-		}
-
-		if err := json.NewEncoder(w).Encode(newSaveState); err != nil {
-			fmt.Printf("error: %#v\n", err)
-			w.WriteHeader(500)
-			return
-		}
-	})
-
 	r.Get("/states", func(w http.ResponseWriter, r *http.Request) {
 		entries, err := os.ReadDir(saveStatesPath)
 		if err != nil {
@@ -263,13 +240,6 @@ func (s *Server) Serve() error {
 			w.WriteHeader(500)
 			return
 		}
-		saveStateData, err = s.reprocessHistoryFromSaveState(saveStateData)
-		if err != nil {
-			fmt.Printf("error: %#v\n", err)
-			w.WriteHeader(500)
-			return
-		}
-
 		w.WriteHeader(200)
 		if err := json.NewEncoder(w).Encode(saveStateData); err != nil {
 			fmt.Printf("error: %#v\n", err)
@@ -577,124 +547,5 @@ func (s *Server) getFile(n string) ([]byte, error) {
 	} else {
 		n = path.Join(".", n)
 		return site.ReadFile(n)
-	}
-}
-
-func (s *Server) reprocessHistoryFromSaveState(ss *SaveStateData) (*SaveStateData, error) {
-	moves := make([]*Move, len(ss.History))
-	setup := &SetupState{
-		RandomSeed: ss.RandomSeed,
-		Players:    ss.Players,
-		Settings:   ss.Settings,
-	}
-	for i, hi := range ss.History {
-		moves[i] = &Move{
-			Position: hi.Position,
-			Data:     hi.Data,
-		}
-	}
-	req := &ReprocessRequest{Moves: moves, Setup: setup}
-	resp, err := s.reprocessHistory(req)
-	if err != nil {
-		return nil, err
-	}
-	history := make([]*HistoryItem, len(resp.Updates))
-	for i, update := range resp.Updates {
-		history[i] = &HistoryItem{
-			Seq:      i,
-			State:    update,
-			Data:     moves[i].Data,
-			Position: moves[i].Position,
-		}
-	}
-	return &SaveStateData{
-		RandomSeed: ss.RandomSeed,
-		Settings:   ss.Settings,
-		Players:    ss.Players,
-		History:    history,
-		InitialState: InitialStateHistoryItem{
-			State:    resp.InitialState,
-			Players:  ss.Players,
-			Settings: ss.Settings,
-		},
-	}, nil
-}
-
-func (s *Server) reprocessHistory(req *ReprocessRequest) (*ReprocessResponse, error) {
-	iso := v8go.NewIsolate()
-	defer func() {
-		iso.Dispose()
-	}()
-	gameJS, err := os.ReadFile(path.Join(s.gameRoot, s.manifest.Game.Root, s.manifest.Game.OutputFile))
-	if err != nil {
-		return nil, err
-	}
-	setup, err := json.Marshal(req.Setup)
-	if err != nil {
-		return nil, err
-	}
-	moves, err := json.Marshal(req.Moves)
-	if err != nil {
-		return nil, err
-	}
-	errs := make(chan error)
-	vals := make(chan *v8go.Value)
-	go func() {
-		start := time.Now()
-		log := v8go.NewFunctionTemplate(iso, func(info *v8go.FunctionCallbackInfo) *v8go.Value {
-			fmt.Printf("[reprocess history] >>> ")
-			args := info.Args()
-			for i, arg := range args {
-				fmt.Printf("%v", arg)
-				if i != len(args)-1 {
-					fmt.Printf(" ")
-				} else {
-					fmt.Printf("\n")
-				}
-			}
-			return nil
-		})
-		global := v8go.NewObjectTemplate(iso)
-		if err := global.Set("log", log); err != nil {
-			errs <- fmt.Errorf("error setting log: %w", err)
-			return
-		}
-		ctx := v8go.NewContext(iso, global)
-		if _, err := ctx.RunScript("console.log = log; console.error = log;", "load.js"); err != nil {
-			errs <- fmt.Errorf("error loading game: %w", err)
-			return
-		}
-		if _, err := ctx.RunScript(string(gameJS), "game.js"); err != nil {
-			errs <- fmt.Errorf("error loading game: %w", err)
-			return
-		}
-		if _, err := ctx.RunScript(`if (game.default) {
-			game = game.default
-		}`, "game.js"); err != nil {
-			errs <- fmt.Errorf("error flattening game structure: %w", err)
-			return
-		}
-		script := fmt.Sprintf("JSON.stringify(game.reprocessHistory(%s, %s))", string(setup), string(moves))
-		val, err := ctx.RunScript(script, "reprocessHistory.js")
-		if err != nil {
-			errs <- fmt.Errorf("error running reprocess: %w", err)
-			return
-		}
-		fmt.Printf("re-process history took %s\n", time.Since(start))
-		vals <- val
-	}()
-
-	select {
-	case val := <-vals:
-		response := &ReprocessResponse{}
-		if err := json.Unmarshal([]byte(val.String()), response); err != nil {
-			return nil, err
-		}
-		return response, nil
-	case err := <-errs:
-		return nil, err
-	case <-time.After(30000 * time.Millisecond):
-		iso.TerminateExecution() // terminate the execution
-		return nil, fmt.Errorf("took too long")
 	}
 }
