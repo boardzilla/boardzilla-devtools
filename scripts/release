@@ -26,7 +26,7 @@ fi
 
 tag=$(git describe --abbrev=0 --tags)
 
-echo "The current version is ${tag}, please enter a new version"
+echo "The current version is ${tag}, please enter a new version (without the v)"
 version=""
 
 while ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; do
@@ -42,10 +42,11 @@ fi
 ./scripts/check
 echo "Using version $version, releasing..."
 
-# update version
+# add the version
 git tag -a "v${version}" -m"Release version ${version}"
+
+# update version
 goreleaser release --clean
-git push
 git push origin "v${version}"
 
 url="https://github.com/boardzilla/boardzilla-devtools/releases"
