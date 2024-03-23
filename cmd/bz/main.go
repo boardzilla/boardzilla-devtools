@@ -222,14 +222,19 @@ func (b *bz) version() error {
 	if version == "dev" {
 		info, ok := debug.ReadBuildInfo()
 		if !ok {
-			return errors.New("Could not determine version number")
+			return errors.New("could not determine version number")
 		}
-		fmt.Printf(`Version: %s\n`, info.Main.Version)
+		if info.Main.Version == "" {
+			fmt.Println("Version: development")
+		} else {
+			fmt.Printf("Version: %s\n", info.Main.Version)
+		}
 	} else {
 		fmt.Printf(
 			`Version: %s
 Commit:  %s
-Date     %s\n`, version, commit, date)
+Date     %s`, version, commit, date)
+		fmt.Println()
 	}
 	return nil
 }
