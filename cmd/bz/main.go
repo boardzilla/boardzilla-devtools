@@ -20,6 +20,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -218,11 +219,18 @@ func (b *bz) info() error {
 }
 
 func (b *bz) version() error {
-	fmt.Printf(
-		`Version: %s
+	if version == "dev" {
+		info, ok := debug.ReadBuildInfo()
+		if !ok {
+			return errors.New("Could not determine version number")
+		}
+		fmt.Printf(`Version: %s\n`, info.Main.Version)
+	} else {
+		fmt.Printf(
+			`Version: %s
 Commit:  %s
-Date     %s`, version, commit, date)
-	fmt.Println()
+Date     %s\n`, version, commit, date)
+	}
 	return nil
 }
 
