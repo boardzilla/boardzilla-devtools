@@ -70,8 +70,22 @@ export type ProcessMoveResultMessage = {
   state: GameUpdate;
 };
 
+export type ReprocessHistoryResultMessage = {
+  type: "reprocessHistoryResult";
+  id: string;
+  error: string | undefined;
+  initialState: GameUpdate;
+  updates: GameUpdate[];
+};
+
 export type GetPlayerStateMessage = {
   type: "getPlayerStateResult";
   id: string;
   state: InternalPlayerState;
+};
+
+export type ReprocessHistoryResult = {
+  initialState: GameUpdate;
+  updates: GameUpdate[];
+  error?: string;
 };

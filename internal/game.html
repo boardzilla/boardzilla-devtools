@@ -28,6 +28,14 @@
           window.top.postMessage({type: "processMoveResult", id: event.data.id, error: String(e.stack), state: undefined}, "*")
         }
         break;
+      case 'reprocessHistory':
+        try {
+          const reprocessHistoryResult = (game.default ?? game).reprocessHistory(event.data.setup, event.data.moves);
+          window.top.postMessage({type: "reprocessHistoryResult", id: event.data.id, initialState: reprocessHistoryResult.initialState, updates: reprocessHistoryResult.updates, error: reprocessHistoryResult.error}, "*")
+        } catch (e) {
+          console.error("error!", e)
+        }
+        break;
       }
     });
   </script>

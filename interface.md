@@ -95,7 +95,6 @@ type Move = {
 type ReprocessHistoryResult = {
   initialState: GameUpdate
   updates: GameUpdate[]
-  movesCompleted: number
   error?: string
 }
 

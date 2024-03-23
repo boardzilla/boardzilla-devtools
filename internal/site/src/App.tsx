@@ -15,6 +15,7 @@ import {
   processMove,
   resolveGamePromise,
   rejectGamePromise,
+  reprocessHistory,
 } from "./game";
 
 const body = document.getElementsByTagName("body")[0];
@@ -79,6 +80,7 @@ type SaveStateData = {
 type MessageType =
   | Game.InitialStateResultMessage
   | Game.ProcessMoveResultMessage
+  | Game.ReprocessHistoryResultMessage
   | UI.UpdateSettingsMessage
   | UI.UpdatePlayersMessage
   | UI.ReadyMessage
@@ -508,7 +510,14 @@ function App() {
             resolveGamePromise(evt.id, evt.state);
           }
           break;
-        case "updateSettings":
+        case "reprocessHistoryResult":
+          if (evt.error) {
+            rejectGamePromise(evt.id, evt.error);
+          } else {
+            resolveGamePromise(evt.id, {initialState: evt.initialState, updates: evt.updates});
+          }
+          break;
+          case "updateSettings":
           if (!host) return;
           setSettings(evt.settings);
           setNumberAndSeat(evt.seatCount);
@@ -734,27 +743,24 @@ function App() {
     }
     setReprocessing(true);
     const randomSeed = getRandomSeed();
-    const response = await fetch(`/reprocess`, {
-      method: "POST",
-      body: JSON.stringify({
-        randomSeed,
-        initialState,
-        history,
-        players,
-        settings,
-      }),
-    });
-    if (response.status !== 200) {
+    const reprocessResult = await reprocessHistory({randomSeed, players, settings}, history.map(h => ({position: h.position, data: h.data})));
+    if (reprocessResult.error) {
+      toast.error(`Error from reprocessing: ${reprocessResult.error}`);
       setReprocessing(false);
-      toast.error(`Error from reprocessing: ${response.statusText}`);
-      return;
+      return
     }
-    const state = (await response.json()) as SaveStateData;
-    setRandomSeed(state.randomSeed);
-    setInitialState(state.initialState);
-    setHistory(state.history);
-    setSettings(state.settings);
-    setPlayers(state.players);
+
+    const newHistory = reprocessResult.updates.map((update, i) => ({
+      seq: i,
+      state: update,
+      data: history[i].data,
+      position: history[i].position,
+    }))
+
+    setReprocessing(false);
+    setRandomSeed(randomSeed);
+    setInitialState({...initialState, state: reprocessResult.initialState});
+    setHistory(newHistory);
     setReprocessing(false);
   }, [getRandomSeed, history, initialState, players, setRandomSeed, settings]);
 
