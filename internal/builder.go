@@ -135,7 +135,7 @@ func (b *Builder) Manifest() (*ManifestV1, error) {
 	f, err := os.Open(path.Join(b.root, manifestFile))
 	if err != nil {
 		if os.IsNotExist(err) {
-			manifestFile := "game.json"
+			manifestFile = "game.json"
 			f, err = os.Open(path.Join(b.root, manifestFile))
 			if err != nil {
 				return nil, fmt.Errorf("Cound not find game.json or game.v1.json")
