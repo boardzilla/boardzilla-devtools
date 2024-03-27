@@ -127,7 +127,7 @@ function App() {
   const getRandomSeed = useCallback(() => {
     let randomSeed = sessionStorage.getItem("rseed");
     if (!randomSeed) {
-      randomSeed = crypto.randomUUID();
+      randomSeed = String(Math.random());
       setRandomSeed(randomSeed);
     }
     return randomSeed;
@@ -779,10 +779,18 @@ function App() {
           center
         >
           <h2>BUILD ERROR!</h2>
-          <h4>OUT</h4>
-          <pre>{buildError?.out}</pre>
-          <h4>ERR</h4>
-          <pre>{buildError?.err}</pre>
+          {buildError?.out && (
+            <>
+              <h4>OUT</h4>
+              <pre>{buildError?.out}</pre>
+            </>
+          )}
+          {buildError?.err && (
+            <>
+              <h4>ERR</h4>
+              <pre>{buildError?.err}</pre>
+            </>
+          )}
         </Modal>
 
         <Modal open={helpOpen} onClose={() => setHelpOpen(false)} center>
