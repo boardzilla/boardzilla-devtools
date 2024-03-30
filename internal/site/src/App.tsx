@@ -511,13 +511,13 @@ function App() {
           }
           break;
         case "reprocessHistoryResult":
-          if (evt.error) {
-            rejectGamePromise(evt.id, evt.error);
-          } else {
-            resolveGamePromise(evt.id, {initialState: evt.initialState, updates: evt.updates});
-          }
+          resolveGamePromise(evt.id, {
+            error: evt.error,
+            initialState: evt.initialState,
+            updates: evt.updates,
+          });
           break;
-          case "updateSettings":
+        case "updateSettings":
           if (!host) return;
           setSettings(evt.settings);
           setNumberAndSeat(evt.seatCount);
@@ -743,11 +743,13 @@ function App() {
     }
     setReprocessing(true);
     const randomSeed = getRandomSeed();
-    const reprocessResult = await reprocessHistory({randomSeed, players, settings}, history.map(h => ({position: h.position, data: h.data})));
+    const reprocessResult = await reprocessHistory(
+      { randomSeed, players, settings },
+      history.map((h) => ({ position: h.position, data: h.data }))
+    );
+
     if (reprocessResult.error) {
       toast.error(`Error from reprocessing: ${reprocessResult.error}`);
-      setReprocessing(false);
-      return
     }
 
     const newHistory = reprocessResult.updates.map((update, i) => ({
@@ -755,11 +757,11 @@ function App() {
       state: update,
       data: history[i].data,
       position: history[i].position,
-    }))
+    }));
 
     setReprocessing(false);
     setRandomSeed(randomSeed);
-    setInitialState({...initialState, state: reprocessResult.initialState});
+    setInitialState({ ...initialState, state: reprocessResult.initialState });
     setHistory(newHistory);
     setReprocessing(false);
   }, [getRandomSeed, history, initialState, players, setRandomSeed, settings]);
