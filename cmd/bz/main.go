@@ -64,7 +64,7 @@ func validateShortName(name string) error {
 	return nil
 }
 
-func getTextInput(prompt, placeholder, errorText string, validator func(string) error) (string, error) {
+func getTextInput(prompt, placeholder, _ string, validator func(string) error) (string, error) {
 	input := textinput.New(prompt)
 	input.InitialValue = placeholder
 	input.Validate = validator
@@ -262,7 +262,7 @@ func (b *bz) run() error {
 	// Add a path.
 	manifest, err := devBuilder.Manifest()
 	if err != nil {
-		log.Fatal(fmt.Errorf("Error getting manifest json\n\n%w", err))
+		log.Fatal(fmt.Errorf("error getting manifest json: %w", err))
 	}
 	server, err := devtools.NewServer(gameRoot, manifest, *port)
 	if err != nil {
@@ -602,35 +602,25 @@ func (b *bz) submit() error {
 	}
 	fmt.Println("✅ Done building")
 
-	pipeReader, pipeWriter := io.Pipe()
-	mpw := multipart.NewWriter(pipeWriter)
+	gw := newGameWriter(b.serverURL, name, *root)
+	if err := gw.addFile("game.js", *root, manifest.Game.Root, manifest.Game.OutputFile); err != nil {
+		panic(err)
+	}
+	if err := gw.addDir("ui", *root, manifest.UI.Root, manifest.UI.OutputDirectory); err != nil {
+		panic(err)
+	}
 
-	gw := newGameWriter(b.serverURL, name, mpw, *root)
-	go func() {
-		if err := gw.addFile("game.js", *root, manifest.Game.Root, manifest.Game.OutputFile); err != nil {
-			panic(err)
-		}
-		if err := gw.addDir("ui", *root, manifest.UI.Root, manifest.UI.OutputDirectory); err != nil {
-			panic(err)
-		}
-		if err := mpw.Close(); err != nil {
-			panic(err)
-		}
-		if err := pipeWriter.Close(); err != nil {
-			panic(err)
-		}
-	}()
+	if err := gw.Start(); err != nil {
+		fmt.Printf("error during start: %s\n", err)
+	}
 
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d&default=%d", b.serverURL, url.PathEscape(name), version, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers, manifest.DefaultPlayers), pipeReader)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/me/games/%s/%s/submit?sha=%s&min=%d&max=%d&default=%d", b.serverURL, url.PathEscape(name), version, gitSha, manifest.MinimumPlayers, manifest.MaximumPlayers, manifest.DefaultPlayers), gw.Reader())
 	if err != nil {
 		return err
 	}
-	req.Header.Add("Content-type", mpw.FormDataContentType())
+	req.Header.Add("Content-type", gw.FormDataContentType())
 	req.Header.Add("Cookie", string(auth))
 	res, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
 	if err != nil {
 		return err
 	}
@@ -901,32 +891,90 @@ func (b *bz) new() error {
 	return nil
 }
 
+type asset struct {
+	Target string
+	Path   string
+}
+
 type preload struct {
 	Path string `json:"path"`
 	As   string `json:"as"`
 }
 
 type gameWriter struct {
-	mpw       *multipart.Writer
-	root      string
-	name      string
-	serverURL string
-	assets    []*preload
+	mpw           *multipart.Writer
+	root          string
+	name          string
+	serverURL     string
+	preloadAssets []*preload
+	assets        []*asset
+	reader        *io.PipeReader
 }
 
-func newGameWriter(serverURL, name string, mpw *multipart.Writer, root string) *gameWriter {
+func newGameWriter(serverURL, name string, root string) *gameWriter {
 	return &gameWriter{
-		mpw:       mpw,
-		root:      root,
-		name:      name,
-		serverURL: serverURL,
-		assets:    []*preload{},
+		mpw:           nil,
+		root:          root,
+		name:          name,
+		serverURL:     serverURL,
+		preloadAssets: []*preload{},
+		assets:        []*asset{},
+		reader:        nil,
 	}
+}
+
+func (gw *gameWriter) Reader() io.Reader {
+	return gw.reader
+}
+
+func (gw *gameWriter) Start() error {
+	pipeReader, pipeWriter := io.Pipe()
+	gw.mpw = multipart.NewWriter(pipeWriter)
+	gw.reader = pipeReader
+	go func() {
+		for _, asset := range gw.assets {
+			{
+				color.Println("Adding file <cyan>%s</> from <cyan>%s</> ", asset.Target, asset.Path)
+				f, err := os.OpenFile(asset.Path, os.O_RDONLY, 0)
+				defer func() {
+					err := f.Close()
+					if err != nil {
+						fmt.Printf("error while closing: %s", err)
+					}
+				}()
+				if err != nil {
+					fmt.Printf("error while opening: %s", err)
+					return
+				}
+				writer, err := gw.mpw.CreateFormFile(asset.Target, asset.Target)
+				if err != nil {
+					fmt.Printf("error while create form file: %s", err)
+					return
+				}
+				if _, err := io.Copy(writer, f); err != nil {
+					fmt.Printf("error while copying: %s", err)
+					return
+				}
+				color.Println(" ✅")
+			}
+		}
+		if err := gw.mpw.Close(); err != nil {
+			fmt.Printf("error closing: %s", err)
+		}
+		if err := pipeWriter.Close(); err != nil {
+			fmt.Printf("error closing: %s", err)
+		}
+	}()
+	return nil
+}
+
+func (gw *gameWriter) FormDataContentType() string {
+	return gw.mpw.FormDataContentType()
 }
 
 func (gw *gameWriter) addFile(target string, src ...string) error {
 	assetPath := path.Join(src...)
-	color.Printf("Adding file <cyan>%s</> from <cyan>%s</>", target, assetPath)
+	color.Printf("Checking file <cyan>%s</> from <cyan>%s</>", target, assetPath)
 	f, err := os.ReadFile(assetPath) // #nosec G304
 	if err != nil {
 		return err
@@ -942,7 +990,7 @@ func (gw *gameWriter) addFile(target string, src ...string) error {
 			assetType = "audio"
 		}
 		if assetType != "" {
-			gw.assets = append(gw.assets, &preload{assetTarget, assetType})
+			gw.preloadAssets = append(gw.preloadAssets, &preload{assetTarget, assetType})
 		}
 		digest := sha256.Sum256(f)
 		req, err := http.NewRequest(http.MethodHead, fmt.Sprintf("%s/api/assets/%s/%s", gw.serverURL, url.PathEscape(gw.name), assetTarget), nil)
@@ -965,14 +1013,10 @@ func (gw *gameWriter) addFile(target string, src ...string) error {
 			}
 		}
 	}
-	writer, err := gw.mpw.CreateFormFile(target, target)
-	if err != nil {
-		return err
-	}
-	if _, err := io.Copy(writer, bytes.NewReader(f)); err != nil {
-		return err
-	}
-	color.Println(" ✅")
+	gw.assets = append(gw.assets, &asset{
+		Target: target,
+		Path:   assetPath,
+	})
 	return nil
 }
 
@@ -980,7 +1024,7 @@ func (gw *gameWriter) postPreloadAssets(auth []byte, id uint64) error {
 	var preloadAssets struct {
 		Preload []*preload `json:"preload"`
 	}
-	preloadAssets.Preload = gw.assets
+	preloadAssets.Preload = gw.preloadAssets
 	body, err := json.Marshal(preloadAssets)
 	if err != nil {
 		return err
