@@ -6,7 +6,7 @@ on:
     branches:
       - main
 env:
-  GOTOOLCHAIN: go1.21.5
+  GOTOOLCHAIN: go1.21.11
 name: Check
 jobs:
   check:
